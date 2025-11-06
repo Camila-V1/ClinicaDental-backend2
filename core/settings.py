@@ -105,7 +105,7 @@ PUBLIC_SCHEMA_URLCONF = 'core.urls_public'  # For public schema (localhost)
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],  # Add custom templates directory
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

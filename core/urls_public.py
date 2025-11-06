@@ -15,6 +15,7 @@ class PublicAdminSite(AdminSite):
     site_header = "Administración del Sistema Multi-Tenant"
     site_title = "Admin del Sistema"
     index_title = "Gestión de Clínicas"
+    index_template = 'admin_public/index.html'  # Custom template
     
     # Disable login requirement for public admin
     # WARNING: In production, implement HTTP Basic Auth or restrict network access
@@ -49,17 +50,88 @@ class PublicAdminSite(AdminSite):
             'site_header': self.site_header,
             'site_url': reverse('admin:index', current_app=self.name) if self.site_url == '/' else self.site_url,
             'has_permission': True,  # Always true for public admin
-            'available_apps': self.get_app_list(request),
+            'available_apps': [],  # Will be populated by index()
             'is_popup': False,
             'is_nav_sidebar_enabled': True,
             'log_entries': [],  # Empty to avoid querying django_admin_log
         }
+    
+    def get_app_list(self, request, app_label=None):
+        """
+        Override to safely get app list without querying django_admin_log.
+        """
+        from django.contrib.admin import site as default_site
+        from django.urls import reverse, NoReverseMatch
+        from django.utils.text import capfirst
+        
+        app_dict = {}
+        
+        # Only iterate over models registered in THIS admin site
+        for model, model_admin in self._registry.items():
+            app_label_local = model._meta.app_label
+            
+            has_module_perms = True  # No permission check for public admin
+            
+            if has_module_perms:
+                perms = {
+                    'add': True,
+                    'change': True,
+                    'delete': True,
+                    'view': True,
+                }
+                
+                # Check whether user has any perm for this module.
+                if True in perms.values():
+                    info = (app_label_local, model._meta.model_name)
+                    model_dict = {
+                        'model': model,
+                        'name': capfirst(model._meta.verbose_name_plural),
+                        'object_name': model._meta.object_name,
+                        'perms': perms,
+                        'admin_url': None,
+                        'add_url': None,
+                    }
+                    
+                    try:
+                        model_dict['admin_url'] = reverse('admin:%s_%s_changelist' % info, current_app=self.name)
+                    except NoReverseMatch:
+                        pass
+                    
+                    if perms.get('add'):
+                        try:
+                            model_dict['add_url'] = reverse('admin:%s_%s_add' % info, current_app=self.name)
+                        except NoReverseMatch:
+                            pass
+                    
+                    if app_label_local in app_dict:
+                        app_dict[app_label_local]['models'].append(model_dict)
+                    else:
+                        app_dict[app_label_local] = {
+                            'name': model._meta.app_config.verbose_name if hasattr(model._meta, 'app_config') else app_label_local.title(),
+                            'app_label': app_label_local,
+                            'app_url': None,
+                            'has_module_perms': has_module_perms,
+                            'models': [model_dict],
+                        }
+        
+        if app_label:
+            return app_dict.get(app_label)
+        
+        # Sort the apps alphabetically
+        app_list = sorted(app_dict.values(), key=lambda x: x['name'].lower())
+        
+        # Sort the models alphabetically within each app
+        for app in app_list:
+            app['models'].sort(key=lambda x: x['name'])
+        
+        return app_list
     
     def index(self, request, extra_context=None):
         """
         Override index to avoid loading admin logs (django_admin_log table doesn't exist in public schema).
         """
         from django.template.response import TemplateResponse
+        from django.utils.text import capfirst
         
         app_list = self.get_app_list(request)
         
@@ -80,18 +152,21 @@ class PublicAdminSite(AdminSite):
 # Instantiate the public admin site
 public_admin = PublicAdminSite(name='public_admin')
 
-# Register public models (tenants)
+# Register public models (tenants) with basic ModelAdmin (not custom admins)
 from tenants.models import Clinica, Domain
-from tenants.admin import ClinicaAdmin, DomainAdmin
+from django.contrib.admin import ModelAdmin
 
-public_admin.register(Clinica, ClinicaAdmin)
-public_admin.register(Domain, DomainAdmin)
+# Use basic ModelAdmin to avoid any permission checks
+class SimpleClinicaAdmin(ModelAdmin):
+    list_display = ['nombre', 'schema_name', 'activo']
+    search_fields = ['nombre', 'schema_name']
 
-# Also register Django's built-in Group model
-from django.contrib.auth.models import Group
-from django.contrib.auth.admin import GroupAdmin
+class SimpleDomainAdmin(ModelAdmin):
+    list_display = ['domain', 'tenant', 'is_primary']
+    search_fields = ['domain']
 
-public_admin.register(Group, GroupAdmin)
+public_admin.register(Clinica, SimpleClinicaAdmin)
+public_admin.register(Domain, SimpleDomainAdmin)
 
 
 urlpatterns = [

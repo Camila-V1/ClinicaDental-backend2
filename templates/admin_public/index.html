@@ -1,0 +1,73 @@
+{% load i18n static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ site_title }}</title>
+    <link rel="stylesheet" href="{% static 'admin/css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'admin/css/dashboard.css' %}">
+</head>
+<body class="dashboard">
+    <div id="container">
+        <div id="header">
+            <div id="branding">
+                <h1 id="site-name">{{ site_header }}</h1>
+            </div>
+        </div>
+        
+        <div id="content" class="colMS">
+            <h1>{{ title }}</h1>
+            
+            {% if app_list %}
+                {% for app in app_list %}
+                    <div class="app-{{ app.app_label }} module">
+                        <table>
+                            <caption>
+                                <a href="{{ app.app_url }}" class="section" title="{% blocktranslate with name=app.name %}Models in the {{ name }} application{% endblocktranslate %}">
+                                    {{ app.name }}
+                                </a>
+                            </caption>
+                            {% for model in app.models %}
+                                <tr class="model-{{ model.object_name|lower }}">
+                                    {% if model.admin_url %}
+                                        <th scope="row"><a href="{{ model.admin_url }}">{{ model.name }}</a></th>
+                                    {% else %}
+                                        <th scope="row">{{ model.name }}</th>
+                                    {% endif %}
+                                    
+                                    {% if model.add_url %}
+                                        <td><a href="{{ model.add_url }}" class="addlink">{% translate 'Add' %}</a></td>
+                                    {% else %}
+                                        <td>&nbsp;</td>
+                                    {% endif %}
+                                    
+                                    {% if model.admin_url %}
+                                        {% if model.view_only %}
+                                            <td><a href="{{ model.admin_url }}" class="viewlink">{% translate 'View' %}</a></td>
+                                        {% else %}
+                                            <td><a href="{{ model.admin_url }}" class="changelink">{% translate 'Change' %}</a></td>
+                                        {% endif %}
+                                    {% else %}
+                                        <td>&nbsp;</td>
+                                    {% endif %}
+                                </tr>
+                            {% endfor %}
+                        </table>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>{% translate "You don't have permission to view or edit anything." %}</p>
+            {% endif %}
+        </div>
+        
+        <div id="footer">
+            <div class="module">
+                <p class="copyright">
+                    Sistema Multi-Tenant - Clínica Dental
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
