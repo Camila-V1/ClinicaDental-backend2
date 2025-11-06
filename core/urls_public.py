@@ -8,10 +8,6 @@ usuarios.Usuario only exists in tenant schemas, not in public schema.
 from django.contrib.admin import AdminSite
 from django.urls import path, include
 from django.shortcuts import redirect
-from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
-    TokenRefreshView,
-)
 
 
 # Create a custom admin site for the public schema WITHOUT authentication
@@ -64,8 +60,4 @@ urlpatterns = [
     
     # API for tenant management (public)
     path('api/tenants/', include('tenants.urls')),
-    
-    # JWT authentication endpoints (public)
-    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]

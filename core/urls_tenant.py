@@ -11,11 +11,19 @@ The public schema (localhost) uses core.urls_public instead.
 """
 from django.contrib import admin
 from django.urls import path, include
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
 
 urlpatterns = [
     # Admin panel for TENANT (clinic staff)
     # Shows: Usuarios, Agenda, Tratamientos, Facturacion, etc.
     path('admin/', admin.site.urls),
+    
+    # JWT authentication endpoints (for tenant users)
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     
     # API routes for tenant operations
     path('api/usuarios/', include('usuarios.urls')),
