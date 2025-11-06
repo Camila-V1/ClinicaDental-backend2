@@ -39,7 +39,8 @@ SHARED_APPS = [
     'tenants',                 # app to manage tenants (we'll create it)
 
     # Django contrib apps used in public
-    'django.contrib.admin',
+    # NOTE: We do NOT include django.contrib.admin here because admin depends on
+    # AUTH_USER_MODEL which is tenant-only. The public admin uses a custom AdminSite.
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -50,9 +51,6 @@ SHARED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
-    
-    # Usuario debe estar en SHARED_APPS para el admin público
-    'usuarios',
 ]
 
 # Tenant apps are installed into each tenant schema
@@ -63,7 +61,7 @@ TENANT_APPS = [
     'django.contrib.contenttypes',
 
     # --- Mis Aplicaciones (instaladas por tenant) ---
-    'usuarios',
+    'usuarios',  # Usuario DEBE estar en TENANT_APPS
     'agenda',
     'historial_clinico',
     'tratamientos',
@@ -92,7 +90,17 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'core.urls'
+# ============================================================
+# URL ROUTING CONFIGURATION (django-tenants)
+# ============================================================
+# ROOT_URLCONF: Used by django-tenants for TENANT schemas (clinic subdomains)
+# PUBLIC_SCHEMA_URLCONF: Used for the PUBLIC schema (localhost)
+#
+# This separation allows different admin sites:
+# - localhost → public_admin_site (manages Clinicas, Domains)
+# - clinica-demo.localhost → standard admin.site (manages Usuarios, Agenda, etc.)
+ROOT_URLCONF = 'core.urls_tenant'           # For tenant schemas
+PUBLIC_SCHEMA_URLCONF = 'core.urls_public'  # For public schema (localhost)
 
 TEMPLATES = [
     {
