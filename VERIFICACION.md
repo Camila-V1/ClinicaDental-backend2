@@ -27,9 +27,7 @@ python manage.py runserver
 
 **URL:** http://localhost:8000/admin/
 
-**Credenciales:**
-- Usuario: `superadmin@sistema.com`
-- Password: `superadmin123`
+**NOTA IMPORTANTE:** El admin público **NO tiene autenticación configurada** porque el modelo Usuario solo existe en esquemas tenant. El PublicAdminSite muestra solo modelos de tenants.
 
 **Debe mostrar SOLAMENTE:**
 - ✅ Tenants
@@ -37,13 +35,14 @@ python manage.py runserver
   - Domains
 - ✅ Authentication and Authorization
   - Groups
-  - Permissions (solo del esquema público)
 
 **NO debe mostrar:**
-- ❌ Usuarios
+- ❌ Usuarios (está SOLO en tenant schemas)
 - ❌ Perfil Odontólogo
 - ❌ Perfil Paciente
 - ❌ Agenda, Historial, etc.
+
+**Alternativa para producción:** Implementar autenticación HTTP básica o gestionar tenants via API desde un tenant administrativo.
 
 ### 4. Probar el Sitio de la Clínica
 
@@ -100,8 +99,13 @@ curl -X POST http://clinica-demo.localhost:8000/api/token/ \
 
 | Sitio | URL | Usuario | Password | Función |
 |-------|-----|---------|----------|---------|
-| **Público** | http://localhost:8000/admin/ | superadmin@sistema.com | superadmin123 | Administrar clínicas |
+| **Público** | http://localhost:8000/admin/ | (sin auth) | - | Administrar clínicas (sin login por ahora) |
 | **Clínica Demo** | http://clinica-demo.localhost:8000/admin/ | admin@clinica.com | 123456 | Administrar la clínica |
+
+**Notas:**
+- El admin público NO tiene autenticación porque `usuarios.Usuario` solo existe en tenant schemas
+- Para producción, considera: autenticación HTTP básica, OAuth, o gestión via API
+- Los administradores de clínicas acceden via subdominios (ej: clinica-demo.localhost)
 
 ## 🔍 Solución de Problemas
 
@@ -110,8 +114,14 @@ curl -X POST http://clinica-demo.localhost:8000/api/token/ \
 - Verificar que `ALLOWED_HOSTS` en settings.py incluya los dominios
 
 ### Los modelos aparecen en el admin incorrecto
-- Verificar que todos los archivos admin.py tengan la verificación de `connection.schema_name`
-- Reiniciar el servidor después de cambiar los archivos admin.py
+- ✅ SOLUCIONADO con la implementación de PUBLIC_SCHEMA_URLCONF
+- La separación ahora se hace a nivel de URL routing, NO en admin.py
+- Cada esquema tiene su propio AdminSite con modelos específicos
+
+### Los checks de connection.schema_name no funcionan
+- ✅ PROBLEMA IDENTIFICADO: admin.py se carga UNA VEZ al inicio en esquema público
+- ✅ SOLUCIÓN: Separar AdminSite instances (PublicAdminSite vs admin.site)
+- NO usar verificaciones condicionales en admin.py
 
 ### No puedo acceder a clinica-demo.localhost
 - Verificar archivo hosts de Windows
@@ -124,23 +134,51 @@ curl -X POST http://clinica-demo.localhost:8000/api/token/ \
 ┌─────────────────────────────────────────────────────┐
 │          http://localhost:8000                      │
 │         (Esquema: public)                           │
+│         URLs: core/urls_public.py                   │
 │                                                     │
-│  Super Admin del Sistema                            │
+│  PublicAdminSite (custom AdminSite)                 │
 │  - Crear nuevas clínicas (tenants)                  │
 │  - Gestionar dominios                               │
-│  - Administración global                            │
+│  - Modelos: Clinica, Domain, Group                  │
+│  - SIN autenticación de usuarios por ahora          │
 └─────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────┐
 │    http://clinica-demo.localhost:8000               │
 │         (Esquema: clinica_demo)                     │
+│         URLs: core/urls_tenant.py                   │
 │                                                     │
-│  Admin de la Clínica                                │
+│  admin.site (Django standard AdminSite)             │
 │  - Gestionar usuarios (Pacientes, Odontólogos)      │
 │  - Gestionar citas, tratamientos, etc.             │
 │  - Datos aislados de otras clínicas                 │
+│  - Autenticación: usuarios.Usuario                  │
 └─────────────────────────────────────────────────────┘
 ```
+
+### Detalles Técnicos de la Separación
+
+**1. Configuración en settings.py:**
+```python
+ROOT_URLCONF = 'core.urls_tenant'           # Para tenants
+PUBLIC_SCHEMA_URLCONF = 'core.urls_public'  # Para localhost
+```
+
+**2. SHARED_APPS (solo en esquema public):**
+- django_tenants, tenants
+- Django contrib: auth, contenttypes, sessions, messages, staticfiles
+- **NO incluye: django.contrib.admin** (evita FK a usuarios.Usuario)
+- **NO incluye: usuarios** (exclusivo de tenants)
+
+**3. TENANT_APPS (solo en esquemas tenant):**
+- django.contrib.admin (con usuario personalizado)
+- usuarios, agenda, historial_clinico, tratamientos, facturacion, inventario, reportes
+
+**4. Patrón AdminSite:**
+- `PublicAdminSite` (core/urls_public.py): Registra Clinica, Domain, Group
+- `admin.site` (core/urls_tenant.py): Registra modelos de negocio
+
+Este patrón garantiza que los modelos correctos aparezcan en cada admin según el esquema activo.
 
 ## ✅ Checklist Final
 
