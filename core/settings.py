@@ -50,6 +50,9 @@ SHARED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
+    
+    # Usuario debe estar en SHARED_APPS para el admin público
+    'usuarios',
 ]
 
 # Tenant apps are installed into each tenant schema
@@ -209,3 +212,7 @@ REST_FRAMEWORK = {
 # django-tenants: indicar el modelo Tenant y Domain (app_name.ModelName)
 TENANT_MODEL = "tenants.Clinica"
 TENANT_DOMAIN_MODEL = "tenants.Domain"
+
+# --- Configuración del Modelo de Autenticación ---
+# Le dice a Django que use nuestro modelo 'Usuario' de la app 'usuarios'
+AUTH_USER_MODEL = 'usuarios.Usuario'

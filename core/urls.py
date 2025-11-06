@@ -32,7 +32,7 @@ urlpatterns = [
     path('api/inventario/', include('inventario.urls')),
     path('api/reportes/', include('reportes.urls')),
     # En producción con django-tenants, la administración de tenants vive en la app 'tenants'
-    path('api/clinicas/', include('tenants.urls')),
+    path('api/tenants/', include('tenants.urls')),
     # JWT auth endpoints (token obtain/refresh)
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
