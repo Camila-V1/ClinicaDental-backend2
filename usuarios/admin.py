@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import Usuario
+from .models import Usuario, PerfilOdontologo, PerfilPaciente
 
 
 @admin.register(Usuario)
@@ -30,4 +30,26 @@ class UsuarioAdmin(BaseUserAdmin):
     )
     
     readonly_fields = ('last_login', 'date_joined')
+
+
+# --- REGISTRO DE PERFILES EXTENDIDOS ---
+
+@admin.register(PerfilOdontologo)
+class PerfilOdontologoAdmin(admin.ModelAdmin):
+    """
+    Configuración del panel de administración para el perfil de Odontólogo.
+    """
+    list_display = ('usuario', 'especialidad', 'cedulaProfesional')
+    search_fields = ('usuario__email', 'usuario__nombre', 'cedulaProfesional')
+    list_filter = ('especialidad',)
+
+
+@admin.register(PerfilPaciente)
+class PerfilPacienteAdmin(admin.ModelAdmin):
+    """
+    Configuración del panel de administración para el perfil de Paciente.
+    """
+    list_display = ('usuario', 'fecha_de_nacimiento', 'direccion')
+    search_fields = ('usuario__email', 'usuario__nombre')
+    list_filter = ('fecha_de_nacimiento',)
 

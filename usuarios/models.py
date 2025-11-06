@@ -78,3 +78,54 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
     @property
     def full_name(self):
         return f"{self.nombre} {self.apellido}"
+
+
+# --- MODELOS DE PERFIL EXTENDIDO ---
+
+class PerfilOdontologo(models.Model):
+    """
+    Extiende el modelo Usuario para campos específicos del Odontólogo.
+    """
+    # Relación uno-a-uno. Cada usuario solo puede tener un perfil de odontólogo.
+    usuario = models.OneToOneField(
+        Usuario, 
+        on_delete=models.CASCADE, 
+        primary_key=True,
+        related_name='perfil_odontologo'
+    )
+    
+    # Campos específicos del documento
+    especialidad = models.CharField(max_length=100, blank=True)
+    cedulaProfesional = models.CharField(max_length=50, blank=True, unique=True, null=True)
+    experienciaProfesional = models.TextField(blank=True, null=True)
+
+    class Meta:
+        verbose_name = 'Perfil Odontólogo'
+        verbose_name_plural = 'Perfiles Odontólogos'
+
+    def __str__(self):
+        return self.usuario.full_name
+
+
+class PerfilPaciente(models.Model):
+    """
+    Extiende el modelo Usuario para campos específicos del Paciente.
+    """
+    # Relación uno-a-uno. Cada usuario solo puede tener un perfil de paciente.
+    usuario = models.OneToOneField(
+        Usuario, 
+        on_delete=models.CASCADE, 
+        primary_key=True,
+        related_name='perfil_paciente'
+    )
+    
+    # Campos específicos del documento
+    fecha_de_nacimiento = models.DateField(null=True, blank=True)
+    direccion = models.CharField(max_length=255, blank=True, null=True)
+
+    class Meta:
+        verbose_name = 'Perfil Paciente'
+        verbose_name_plural = 'Perfiles Pacientes'
+
+    def __str__(self):
+        return self.usuario.full_name
