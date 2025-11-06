@@ -35,6 +35,46 @@ class PublicAdminSite(AdminSite):
         Redirect to admin index since we don't use authentication.
         """
         return redirect('admin:index')
+    
+    def each_context(self, request):
+        """
+        Override to avoid accessing user-related context that might query usuarios_usuario.
+        """
+        from django.urls import reverse
+        from django.utils.text import capfirst
+        from django.utils.translation import gettext_lazy as _
+        
+        return {
+            'site_title': self.site_title,
+            'site_header': self.site_header,
+            'site_url': reverse('admin:index', current_app=self.name) if self.site_url == '/' else self.site_url,
+            'has_permission': True,  # Always true for public admin
+            'available_apps': self.get_app_list(request),
+            'is_popup': False,
+            'is_nav_sidebar_enabled': True,
+            'log_entries': [],  # Empty to avoid querying django_admin_log
+        }
+    
+    def index(self, request, extra_context=None):
+        """
+        Override index to avoid loading admin logs (django_admin_log table doesn't exist in public schema).
+        """
+        from django.template.response import TemplateResponse
+        
+        app_list = self.get_app_list(request)
+        
+        context = {
+            **self.each_context(request),
+            'title': self.index_title,
+            'subtitle': None,
+            'app_list': app_list,
+            # Don't include 'recent_actions' to avoid querying django_admin_log
+            **(extra_context or {}),
+        }
+        
+        request.current_app = self.name
+        
+        return TemplateResponse(request, self.index_template or 'admin/index.html', context)
 
 
 # Instantiate the public admin site
