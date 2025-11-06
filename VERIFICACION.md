@@ -27,7 +27,15 @@ python manage.py runserver
 
 **URL:** http://localhost:8000/admin/
 
-**NOTA IMPORTANTE:** El admin público **NO tiene autenticación configurada** porque el modelo Usuario solo existe en esquemas tenant. El PublicAdminSite muestra solo modelos de tenants.
+**⚠️ IMPORTANTE:** El admin público **NO requiere login** porque:
+- El modelo `usuarios.Usuario` solo existe en esquemas tenant
+- No hay tabla auth_user en el esquema público
+- El `PublicAdminSite` sobrescribe `has_permission()` para permitir acceso directo
+
+**🔒 Seguridad en Producción:**
+- Implementar HTTP Basic Authentication a nivel de servidor web (nginx/Apache)
+- Restricción por IP/VPN
+- O gestionar tenants exclusivamente via API desde un tenant administrativo
 
 **Debe mostrar SOLAMENTE:**
 - ✅ Tenants
@@ -41,8 +49,6 @@ python manage.py runserver
 - ❌ Perfil Odontólogo
 - ❌ Perfil Paciente
 - ❌ Agenda, Historial, etc.
-
-**Alternativa para producción:** Implementar autenticación HTTP básica o gestionar tenants via API desde un tenant administrativo.
 
 ### 4. Probar el Sitio de la Clínica
 
@@ -97,15 +103,15 @@ curl -X POST http://clinica-demo.localhost:8000/api/token/ \
 
 ## 📊 Resumen de Dominios y Credenciales
 
-| Sitio | URL | Usuario | Password | Función |
-|-------|-----|---------|----------|---------|
-| **Público** | http://localhost:8000/admin/ | (sin auth) | - | Administrar clínicas (sin login por ahora) |
-| **Clínica Demo** | http://clinica-demo.localhost:8000/admin/ | admin@clinica.com | 123456 | Administrar la clínica |
+| Sitio | URL | Autenticación | Función |
+|-------|-----|---------------|---------|
+| **Público** | http://localhost:8000/admin/ | ❌ Sin login (acceso directo) | Administrar clínicas y dominios |
+| **Clínica Demo** | http://clinica-demo.localhost:8000/admin/ | ✅ admin@clinica.com / 123456 | Administrar la clínica |
 
-**Notas:**
-- El admin público NO tiene autenticación porque `usuarios.Usuario` solo existe en tenant schemas
-- Para producción, considera: autenticación HTTP básica, OAuth, o gestión via API
-- Los administradores de clínicas acceden via subdominios (ej: clinica-demo.localhost)
+**Notas de Seguridad:**
+- ⚠️ El admin público NO tiene autenticación porque `usuarios.Usuario` solo existe en tenant schemas
+- 🔒 Para producción: Implementar HTTP Basic Auth, restricción por IP, o VPN
+- ✅ Los administradores de clínicas acceden via subdominios con autenticación completa
 
 ## 🔍 Solución de Problemas
 
