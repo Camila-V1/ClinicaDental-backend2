@@ -80,6 +80,39 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
         return f"{self.nombre} {self.apellido}"
 
 
+# --- MODELO ESPECIALIDAD ---
+
+class Especialidad(models.Model):
+    """
+    Catálogo de especialidades odontológicas.
+    Evita errores tipográficos y mantiene consistencia en los datos.
+    """
+    nombre = models.CharField(
+        max_length=100, 
+        unique=True,
+        help_text="Nombre de la especialidad odontológica"
+    )
+    descripcion = models.TextField(
+        blank=True, 
+        null=True,
+        help_text="Descripción detallada de la especialidad"
+    )
+    activo = models.BooleanField(
+        default=True,
+        help_text="Si la especialidad está activa para ser asignada"
+    )
+    creado = models.DateTimeField(auto_now_add=True)
+    actualizado = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Especialidad'
+        verbose_name_plural = 'Especialidades'
+        ordering = ['nombre']
+
+    def __str__(self):
+        return self.nombre
+
+
 # --- MODELOS DE PERFIL EXTENDIDO ---
 
 class PerfilOdontologo(models.Model):
@@ -95,7 +128,14 @@ class PerfilOdontologo(models.Model):
     )
     
     # Campos específicos del documento
-    especialidad = models.CharField(max_length=100, blank=True)
+    especialidad = models.ForeignKey(
+        Especialidad,
+        on_delete=models.PROTECT,  # No permitir eliminar especialidad si tiene odontólogos
+        related_name='odontologos',
+        null=True,
+        blank=True,
+        help_text="Especialidad odontológica del profesional"
+    )
     cedulaProfesional = models.CharField(max_length=50, blank=True, unique=True, null=True)
     experienciaProfesional = models.TextField(blank=True, null=True)
 

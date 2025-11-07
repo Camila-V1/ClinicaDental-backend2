@@ -1,5 +1,6 @@
 from django.contrib import admin
 from .models import Cita
+from usuarios.models import PerfilPaciente, PerfilOdontologo
 
 
 @admin.register(Cita)
@@ -39,6 +40,18 @@ class CitaAdmin(admin.ModelAdmin):
     )
     
     readonly_fields = ('creado', 'actualizado')
+    
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        """
+        Filtrar los campos de ForeignKey para mostrar solo perfiles válidos.
+        """
+        if db_field.name == "paciente":
+            # Mostrar solo perfiles de paciente que existen
+            kwargs["queryset"] = PerfilPaciente.objects.select_related('usuario').all()
+        if db_field.name == "odontologo":
+            # Mostrar solo perfiles de odontólogo que existen
+            kwargs["queryset"] = PerfilOdontologo.objects.select_related('usuario').all()
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
     
     def get_paciente_nombre(self, obj):
         """Retorna el nombre completo del paciente"""
