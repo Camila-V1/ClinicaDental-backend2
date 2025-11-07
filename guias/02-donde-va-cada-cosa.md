@@ -208,4 +208,4 @@ TENANT_APPS = ['usuarios', 'agenda', ...]  # ← Negocio aquí
 ## 🎓 Próximo Paso
 
 - Para crear modelo de negocio: **[03-crear-modelo-negocio.md](03-crear-modelo-negocio.md)**
-- Para crear modelo de gestión: **[04-crear-modelo-gestion.md](04-crear-modelo-gestion.md)**
+- Ver checklist completo: **[07-checklist-nueva-feature.md](07-checklist-nueva-feature.md)**

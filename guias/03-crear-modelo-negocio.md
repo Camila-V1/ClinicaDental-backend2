@@ -363,5 +363,5 @@ http://clinica-demo.localhost:8000/api/agenda/citas/
 
 ## 🎓 Próximo Paso
 
-- Ver ejemplo completo: **[11-ejemplo-agenda.md](11-ejemplo-agenda.md)**
-- Checklist completo: **[07-checklist-nueva-feature.md](07-checklist-nueva-feature.md)**
+- Ver checklist completo: **[07-checklist-nueva-feature.md](07-checklist-nueva-feature.md)**
+- Comandos útiles: **[08-comandos-frecuentes.md](08-comandos-frecuentes.md)**

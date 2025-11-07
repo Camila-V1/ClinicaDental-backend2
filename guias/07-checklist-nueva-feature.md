@@ -181,4 +181,4 @@ python manage.py showmigrations agenda
 
 - **Comandos frecuentes:** [08-comandos-frecuentes.md](08-comandos-frecuentes.md)
 - **Debugging:** [09-debugging-admin.md](09-debugging-admin.md)
-- **Ejemplo completo:** [11-ejemplo-agenda.md](11-ejemplo-agenda.md)
+- **Verificación:** [13-como-verificar.md](13-como-verificar.md)
