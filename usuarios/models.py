@@ -44,10 +44,40 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
         ODONTOLOGO = 'ODONTOLOGO', 'Odontólogo'
         PACIENTE = 'PACIENTE', 'Paciente'
     
+    # --- Opciones de Sexo ---
+    class Sexo(models.TextChoices):
+        MASCULINO = 'M', 'Masculino'
+        FEMENINO = 'F', 'Femenino'
+        OTRO = 'O', 'Otro'
+        NO_ESPECIFICAR = 'N', 'Prefiero no especificar'
+
     # --- Campos Principales ---
     email = models.EmailField(unique=True, help_text="Email. Se usará para el login.")
     nombre = models.CharField(max_length=100)
     apellido = models.CharField(max_length=100)
+    
+    # --- Campos Nuevos ---
+    ci = models.CharField(
+        max_length=20, 
+        unique=True, 
+        null=True, 
+        blank=True,
+        verbose_name="Cédula de Identidad",
+        help_text="Número de cédula de identidad o documento de identificación"
+    )
+    sexo = models.CharField(
+        max_length=1,
+        choices=Sexo.choices,
+        null=True,
+        blank=True,
+        help_text="Sexo del usuario"
+    )
+    telefono = models.CharField(
+        max_length=20,
+        null=True,
+        blank=True,
+        help_text="Número de teléfono de contacto"
+    )
 
     tipo_usuario = models.CharField(
         max_length=20,

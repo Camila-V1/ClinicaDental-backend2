@@ -30,8 +30,8 @@ class UsuarioSerializer(serializers.ModelSerializer):
     class Meta:
         model = Usuario
         fields = [
-            'id', 'email', 'nombre', 'apellido', 'tipo_usuario',
-            'is_active', 'date_joined',
+            'id', 'email', 'nombre', 'apellido', 'ci', 'sexo', 'telefono', 
+            'tipo_usuario', 'is_active', 'date_joined',
             'perfil_paciente', 'perfil_odontologo'
         ]
         read_only_fields = ['id', 'date_joined']
@@ -52,7 +52,8 @@ class RegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = Usuario
         fields = [
-            'email', 'password', 'password2', 'nombre', 'apellido',
+            'email', 'password', 'password2', 'nombre', 'apellido', 
+            'ci', 'sexo', 'telefono',
             'fecha_de_nacimiento', 'direccion'
         ]
 
@@ -78,6 +79,9 @@ class RegisterSerializer(serializers.ModelSerializer):
             email=validated_data['email'],
             nombre=validated_data['nombre'],
             apellido=validated_data['apellido'],
+            ci=validated_data.get('ci'),
+            sexo=validated_data.get('sexo'),
+            telefono=validated_data.get('telefono'),
             password=validated_data['password'],
             tipo_usuario='PACIENTE'  # El registro público es solo para pacientes
         )

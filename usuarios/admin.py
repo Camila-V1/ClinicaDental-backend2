@@ -8,16 +8,16 @@ class UsuarioAdmin(BaseUserAdmin):
     """
     Configuración del panel de administración para el modelo Usuario personalizado.
     """
-    list_display = ('email', 'nombre', 'apellido', 'tipo_usuario', 'tiene_perfil', 'is_active', 'is_staff')
-    list_filter = ('tipo_usuario', 'is_active', 'is_staff', 'is_superuser')
-    search_fields = ('email', 'nombre', 'apellido')
+    list_display = ('email', 'nombre', 'apellido', 'ci', 'sexo', 'telefono', 'tipo_usuario', 'tiene_perfil', 'is_active', 'is_staff')
+    list_filter = ('tipo_usuario', 'sexo', 'is_active', 'is_staff', 'is_superuser')
+    search_fields = ('email', 'nombre', 'apellido', 'ci', 'telefono')
     ordering = ('email',)
     actions = ['crear_perfiles_faltantes']
     
     # Campos que se muestran al editar un usuario
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
-        ('Información Personal', {'fields': ('nombre', 'apellido', 'tipo_usuario')}),
+        ('Información Personal', {'fields': ('nombre', 'apellido', 'ci', 'sexo', 'telefono', 'tipo_usuario')}),
         ('Permisos', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
         ('Fechas Importantes', {'fields': ('last_login', 'date_joined')}),
     )
@@ -26,7 +26,7 @@ class UsuarioAdmin(BaseUserAdmin):
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('email', 'nombre', 'apellido', 'tipo_usuario', 'password1', 'password2'),
+            'fields': ('email', 'nombre', 'apellido', 'ci', 'sexo', 'telefono', 'tipo_usuario', 'password1', 'password2'),
         }),
     )
     
