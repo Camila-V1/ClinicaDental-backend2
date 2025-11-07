@@ -1,0 +1,145 @@
+### =================================
+### FLUJO 0: AUTENTICACIÓN Y PREPARACIÓN
+### =================================
+### URL Base: http://clinica-demo.localhost:8000
+### Objetivo: Obtener tokens para Admin y Paciente
+
+### Variables globales para reutilizar
+@baseUrl = http://clinica-demo.localhost:8000
+@adminToken = 
+@pacienteToken = 
+
+### A. LOGIN ADMINISTRADOR
+### Obtener token de administrador/odontólogo existente
+POST {{baseUrl}}/api/token/
+Content-Type: application/json
+
+{
+  "email": "admin@clinica.com",
+  "password": "123456"
+}
+
+### Resultado esperado: Copia el "access" token y pégalo arriba en @adminToken
+
+### B. REGISTRAR NUEVO PACIENTE (CU01, CU02)
+### Registrar paciente para pruebas
+POST {{baseUrl}}/api/usuarios/register/
+Content-Type: application/json
+
+{
+  "email": "paciente-prueba@mail.com",
+  "password": "paciente123",
+  "nombre": "Ana",
+  "apellido": "Silva",
+  "ci": "1234567",
+  "sexo": "F",
+  "telefono": "77712345",
+  "fecha_de_nacimiento": "1995-10-20"
+}
+
+### Resultado esperado: {"message": "Usuario registrado exitosamente..."}
+
+### C. LOGIN PACIENTE
+### Obtener token del paciente recién registrado
+POST {{baseUrl}}/api/token/
+Content-Type: application/json
+
+{
+  "email": "paciente-prueba@mail.com",
+  "password": "paciente123"
+}
+
+### Resultado esperado: Copia el "access" token y pégalo arriba en @pacienteToken
+
+### D. VERIFICAR PERFIL ADMIN (Opcional)
+### Verificar que el token admin funciona
+GET {{baseUrl}}/api/usuarios/perfil/
+Authorization: Bearer {{adminToken}}
+
+### E. VERIFICAR PERFIL PACIENTE (Opcional)
+### Verificar que el token paciente funciona
+GET {{baseUrl}}/api/usuarios/perfil/
+Authorization: Bearer {{pacienteToken}}
+
+### ========================================
+### ENDPOINTS EXHAUSTIVOS DE USUARIOS
+### ========================================
+
+### F. REFRESH TOKEN
+### Refrescar token antes de que expire
+POST {{baseUrl}}/api/token/refresh/
+Content-Type: application/json
+
+{
+  "refresh": "PEGAR_REFRESH_TOKEN_DEL_LOGIN"
+}
+
+### G. LISTAR TODOS LOS USUARIOS (Solo Admin)
+### Ver todos los usuarios del sistema
+GET {{baseUrl}}/api/usuarios/
+Authorization: Bearer {{adminToken}}
+
+### H. VER MIS DATOS COMPLETOS (CU04)
+### Endpoint "me" para ver datos propios
+GET {{baseUrl}}/api/usuarios/me/
+Authorization: Bearer {{adminToken}}
+
+### I. VER DETALLE DE USUARIO ESPECÍFICO
+### Ver información completa por ID (anotar un ID de la lista anterior)
+@usuarioId = 
+GET {{baseUrl}}/api/usuarios/{{usuarioId}}/
+Authorization: Bearer {{adminToken}}
+
+### J. ACTUALIZAR USUARIO (PATCH)
+### Modificar campos específicos
+PATCH {{baseUrl}}/api/usuarios/{{usuarioId}}/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "telefono": "77799999",
+  "nombre": "Nombre Actualizado"
+}
+
+### K. LISTAR SOLO ODONTÓLOGOS
+GET {{baseUrl}}/api/usuarios/odontologos/
+Authorization: Bearer {{adminToken}}
+
+### L. LISTAR SOLO PACIENTES
+GET {{baseUrl}}/api/usuarios/pacientes/
+Authorization: Bearer {{adminToken}}
+
+### ========================================
+### VALIDACIONES Y CASOS LÍMITE
+### ========================================
+
+### M. REGISTRO CON EMAIL DUPLICADO (Error esperado)
+POST {{baseUrl}}/api/usuarios/register/
+Content-Type: application/json
+
+{
+  "email": "admin@clinica.com",
+  "password": "test123",
+  "nombre": "Duplicado",
+  "apellido": "Test",
+  "ci": "9999999",
+  "sexo": "M",
+  "telefono": "70000000",
+  "fecha_de_nacimiento": "1990-01-01"
+}
+
+### N. LOGIN CON CREDENCIALES INCORRECTAS (Error esperado)
+POST {{baseUrl}}/api/token/
+Content-Type: application/json
+
+{
+  "email": "noexiste@mail.com",
+  "password": "passwordincorrecto"
+}
+
+### O. ACCESO SIN TOKEN (Error esperado)
+GET {{baseUrl}}/api/usuarios/
+
+### P. PACIENTE INTENTA VER TODOS LOS USUARIOS (Error esperado)
+GET {{baseUrl}}/api/usuarios/
+Authorization: Bearer {{pacienteToken}}

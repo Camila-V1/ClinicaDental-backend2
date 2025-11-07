@@ -1,0 +1,272 @@
+### =================================
+### FLUJO 2: MÓDULO DE TRATAMIENTOS (PASO 2)
+### =================================
+### Actor: Administrador
+### Objetivo: Probar precio dinámico (CU19, CU20, CU21, CU22)
+
+### Variables (actualiza con datos reales)
+@baseUrl = http://clinica-demo.localhost:8000
+@adminToken = 
+@categoriaServicioId = 1
+@servicioId = 
+@categoriaInsumoId = 
+@insumoId = 
+@pacienteId = 1
+@odontologoId = 1
+@planId = 
+@itemPlanId = 
+@presupuestoId = 
+@tokenAceptacion = 
+
+### 1. LISTAR CATEGORÍAS DE SERVICIOS
+### Ver categorías disponibles
+GET {{baseUrl}}/api/tratamientos/categorias-servicios/
+Authorization: Bearer {{adminToken}}
+
+### 2. CREAR SERVICIO ODONTOLÓGICO (CU22)
+### Definir nuevo servicio con precio base
+POST {{baseUrl}}/api/tratamientos/servicios/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "categoria_servicio": {{categoriaServicioId}},
+  "codigo_servicio": "REST-002",
+  "nombre": "Restauración Premium",
+  "precio_base": 100.00,
+  "tiempo_estimado_minutos": 60,
+  "descripcion": "Restauración dental con materiales premium"
+}
+
+### Resultado esperado: Servicio creado. Anota el "id" arriba en @servicioId
+
+### 3. LISTAR SERVICIOS
+### Verificar servicios disponibles
+GET {{baseUrl}}/api/tratamientos/servicios/
+Authorization: Bearer {{adminToken}}
+
+### 4. DEFINIR "RECETA" - MATERIAL OPCIONAL
+### Vincular servicio con categoría de insumos
+POST {{baseUrl}}/api/tratamientos/materiales-opcionales/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "servicio": {{servicioId}},
+  "categoria_insumo": {{categoriaInsumoId}},
+  "cantidad": 1.0,
+  "nombre_personalizado": "Tipo de Resina Premium"
+}
+
+### Resultado esperado: Material opcional creado
+
+### 5. OBTENER PACIENTES DISPONIBLES
+### Ver lista de pacientes para crear plan
+GET {{baseUrl}}/api/usuarios/pacientes/
+Authorization: Bearer {{adminToken}}
+
+### 6. OBTENER ODONTÓLOGOS DISPONIBLES
+### Ver lista de odontólogos
+GET {{baseUrl}}/api/usuarios/odontologos/
+Authorization: Bearer {{adminToken}}
+
+### 7. CREAR PLAN DE TRATAMIENTO (CU19)
+### Crear plan para paciente específico
+POST {{baseUrl}}/api/tratamientos/planes/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "paciente": {{pacienteId}},
+  "odontologo": {{odontologoId}},
+  "titulo": "Plan de Restauración - Ana Silva",
+  "descripcion": "Plan de tratamiento para restauración pieza 16"
+}
+
+### Resultado esperado: Plan creado. Anota el "id" arriba en @planId
+
+### 8. AÑADIR ÍTEM CON PRECIO DINÁMICO
+### Añadir servicio + insumo específico (¡PRECIO DINÁMICO!)
+POST {{baseUrl}}/api/tratamientos/items-plan/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "plan_tratamiento": {{planId}},
+  "servicio": {{servicioId}},
+  "insumo_seleccionado": {{insumoId}},
+  "estado": "PENDIENTE",
+  "orden": 1,
+  "pieza_dental": "16",
+  "observaciones": "Restauración cara oclusal"
+}
+
+### Resultado esperado: 
+### - precio_servicio_snapshot: 100.00 (Honorarios)
+### - precio_insumo_seleccionado_snapshot: 300.00 (Material)
+### - precio_total: 400.00 (¡Precio dinámico!)
+### Anota el "id" arriba en @itemPlanId
+
+### 9. CONSULTAR PLAN COMPLETO
+### Ver plan con todos sus ítems
+GET {{baseUrl}}/api/tratamientos/planes/{{planId}}/
+Authorization: Bearer {{adminToken}}
+
+### 10. GENERAR PRESUPUESTO (CU20)
+### Convertir plan en presupuesto oficial
+POST {{baseUrl}}/api/tratamientos/planes/{{planId}}/generar_presupuesto/
+Authorization: Bearer {{adminToken}}
+
+### Resultado esperado: Presupuesto creado
+### Anota el "id" y el "token_aceptacion" arriba
+
+### 11. CONSULTAR PRESUPUESTO
+### Ver presupuesto generado
+GET {{baseUrl}}/api/tratamientos/presupuestos/
+Authorization: Bearer {{adminToken}}
+
+### 12. ACEPTAR PRESUPUESTO (CU21) - SIN TOKEN
+### Este endpoint es público (simula al paciente aceptando)
+POST {{baseUrl}}/api/tratamientos/presupuestos/{{presupuestoId}}/aceptar/{{tokenAceptacion}}/
+
+### Resultado esperado: {"message": "Presupuesto... aceptado exitosamente."}
+
+### 13. VERIFICAR ESTADO DEL PRESUPUESTO
+### Confirmar que cambió a ACEPTADO
+GET {{baseUrl}}/api/tratamientos/presupuestos/{{presupuestoId}}/
+Authorization: Bearer {{adminToken}}
+
+### ========================================
+### CRUD EXHAUSTIVO DE TRATAMIENTOS
+### ========================================
+
+### 14. VER DETALLE DE SERVICIO
+GET {{baseUrl}}/api/tratamientos/servicios/{{servicioId}}/
+Authorization: Bearer {{adminToken}}
+
+### 15. ACTUALIZAR SERVICIO (PATCH)
+PATCH {{baseUrl}}/api/tratamientos/servicios/{{servicioId}}/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "precio_base": 120.00,
+  "tiempo_estimado_minutos": 90
+}
+
+### 16. ACTUALIZAR PLAN (PATCH)
+PATCH {{baseUrl}}/api/tratamientos/planes/{{planId}}/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "estado": "ACTIVO",
+  "observaciones": "Plan activado y listo para ejecución"
+}
+
+### 17. VER DETALLE DE ÍTEM DE PLAN
+GET {{baseUrl}}/api/tratamientos/items-plan/{{itemPlanId}}/
+Authorization: Bearer {{adminToken}}
+
+### 18. ACTUALIZAR ÍTEM DE PLAN
+PATCH {{baseUrl}}/api/tratamientos/items-plan/{{itemPlanId}}/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "estado": "EN_PROGRESO",
+  "observaciones": "Tratamiento iniciado - primera sesión"
+}
+
+### 19. MARCAR ÍTEM COMO COMPLETADO
+PATCH {{baseUrl}}/api/tratamientos/items-plan/{{itemPlanId}}/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "estado": "COMPLETADO",
+  "fecha_completado": "2025-11-07T15:30:00Z"
+}
+
+### ========================================
+### FILTROS Y BÚSQUEDAS AVANZADAS
+### ========================================
+
+### 20. BUSCAR SERVICIOS POR NOMBRE
+GET {{baseUrl}}/api/tratamientos/servicios/?search=restauracion
+Authorization: Bearer {{adminToken}}
+
+### 21. FILTRAR PLANES POR PACIENTE
+GET {{baseUrl}}/api/tratamientos/planes/?paciente={{pacienteId}}
+Authorization: Bearer {{adminToken}}
+
+### 22. FILTRAR PLANES POR ESTADO
+GET {{baseUrl}}/api/tratamientos/planes/?estado=ACTIVO
+Authorization: Bearer {{adminToken}}
+
+### 23. FILTRAR PRESUPUESTOS PENDIENTES
+GET {{baseUrl}}/api/tratamientos/presupuestos/?estado=PENDIENTE
+Authorization: Bearer {{adminToken}}
+
+### 24. FILTRAR ÍTEMS POR PLAN
+GET {{baseUrl}}/api/tratamientos/items-plan/?plan_tratamiento={{planId}}
+Authorization: Bearer {{adminToken}}
+
+### 25. ORDENAR SERVICIOS POR PRECIO
+GET {{baseUrl}}/api/tratamientos/servicios/?ordering=precio_base
+Authorization: Bearer {{adminToken}}
+
+### ========================================
+### CASOS LÍMITE Y VALIDACIONES
+### ========================================
+
+### 26. CREAR SERVICIO CON CÓDIGO DUPLICADO (Error esperado)
+POST {{baseUrl}}/api/tratamientos/servicios/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "categoria_servicio": {{categoriaServicioId}},
+  "codigo_servicio": "REST-002",
+  "nombre": "Duplicado",
+  "precio_base": 50.00,
+  "tiempo_estimado_minutos": 30
+}
+
+### 27. GENERAR PRESUPUESTO DE PLAN VACÍO (Error esperado)
+### Crear plan sin ítems e intentar generar presupuesto
+POST {{baseUrl}}/api/tratamientos/planes/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "paciente": {{pacienteId}},
+  "odontologo": {{odontologoId}},
+  "titulo": "Plan Vacío"
+}
+
+### Luego intentar generar presupuesto (debería fallar)
+POST {{baseUrl}}/api/tratamientos/planes/[ID_PLAN_VACIO]/generar_presupuesto/
+Authorization: Bearer {{adminToken}}
+
+### 28. ACEPTAR PRESUPUESTO CON TOKEN INVÁLIDO (Error esperado)
+POST {{baseUrl}}/api/tratamientos/presupuestos/{{presupuestoId}}/aceptar/token-falso-123/
+
+### ========================================
+### ACCIONES ADICIONALES DE PRESUPUESTOS
+### ========================================
+
+### 29. RECHAZAR PRESUPUESTO
+POST {{baseUrl}}/api/tratamientos/presupuestos/{{presupuestoId}}/rechazar/{{tokenAceptacion}}/
+
+### 30. REGENERAR TOKEN DE ACEPTACIÓN
+POST {{baseUrl}}/api/tratamientos/presupuestos/{{presupuestoId}}/regenerar_token/
+Authorization: Bearer {{adminToken}}
+
+### 31. ELIMINAR ÍTEM DE PLAN
+DELETE {{baseUrl}}/api/tratamientos/items-plan/{{itemPlanId}}/
+Authorization: Bearer {{adminToken}}
+
+### 32. ELIMINAR PLAN (Soft Delete)
+DELETE {{baseUrl}}/api/tratamientos/planes/{{planId}}/
+Authorization: Bearer {{adminToken}}

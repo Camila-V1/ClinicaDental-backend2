@@ -1,0 +1,302 @@
+### =================================
+### FLUJO 4: MÓDULO DE FACTURACIÓN (PASO 4)
+### =================================
+### Actor: Administrador
+### Objetivo: Generar factura y registrar pagos (CU30, CU31, CU33)
+
+### Variables (actualiza con datos reales)
+@baseUrl = http://clinica-demo.localhost:8000
+@adminToken = 
+@pacienteToken = 
+@pacienteId = 1
+@presupuestoId = 
+@facturaId = 
+@pagoId = 
+
+### 1. LISTAR PRESUPUESTOS ACEPTADOS
+### Ver presupuestos listos para facturar
+GET {{baseUrl}}/api/tratamientos/presupuestos/?estado=ACEPTADO
+Authorization: Bearer {{adminToken}}
+
+### 2. LISTAR FACTURAS EXISTENTES
+### Ver facturas ya generadas
+GET {{baseUrl}}/api/facturacion/facturas/
+Authorization: Bearer {{adminToken}}
+
+### 3. GENERAR FACTURA DESDE PRESUPUESTO (CU31)
+### Crear factura basada en presupuesto aceptado
+POST {{baseUrl}}/api/facturacion/facturas/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "paciente": {{pacienteId}},
+  "presupuesto": {{presupuestoId}},
+  "nit_ci": "1234567",
+  "razon_social": "Ana Silva",
+  "observaciones": "Factura por tratamiento de restauración P16"
+}
+
+### Resultado esperado: Factura creada con monto_total copiado del presupuesto
+### Anota el "id" arriba en @facturaId
+
+### 4. CONSULTAR FACTURA GENERADA
+### Ver detalles de la factura
+GET {{baseUrl}}/api/facturacion/facturas/{{facturaId}}/
+Authorization: Bearer {{adminToken}}
+
+### 5. REGISTRAR PAGO EN EFECTIVO (CU33)
+### Paciente paga en efectivo el monto completo
+POST {{baseUrl}}/api/facturacion/pagos/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "factura": {{facturaId}},
+  "monto_pagado": 400.00,
+  "metodo_pago": "EFECTIVO",
+  "estado_pago": "COMPLETADO",
+  "observaciones": "Pago completo en efectivo"
+}
+
+### Resultado esperado: Pago registrado y factura marcada como PAGADA
+### Anota el "id" arriba en @pagoId
+
+### 6. VERIFICAR ESTADO DE FACTURA
+### Confirmar que la factura cambió a PAGADA
+GET {{baseUrl}}/api/facturacion/facturas/{{facturaId}}/
+Authorization: Bearer {{adminToken}}
+
+### 7. LISTAR PAGOS DE LA FACTURA
+### Ver todos los pagos registrados
+GET {{baseUrl}}/api/facturacion/pagos/?factura={{facturaId}}
+Authorization: Bearer {{adminToken}}
+
+### 8. REGISTRAR PAGO PARCIAL (Ejemplo adicional)
+### Crear nueva factura y hacer pago parcial
+POST {{baseUrl}}/api/facturacion/facturas/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "paciente": {{pacienteId}},
+  "presupuesto": {{presupuestoId}},
+  "nit_ci": "1234567-2",
+  "razon_social": "Ana Silva",
+  "observaciones": "Segunda factura para probar pago parcial"
+}
+
+### 9. PAGO PARCIAL CON TARJETA
+### Registrar pago parcial de la nueva factura
+POST {{baseUrl}}/api/facturacion/pagos/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "factura": 2,
+  "monto_pagado": 200.00,
+  "metodo_pago": "TARJETA",
+  "estado_pago": "COMPLETADO",
+  "observaciones": "Pago parcial - 50% del total"
+}
+
+### 10. CONSULTAR SALDO PENDIENTE
+### Ver facturas con saldo pendiente
+GET {{baseUrl}}/api/facturacion/facturas/?estado=PENDIENTE
+Authorization: Bearer {{adminToken}}
+
+### 11. COMPLETAR PAGO RESTANTE
+### Pagar el saldo restante
+POST {{baseUrl}}/api/facturacion/pagos/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "factura": 2,
+  "monto_pagado": 200.00,
+  "metodo_pago": "EFECTIVO",
+  "estado_pago": "COMPLETADO",
+  "observaciones": "Pago final - saldo restante"
+}
+
+### 12. REPORTE DE PAGOS DEL PACIENTE
+### Ver historial completo de pagos del paciente
+GET {{baseUrl}}/api/facturacion/facturas/?paciente={{pacienteId}}
+Authorization: Bearer {{adminToken}}
+
+### ========================================
+### CRUD EXHAUSTIVO DE FACTURACIÓN
+### ========================================
+
+### 13. VER DETALLE DE PAGO ESPECÍFICO
+GET {{baseUrl}}/api/facturacion/pagos/{{pagoId}}/
+Authorization: Bearer {{adminToken}}
+
+### 14. ACTUALIZAR FACTURA (PATCH)
+PATCH {{baseUrl}}/api/facturacion/facturas/{{facturaId}}/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "observaciones": "Factura actualizada con información adicional",
+  "razon_social": "Ana Silva - Actualizada"
+}
+
+### 15. ACTUALIZAR PAGO (PATCH)
+PATCH {{baseUrl}}/api/facturacion/pagos/{{pagoId}}/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "observaciones": "Pago verificado y confirmado por contabilidad"
+}
+
+### 16. MARCAR FACTURA COMO PAGADA MANUALMENTE
+POST {{baseUrl}}/api/facturacion/facturas/{{facturaId}}/marcar_pagada/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "observaciones": "Marcada como pagada por ajuste contable"
+}
+
+### ========================================
+### FILTROS Y REPORTES AVANZADOS
+### ========================================
+
+### 17. FILTRAR FACTURAS POR ESTADO
+GET {{baseUrl}}/api/facturacion/facturas/?estado=PENDIENTE
+Authorization: Bearer {{adminToken}}
+
+### 18. FILTRAR FACTURAS POR FECHA
+GET {{baseUrl}}/api/facturacion/facturas/?fecha_desde=2025-11-01&fecha_hasta=2025-11-30
+Authorization: Bearer {{adminToken}}
+
+### 19. FILTRAR PAGOS POR MÉTODO
+GET {{baseUrl}}/api/facturacion/pagos/?metodo_pago=EFECTIVO
+Authorization: Bearer {{adminToken}}
+
+### 20. ORDENAR FACTURAS POR MONTO
+GET {{baseUrl}}/api/facturacion/facturas/?ordering=-monto_total
+Authorization: Bearer {{adminToken}}
+
+### 21. BUSCAR FACTURAS POR RAZÓN SOCIAL
+GET {{baseUrl}}/api/facturacion/facturas/?search=Ana Silva
+Authorization: Bearer {{adminToken}}
+
+### 22. REPORTE FINANCIERO (CU33)
+GET {{baseUrl}}/api/facturacion/facturas/reporte_financiero/?mes=2025-11
+Authorization: Bearer {{adminToken}}
+
+### 23. REPORTE FINANCIERO POR FECHAS
+GET {{baseUrl}}/api/facturacion/facturas/reporte_financiero/?fecha_inicio=2025-11-01&fecha_fin=2025-11-30
+Authorization: Bearer {{adminToken}}
+
+### ========================================
+### CASOS ESPECIALES DE FACTURACIÓN
+### ========================================
+
+### 24. CREAR FACTURA SIN PRESUPUESTO (Manual)
+POST {{baseUrl}}/api/facturacion/facturas/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "paciente": {{pacienteId}},
+  "monto_total": 250.00,
+  "nit_ci": "1234567",
+  "razon_social": "Ana Silva",
+  "observaciones": "Factura manual por consulta de emergencia"
+}
+
+### 25. REGISTRAR MÚLTIPLES PAGOS A UNA FACTURA
+### Primer pago parcial
+POST {{baseUrl}}/api/facturacion/pagos/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "factura": {{facturaId}},
+  "monto_pagado": 100.00,
+  "metodo_pago": "EFECTIVO",
+  "estado_pago": "COMPLETADO",
+  "observaciones": "Primer pago - 40% del total"
+}
+
+### Segundo pago parcial
+POST {{baseUrl}}/api/facturacion/pagos/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "factura": {{facturaId}},
+  "monto_pagado": 150.00,
+  "metodo_pago": "TRANSFERENCIA",
+  "estado_pago": "COMPLETADO",
+  "observaciones": "Segundo pago - saldo restante"
+}
+
+### ========================================
+### VALIDACIONES Y CASOS LÍMITE
+### ========================================
+
+### 26. PAGAR MÁS DEL MONTO DE FACTURA (Error esperado)
+POST {{baseUrl}}/api/facturacion/pagos/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "factura": {{facturaId}},
+  "monto_pagado": 99999.00,
+  "metodo_pago": "EFECTIVO",
+  "estado_pago": "COMPLETADO"
+}
+
+### 27. CREAR FACTURA CON MONTO NEGATIVO (Error esperado)
+POST {{baseUrl}}/api/facturacion/facturas/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "paciente": {{pacienteId}},
+  "monto_total": -100.00,
+  "nit_ci": "1234567",
+  "razon_social": "Test Negativo"
+}
+
+### 28. REGISTRAR PAGO CON MONTO CERO (Error esperado)
+POST {{baseUrl}}/api/facturacion/pagos/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "factura": {{facturaId}},
+  "monto_pagado": 0.00,
+  "metodo_pago": "EFECTIVO"
+}
+
+### ========================================
+### PRUEBAS DE PERMISOS FINANCIEROS
+### ========================================
+
+### 29. PACIENTE VE SUS FACTURAS (CU32)
+GET {{baseUrl}}/api/facturacion/facturas/
+Authorization: Bearer {{pacienteToken}}
+
+### 30. PACIENTE VE SUS PAGOS
+GET {{baseUrl}}/api/facturacion/pagos/
+Authorization: Bearer {{pacienteToken}}
+
+### 31. PACIENTE INTENTA CREAR FACTURA (Error esperado)
+POST {{baseUrl}}/api/facturacion/facturas/
+Authorization: Bearer {{pacienteToken}}
+Content-Type: application/json
+
+{
+  "paciente": {{pacienteId}},
+  "monto_total": 100.00
+}
+
+### 32. PACIENTE INTENTA VER REPORTE FINANCIERO (Error esperado)
+GET {{baseUrl}}/api/facturacion/facturas/reporte_financiero/
+Authorization: Bearer {{pacienteToken}}

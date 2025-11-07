@@ -1,0 +1,225 @@
+### =================================
+### FLUJO 5: MÓDULO DE REPORTES (PASO 5)
+### =================================
+### Actor: Administrador
+### Objetivo: Probar reportes y dashboards (CU37, CU38)
+
+### Variables
+@baseUrl = http://clinica-demo.localhost:8000
+@adminToken = 
+
+### 1. DASHBOARD DE KPIS PRINCIPALES
+### Métricas clave del negocio
+GET {{baseUrl}}/api/reportes/dashboard-kpis/
+Authorization: Bearer {{adminToken}}
+
+### Resultado esperado:
+### - total_pacientes: número de pacientes registrados
+### - citas_hoy: citas programadas para hoy
+### - ingresos_mes: suma de pagos del mes actual
+### - tratamientos_activos: planes en curso
+
+### 2. TENDENCIA DE CITAS
+### Evolución de citas en los últimos días
+GET {{baseUrl}}/api/reportes/tendencia-citas/?dias=30
+Authorization: Bearer {{adminToken}}
+
+### Resultado esperado: Array con fechas y cantidad de citas
+
+### 3. TOP PROCEDIMIENTOS MÁS REALIZADOS
+### Servicios más populares
+GET {{baseUrl}}/api/reportes/top-procedimientos/?limite=10
+Authorization: Bearer {{adminToken}}
+
+### Resultado esperado: Lista de servicios ordenados por frecuencia
+
+### 4. ESTADÍSTICAS GENERALES DEL SISTEMA
+### Resumen completo de la clínica
+GET {{baseUrl}}/api/reportes/estadisticas-generales/
+Authorization: Bearer {{adminToken}}
+
+### Resultado esperado:
+### - Totales por módulo (pacientes, tratamientos, facturas)
+### - Promedios de ingresos
+### - Estados de citas y tratamientos
+
+### 5. REPORTE FINANCIERO MENSUAL
+### Análisis financiero detallado
+GET {{baseUrl}}/api/reportes/reporte-financiero/?mes=2025-11
+Authorization: Bearer {{adminToken}}
+
+### Resultado esperado:
+### - ingresos_totales: suma de pagos del mes
+### - facturas_emitidas: cantidad de facturas
+### - facturas_pendientes: facturas sin pagar
+### - promedio_por_factura: ticket promedio
+
+### 6. REPORTE FINANCIERO POR RANGO DE FECHAS
+### Análisis financiero entre fechas específicas
+GET {{baseUrl}}/api/reportes/reporte-financiero/?fecha_inicio=2025-11-01&fecha_fin=2025-11-30
+Authorization: Bearer {{adminToken}}
+
+### 7. OCUPACIÓN DE ODONTÓLOGOS
+### Carga de trabajo por profesional
+GET {{baseUrl}}/api/reportes/ocupacion-odontologos/?mes=2025-11
+Authorization: Bearer {{adminToken}}
+
+### Resultado esperado:
+### - Lista de odontólogos con cantidad de citas atendidas
+### - Porcentaje de ocupación por profesional
+
+### 8. OCUPACIÓN POR RANGO DE FECHAS
+### Carga de trabajo en período específico
+GET {{baseUrl}}/api/reportes/ocupacion-odontologos/?fecha_inicio=2025-11-01&fecha_fin=2025-11-30
+Authorization: Bearer {{adminToken}}
+
+### 9. TENDENCIA DE CITAS (7 DÍAS)
+### Análisis de citas última semana
+GET {{baseUrl}}/api/reportes/tendencia-citas/?dias=7
+Authorization: Bearer {{adminToken}}
+
+### 10. TOP 5 PROCEDIMIENTOS
+### Los 5 servicios más demandados
+GET {{baseUrl}}/api/reportes/top-procedimientos/?limite=5
+Authorization: Bearer {{adminToken}}
+
+### 11. VERIFICAR DATOS EN TIEMPO REAL
+### Después de crear más datos, re-consultar dashboard
+GET {{baseUrl}}/api/reportes/dashboard-kpis/
+Authorization: Bearer {{adminToken}}
+
+### Nota: Los reportes reflejarán los datos que hayas generado
+### en los flujos anteriores (pacientes, citas, facturas, pagos)
+
+### ========================================
+### REPORTES AVANZADOS Y FILTROS
+### ========================================
+
+### 12. REPORTES CON FILTROS ESPECÍFICOS
+### Dashboard de un odontólogo específico
+GET {{baseUrl}}/api/reportes/dashboard-kpis/?odontologo=1
+Authorization: Bearer {{adminToken}}
+
+### 13. REPORTES POR RANGO DE FECHAS PERSONALIZADO
+GET {{baseUrl}}/api/reportes/reporte-financiero/?fecha_inicio=2025-10-01&fecha_fin=2025-10-31
+Authorization: Bearer {{adminToken}}
+
+### 14. TOP PROCEDIMIENTOS CON LÍMITE PERSONALIZADO
+GET {{baseUrl}}/api/reportes/top-procedimientos/?limite=3
+Authorization: Bearer {{adminToken}}
+
+### 15. TENDENCIA DE CITAS ÚLTIMO AÑO
+GET {{baseUrl}}/api/reportes/tendencia-citas/?dias=365
+Authorization: Bearer {{adminToken}}
+
+### 16. OCUPACIÓN DE ODONTÓLOGOS - TRIMESTRE
+GET {{baseUrl}}/api/reportes/ocupacion-odontologos/?fecha_inicio=2025-09-01&fecha_fin=2025-11-30
+Authorization: Bearer {{adminToken}}
+
+### ========================================
+### REPORTES SIN DATOS (CASOS LÍMITE)
+### ========================================
+
+### 17. REPORTE FINANCIERO FUTURO (Sin datos)
+GET {{baseUrl}}/api/reportes/reporte-financiero/?fecha_inicio=2030-01-01&fecha_fin=2030-12-31
+Authorization: Bearer {{adminToken}}
+
+### Resultado esperado: Valores en 0, no errores
+
+### 18. TENDENCIA CON PERÍODO VACÍO
+GET {{baseUrl}}/api/reportes/tendencia-citas/?fecha_inicio=2030-01-01&fecha_fin=2030-01-31
+Authorization: Bearer {{adminToken}}
+
+### 19. TOP PROCEDIMIENTOS SIN LÍMITE
+GET {{baseUrl}}/api/reportes/top-procedimientos/?limite=100
+Authorization: Bearer {{adminToken}}
+
+### ========================================
+### VALIDACIÓN DE PARÁMETROS
+### ========================================
+
+### 20. REPORTE CON FECHAS INVÁLIDAS
+GET {{baseUrl}}/api/reportes/reporte-financiero/?fecha_inicio=2025-13-01&fecha_fin=2025-14-31
+Authorization: Bearer {{adminToken}}
+
+### Resultado esperado: Error de validación o corrección automática
+
+### 21. TENDENCIA CON DÍAS NEGATIVOS
+GET {{baseUrl}}/api/reportes/tendencia-citas/?dias=-10
+Authorization: Bearer {{adminToken}}
+
+### 22. TOP PROCEDIMIENTOS CON LÍMITE INVÁLIDO
+GET {{baseUrl}}/api/reportes/top-procedimientos/?limite=-5
+Authorization: Bearer {{adminToken}}
+
+### ========================================
+### COMPARATIVA DE RENDIMIENTO
+### ========================================
+
+### 23. VERIFICAR CONSISTENCIA DE DATOS
+### Los números deben coincidir entre diferentes reportes
+
+### KPIs generales
+GET {{baseUrl}}/api/reportes/dashboard-kpis/
+Authorization: Bearer {{adminToken}}
+
+### Estadísticas detalladas (debe coincidir con KPIs)
+GET {{baseUrl}}/api/reportes/estadisticas-generales/
+Authorization: Bearer {{adminToken}}
+
+### Reporte financiero del mes (ingresos deben coincidir)
+GET {{baseUrl}}/api/reportes/reporte-financiero/?mes=2025-11
+Authorization: Bearer {{adminToken}}
+
+### ========================================
+### PRUEBAS DE SEGURIDAD EN REPORTES
+### ========================================
+
+### 24. PACIENTE INTENTA VER DASHBOARD (Error esperado)
+@pacienteToken = 
+GET {{baseUrl}}/api/reportes/dashboard-kpis/
+Authorization: Bearer {{pacienteToken}}
+
+### 25. PACIENTE INTENTA VER REPORTES FINANCIEROS (Error esperado)
+GET {{baseUrl}}/api/reportes/reporte-financiero/
+Authorization: Bearer {{pacienteToken}}
+
+### 26. ACCESO A REPORTES SIN TOKEN (Error esperado)
+GET {{baseUrl}}/api/reportes/dashboard-kpis/
+
+### ========================================
+### REPORTES EN DIFERENTES FORMATOS
+### ========================================
+
+### 27. REPORTES CON PARÁMETROS MÚLTIPLES
+GET {{baseUrl}}/api/reportes/ocupacion-odontologos/?mes=2025-11&formato=detallado
+Authorization: Bearer {{adminToken}}
+
+### 28. EXPORTAR DATOS PARA ANÁLISIS
+### Obtener todos los KPIs para exportar
+GET {{baseUrl}}/api/reportes/dashboard-kpis/?export=true
+Authorization: Bearer {{adminToken}}
+
+### 29. REPORTE CONSOLIDADO
+### Combinar múltiples métricas en una sola consulta
+GET {{baseUrl}}/api/reportes/estadisticas-generales/?incluir_financiero=true&incluir_agenda=true
+Authorization: Bearer {{adminToken}}
+
+### ========================================
+### VERIFICACIÓN POST-CREACIÓN DE DATOS
+### ========================================
+
+### 30. REFRESCAR DASHBOARD DESPUÉS DE NUEVAS TRANSACCIONES
+### Después de crear facturas, pagos, citas, etc. en otros flujos
+GET {{baseUrl}}/api/reportes/dashboard-kpis/
+Authorization: Bearer {{adminToken}}
+
+### Los números deben reflejar los datos nuevos inmediatamente
+
+### 31. TENDENCIA ACTUALIZADA
+GET {{baseUrl}}/api/reportes/tendencia-citas/?dias=7
+Authorization: Bearer {{adminToken}}
+
+### 32. TOP PROCEDIMIENTOS ACTUALIZADO
+GET {{baseUrl}}/api/reportes/top-procedimientos/?limite=5
+Authorization: Bearer {{adminToken}}

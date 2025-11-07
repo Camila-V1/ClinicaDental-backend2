@@ -1,0 +1,345 @@
+### =================================
+### FLUJO 6: PERMISOS DE PACIENTE
+### =================================
+### Actor: Paciente
+### Objetivo: Verificar que el paciente solo ve sus propios datos
+
+### Variables
+@baseUrl = http://clinica-demo.localhost:8000
+@pacienteToken = 
+
+### 1. CONSULTAR PROPIO PERFIL (Permitido)
+### El paciente puede ver su información personal
+GET {{baseUrl}}/api/usuarios/perfil/
+Authorization: Bearer {{pacienteToken}}
+
+### Resultado esperado: Datos del paciente "Ana Silva"
+
+### 2. CONSULTAR PROPIAS FACTURAS (CU32)
+### El paciente puede ver su historial de pagos
+GET {{baseUrl}}/api/facturacion/facturas/
+Authorization: Bearer {{pacienteToken}}
+
+### Resultado esperado: Solo facturas del paciente autenticado
+
+### 3. CONSULTAR PROPIOS PAGOS
+### El paciente puede ver sus pagos registrados
+GET {{baseUrl}}/api/facturacion/pagos/
+Authorization: Bearer {{pacienteToken}}
+
+### Resultado esperado: Solo pagos de las facturas del paciente
+
+### 4. CONSULTAR PROPIAS CITAS
+### El paciente puede ver su agenda
+GET {{baseUrl}}/api/agenda/citas/
+Authorization: Bearer {{pacienteToken}}
+
+### Resultado esperado: Solo citas del paciente autenticado
+
+### 5. CONSULTAR PROPIO HISTORIAL CLÍNICO
+### El paciente puede ver su historial médico
+GET {{baseUrl}}/api/historial/historiales/
+Authorization: Bearer {{pacienteToken}}
+
+### Resultado esperado: Solo su propio historial clínico
+
+### 6. CONSULTAR PROPIOS PLANES DE TRATAMIENTO
+### El paciente puede ver sus tratamientos
+GET {{baseUrl}}/api/tratamientos/planes/
+Authorization: Bearer {{pacienteToken}}
+
+### Resultado esperado: Solo planes donde es paciente
+
+### 7. CONSULTAR PROPIOS PRESUPUESTOS
+### El paciente puede ver sus presupuestos
+GET {{baseUrl}}/api/tratamientos/presupuestos/
+Authorization: Bearer {{pacienteToken}}
+
+### Resultado esperado: Solo presupuestos de sus planes
+
+### ========================================
+### INTENTOS DE ACCESO NO AUTORIZADO
+### ========================================
+
+### 8. INTENTAR VER REPORTES (DENEGADO)
+### Los pacientes NO pueden ver reportes del negocio
+GET {{baseUrl}}/api/reportes/dashboard-kpis/
+Authorization: Bearer {{pacienteToken}}
+
+### Resultado esperado: 403 Forbidden o mensaje de error
+
+### 9. INTENTAR VER INVENTARIO (DENEGADO)
+### Los pacientes NO pueden ver el inventario
+GET {{baseUrl}}/api/inventario/insumos/
+Authorization: Bearer {{pacienteToken}}
+
+### Resultado esperado: 403 Forbidden o mensaje de error
+
+### 10. INTENTAR CREAR SERVICIOS (DENEGADO)
+### Los pacientes NO pueden crear servicios
+POST {{baseUrl}}/api/tratamientos/servicios/
+Authorization: Bearer {{pacienteToken}}
+Content-Type: application/json
+
+{
+  "categoria_servicio": 1,
+  "codigo_servicio": "TEST-001",
+  "nombre": "Servicio de Prueba",
+  "precio_base": 50.00,
+  "tiempo_estimado_minutos": 30
+}
+
+### Resultado esperado: 403 Forbidden o mensaje de error
+
+### 11. INTENTAR VER LISTA DE TODOS LOS PACIENTES (DENEGADO)
+### Los pacientes NO pueden ver otros pacientes
+GET {{baseUrl}}/api/usuarios/pacientes/
+Authorization: Bearer {{pacienteToken}}
+
+### Resultado esperado: 403 Forbidden o mensaje de error
+
+### 12. INTENTAR CREAR FACTURAS (DENEGADO)
+### Los pacientes NO pueden crear facturas
+POST {{baseUrl}}/api/facturacion/facturas/
+Authorization: Bearer {{pacienteToken}}
+Content-Type: application/json
+
+{
+  "paciente": 1,
+  "presupuesto": 1,
+  "nit_ci": "1234567",
+  "razon_social": "Test"
+}
+
+### Resultado esperado: 403 Forbidden o mensaje de error
+
+### ========================================
+### VERIFICAR AISLAMIENTO DE DATOS
+### ========================================
+
+### 13. INTENTAR VER FACTURA DE OTRO PACIENTE (DENEGADO)
+### Los pacientes solo ven sus propias facturas
+GET {{baseUrl}}/api/facturacion/facturas/999/
+Authorization: Bearer {{pacienteToken}}
+
+### Resultado esperado: 404 Not Found (como si no existiera)
+
+### 14. INTENTAR VER CITA DE OTRO PACIENTE (DENEGADO)
+### Los pacientes solo ven sus propias citas
+GET {{baseUrl}}/api/agenda/citas/999/
+Authorization: Bearer {{pacienteToken}}
+
+### Resultado esperado: 404 Not Found (como si no existiera)
+
+### Nota: El sistema debe garantizar que cada paciente solo vea
+### sus propios datos y no pueda acceder a funciones administrativas
+
+### ========================================
+### PRUEBAS EXHAUSTIVAS DE SEGURIDAD
+### ========================================
+
+### 15. PACIENTE INTENTA MODIFICAR SUS DATOS (Permitido)
+### El paciente debería poder actualizar su información personal
+PATCH {{baseUrl}}/api/usuarios/me/
+Authorization: Bearer {{pacienteToken}}
+Content-Type: application/json
+
+{
+  "telefono": "77788888",
+  "nombre": "Ana Modificado"
+}
+
+### 16. PACIENTE INTENTA VER ESPECÍFICAMENTE SU HISTORIAL
+### Acceso directo a su ID de historial (debería funcionar)
+GET {{baseUrl}}/api/historial/historiales/1/
+Authorization: Bearer {{pacienteToken}}
+
+### 17. PACIENTE INTENTA ACCEDER A HISTORIAL DE OTRO (DENEGADO)
+GET {{baseUrl}}/api/historial/historiales/999/
+Authorization: Bearer {{pacienteToken}}
+
+### 18. PACIENTE INTENTA MODIFICAR CITA PROPIA (DENEGADO)
+PATCH {{baseUrl}}/api/agenda/citas/1/
+Authorization: Bearer {{pacienteToken}}
+Content-Type: application/json
+
+{
+  "observaciones": "Intento de modificación"
+}
+
+### 19. PACIENTE INTENTA CREAR PRESUPUESTO (DENEGADO)
+POST {{baseUrl}}/api/tratamientos/presupuestos/
+Authorization: Bearer {{pacienteToken}}
+Content-Type: application/json
+
+{
+  "plan_tratamiento": 1,
+  "monto_total": 100.00
+}
+
+### ========================================
+### VALIDACIÓN DE FILTROS DE SEGURIDAD
+### ========================================
+
+### 20. VERIFICAR AISLAMIENTO EN FACTURAS
+### El paciente solo debe ver facturas con su ID
+GET {{baseUrl}}/api/facturacion/facturas/
+Authorization: Bearer {{pacienteToken}}
+
+### 21. VERIFICAR AISLAMIENTO EN PAGOS
+### Solo pagos de sus facturas
+GET {{baseUrl}}/api/facturacion/pagos/
+Authorization: Bearer {{pacienteToken}}
+
+### 22. VERIFICAR AISLAMIENTO EN CITAS
+### Solo citas donde aparece como paciente
+GET {{baseUrl}}/api/agenda/citas/
+Authorization: Bearer {{pacienteToken}}
+
+### 23. VERIFICAR AISLAMIENTO EN PLANES
+### Solo planes de tratamiento propios
+GET {{baseUrl}}/api/tratamientos/planes/
+Authorization: Bearer {{pacienteToken}}
+
+### ========================================
+### ATAQUES DE INYECCIÓN DE PARÁMETROS
+### ========================================
+
+### 24. INTENTO DE BYPASS CON PARÁMETROS
+### Intentar ver datos de otros con filtros maliciosos
+GET {{baseUrl}}/api/facturacion/facturas/?paciente=999
+Authorization: Bearer {{pacienteToken}}
+
+### Resultado esperado: Vacío o error, nunca datos de otro paciente
+
+### 25. INTENTO DE BYPASS EN CITAS
+GET {{baseUrl}}/api/agenda/citas/?paciente=999
+Authorization: Bearer {{pacienteToken}}
+
+### 26. INTENTO DE BYPASS EN HISTORIALES
+GET {{baseUrl}}/api/historial/episodios/?historial_clinico=999
+Authorization: Bearer {{pacienteToken}}
+
+### ========================================
+### PRUEBAS DE TOKEN Y SESIÓN
+### ========================================
+
+### 27. ACCESO CON TOKEN EXPIRADO/INVÁLIDO
+GET {{baseUrl}}/api/usuarios/me/
+Authorization: Bearer token-falso-para-paciente
+
+### Resultado esperado: 401 Unauthorized
+
+### 28. ACCESO SIN HEADER DE AUTORIZACIÓN
+GET {{baseUrl}}/api/facturacion/facturas/
+
+### Resultado esperado: 401 Unauthorized
+
+### 29. INTENTO DE USAR TOKEN DE ADMIN PARA BYPASS
+### (Esto sería un ataque real, el paciente no debería tener token admin)
+GET {{baseUrl}}/api/usuarios/
+Authorization: Bearer {{pacienteToken}}
+
+### Resultado esperado: 403 Forbidden
+
+### ========================================
+### OPERACIONES CRUD PROHIBIDAS
+### ========================================
+
+### 30. PACIENTE INTENTA ELIMINAR SU FACTURA (DENEGADO)
+DELETE {{baseUrl}}/api/facturacion/facturas/1/
+Authorization: Bearer {{pacienteToken}}
+
+### 31. PACIENTE INTENTA ELIMINAR SU CITA (DENEGADO)
+DELETE {{baseUrl}}/api/agenda/citas/1/
+Authorization: Bearer {{pacienteToken}}
+
+### 32. PACIENTE INTENTA CREAR USUARIO (DENEGADO)
+POST {{baseUrl}}/api/usuarios/
+Authorization: Bearer {{pacienteToken}}
+Content-Type: application/json
+
+{
+  "email": "hack@test.com",
+  "nombre": "Hack",
+  "apellido": "Test"
+}
+
+### 33. PACIENTE INTENTA MODIFICAR OTRO USUARIO (DENEGADO)
+PATCH {{baseUrl}}/api/usuarios/999/
+Authorization: Bearer {{pacienteToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Hackeado"
+}
+
+### ========================================
+### VERIFICACIÓN DE CAMPOS SENSIBLES
+### ========================================
+
+### 34. VERIFICAR QUE NO VE PRECIOS ADMINISTRATIVOS
+### El paciente no debería ver precio_costo en inventario
+GET {{baseUrl}}/api/inventario/insumos/
+Authorization: Bearer {{pacienteToken}}
+
+### Resultado esperado: 403 Forbidden
+
+### 35. VERIFICAR QUE NO VE DATOS FINANCIEROS DE OTROS
+### No debería ver información financiera global
+GET {{baseUrl}}/api/facturacion/facturas/reporte_financiero/
+Authorization: Bearer {{pacienteToken}}
+
+### 36. VERIFICAR QUE NO VE AGENDA DE OTROS ODONTÓLOGOS
+### No puede ver disponibilidad o citas de profesionales
+GET {{baseUrl}}/api/agenda/citas/?odontologo=1
+Authorization: Bearer {{pacienteToken}}
+
+### ========================================
+### CASOS EXTREMOS DE SEGURIDAD
+### ========================================
+
+### 37. INTENTO DE ESCALACIÓN DE PRIVILEGIOS
+### Intentar cambiar su rol (si existiera tal endpoint)
+PATCH {{baseUrl}}/api/usuarios/me/
+Authorization: Bearer {{pacienteToken}}
+Content-Type: application/json
+
+{
+  "is_staff": true,
+  "is_superuser": true,
+  "groups": ["administradores"]
+}
+
+### Resultado esperado: Error o campos ignorados
+
+### 38. INTENTO DE ACCESO DIRECTO A ADMIN
+### Intentar acceder a endpoints administrativos
+GET {{baseUrl}}/admin/
+Authorization: Bearer {{pacienteToken}}
+
+### 39. VERIFICAR LOGS DE SEGURIDAD (Si existen)
+### El sistema debería registrar intentos de acceso no autorizado
+GET {{baseUrl}}/api/seguridad/logs/
+Authorization: Bearer {{pacienteToken}}
+
+### Resultado esperado: 403 Forbidden o endpoint inexistente
+
+### ========================================
+### PRUEBAS DE INTEGRIDAD DE DATOS
+### ========================================
+
+### 40. VERIFICAR QUE SOLO VE SUS PROPIOS EPISODIOS
+GET {{baseUrl}}/api/historial/episodios/
+Authorization: Bearer {{pacienteToken}}
+
+### 41. VERIFICAR QUE SOLO VE SUS DOCUMENTOS CLÍNICOS
+GET {{baseUrl}}/api/historial/documentos/
+Authorization: Bearer {{pacienteToken}}
+
+### 42. VERIFICAR CONSISTENCIA DE DATOS PROPIOS
+### Los datos en diferentes endpoints deben ser consistentes
+GET {{baseUrl}}/api/usuarios/me/
+Authorization: Bearer {{pacienteToken}}
+
+### Luego verificar que el ID coincide en otros endpoints

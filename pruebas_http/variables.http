@@ -1,0 +1,44 @@
+### =================================
+### CONFIGURACIÓN PARA REST CLIENT
+### =================================
+### Archivo de variables globales para usar en todos los .http
+
+### Variables de entorno
+@hostname = clinica-demo.localhost
+@port = 8000
+@baseUrl = http://{{hostname}}:{{port}}
+
+### Headers comunes
+@contentType = application/json
+
+### Tokens de autenticación (actualizar después del login)
+@adminToken = 
+@pacienteToken = 
+
+### IDs comunes (actualizar según vayas creando datos)
+@pacienteId = 1
+@odontologoId = 1
+@categoriaInsumoId = 
+@insumoId = 
+@servicioId = 
+@planId = 
+@itemPlanId = 
+@presupuestoId = 
+@tokenAceptacion = 
+@facturaId = 
+@citaId = 
+@episodioId = 
+@pagoId = 
+
+### INSTRUCCIONES DE USO:
+### 1. Instalar extensión "REST Client" en VS Code
+### 2. Ejecutar 00_autenticacion.http primero
+### 3. Copiar tokens obtenidos arriba
+### 4. Ir ejecutando archivos en orden numérico
+### 5. Actualizar IDs según las respuestas obtenidas
+
+### EJEMPLO DE FLUJO:
+### 00_autenticacion.http → obtener @adminToken y @pacienteToken
+### 01_inventario.http → obtener @categoriaInsumoId y @insumoId  
+### 02_tratamientos.http → obtener @servicioId, @planId, @presupuestoId
+### ... y así sucesivamente

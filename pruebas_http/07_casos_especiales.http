@@ -1,0 +1,186 @@
+### =================================
+### FLUJO 7: CASOS ESPECIALES Y EDGE CASES
+### =================================
+### Actor: Administrador
+### Objetivo: Probar escenarios límite y validaciones
+
+### Variables
+@baseUrl = http://clinica-demo.localhost:8000
+@adminToken = 
+
+### ========================================
+### VALIDACIONES DE NEGOCIO
+### ========================================
+
+### 1. INTENTAR GENERAR PRESUPUESTO DE PLAN VACÍO
+### Plan sin ítems no debería generar presupuesto
+POST {{baseUrl}}/api/tratamientos/planes/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "paciente": 1,
+  "odontologo": 1,
+  "titulo": "Plan Vacío para Prueba"
+}
+
+### Luego intentar generar presupuesto sin ítems
+POST {{baseUrl}}/api/tratamientos/planes/[ID_DEL_PLAN_VACIO]/generar_presupuesto/
+Authorization: Bearer {{adminToken}}
+
+### Resultado esperado: Error indicando que el plan está vacío
+
+### 2. INTENTAR PAGAR MÁS DEL MONTO DE LA FACTURA
+### El sistema debería validar que no se pague de más
+POST {{baseUrl}}/api/facturacion/pagos/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "factura": 1,
+  "monto_pagado": 999999.00,
+  "metodo_pago": "EFECTIVO",
+  "estado_pago": "COMPLETADO"
+}
+
+### Resultado esperado: Error de validación
+
+### 3. INTENTAR ACEPTAR PRESUPUESTO CON TOKEN INVÁLIDO
+### Token incorrecto no debería funcionar
+POST {{baseUrl}}/api/tratamientos/presupuestos/1/aceptar/token-falso-12345/
+
+### Resultado esperado: Error 404 o 400
+
+### 4. INTENTAR CREAR CITA EN FECHA PASADA
+### No debería permitir agendar en el pasado
+POST {{baseUrl}}/api/agenda/citas/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "paciente": 1,
+  "odontologo": 1,
+  "fecha_hora": "2020-01-01T10:00:00Z",
+  "motivo": "Cita en el pasado",
+  "estado": "PROGRAMADA"
+}
+
+### Resultado esperado: Error de validación de fecha
+
+### 5. CREAR INSUMO CON STOCK NEGATIVO
+### No debería permitir stock inicial negativo
+POST {{baseUrl}}/api/inventario/insumos/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "categoria": 1,
+  "codigo": "TEST-NEG",
+  "nombre": "Insumo Negativo",
+  "precio_costo": 10.00,
+  "precio_venta": 20.00,
+  "stock_actual": -5,
+  "stock_minimo": 1,
+  "unidad_medida": "unidad"
+}
+
+### Resultado esperado: Error de validación
+
+### ========================================
+### FLUJOS DE CONCILIACIÓN
+### ========================================
+
+### 6. VERIFICAR CONSISTENCIA DE PRECIOS
+### Consultar ítem de plan y verificar que los precios snapshot coincidan
+GET {{baseUrl}}/api/tratamientos/items-plan/1/
+Authorization: Bearer {{adminToken}}
+
+### Luego verificar el servicio y el insumo por separado
+GET {{baseUrl}}/api/tratamientos/servicios/[ID_SERVICIO]/
+Authorization: Bearer {{adminToken}}
+
+GET {{baseUrl}}/api/inventario/insumos/[ID_INSUMO]/
+Authorization: Bearer {{adminToken}}
+
+### Los precios actuales pueden diferir de los snapshot (correcto)
+
+### 7. VERIFICAR INTEGRIDAD PRESUPUESTO → FACTURA
+### El monto total debe copiarse correctamente
+GET {{baseUrl}}/api/tratamientos/presupuestos/1/
+Authorization: Bearer {{adminToken}}
+
+GET {{baseUrl}}/api/facturacion/facturas/1/
+Authorization: Bearer {{adminToken}}
+
+### Los montos deben ser idénticos
+
+### 8. VERIFICAR SUMA DE PAGOS = MONTO FACTURA
+### Para facturas pagadas, la suma de pagos debe igualar el total
+GET {{baseUrl}}/api/facturacion/facturas/1/
+Authorization: Bearer {{adminToken}}
+
+GET {{baseUrl}}/api/facturacion/pagos/?factura=1
+Authorization: Bearer {{adminToken}}
+
+### Sumar manualmente los pagos y comparar con monto_total
+
+### ========================================
+### REPORTES CON DATOS EXTREMOS
+### ========================================
+
+### 9. REPORTES SIN DATOS
+### Probar reportes cuando no hay datos en el rango
+GET {{baseUrl}}/api/reportes/reporte-financiero/?fecha_inicio=2030-01-01&fecha_fin=2030-12-31
+Authorization: Bearer {{adminToken}}
+
+### Resultado esperado: Valores en 0, no errores
+
+### 10. TENDENCIA CON MUCHOS DÍAS
+### Probar con rango muy amplio
+GET {{baseUrl}}/api/reportes/tendencia-citas/?dias=365
+Authorization: Bearer {{adminToken}}
+
+### 11. TOP PROCEDIMIENTOS SIN LÍMITE
+### Ver comportamiento sin límite
+GET {{baseUrl}}/api/reportes/top-procedimientos/
+Authorization: Bearer {{adminToken}}
+
+### ========================================
+### PRUEBAS DE SEGURIDAD BÁSICAS
+### ========================================
+
+### 12. INTENTAR ACCESO SIN TOKEN
+### Todos estos deberían fallar
+GET {{baseUrl}}/api/reportes/dashboard-kpis/
+
+GET {{baseUrl}}/api/inventario/insumos/
+
+GET {{baseUrl}}/api/tratamientos/planes/
+
+### Resultado esperado: 401 Unauthorized
+
+### 13. INTENTAR ACCESO CON TOKEN EXPIRADO/INVÁLIDO
+### Token falso no debería funcionar
+GET {{baseUrl}}/api/reportes/dashboard-kpis/
+Authorization: Bearer token-falso-12345
+
+### Resultado esperado: 401 Unauthorized
+
+### ========================================
+### LIMPIEZA DE DATOS DE PRUEBA
+### ========================================
+
+### 14. LISTAR DATOS CREADOS PARA LIMPIEZA (Opcional)
+### Para identificar qué datos limpiar después de las pruebas
+
+GET {{baseUrl}}/api/usuarios/pacientes/
+Authorization: Bearer {{adminToken}}
+
+GET {{baseUrl}}/api/tratamientos/planes/
+Authorization: Bearer {{adminToken}}
+
+GET {{baseUrl}}/api/facturacion/facturas/
+Authorization: Bearer {{adminToken}}
+
+### Nota: En un entorno de producción, estas pruebas se harían
+### en una base de datos de testing separada

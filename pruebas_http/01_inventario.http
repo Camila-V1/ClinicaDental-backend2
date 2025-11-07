@@ -1,0 +1,220 @@
+### =================================
+### FLUJO 1: MÓDULO DE INVENTARIO (PASO 1)
+### =================================
+### Actor: Administrador
+### Objetivo: Probar gestión de inventario (CU34, CU35, CU36)
+
+### Variables (actualiza con datos reales)
+@baseUrl = http://clinica-demo.localhost:8000
+@adminToken = 
+@categoriaId = 
+@insumoId = 
+
+### 1. CREAR CATEGORÍA DE INSUMO
+### Crear categoría para organizar insumos
+POST {{baseUrl}}/api/inventario/categorias/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Resinas Premium", 
+  "descripcion": "Resinas de alta gama para restauraciones"
+}
+
+### Resultado esperado: Categoría creada. Anota el "id" arriba en @categoriaId
+
+### 2. LISTAR CATEGORÍAS EXISTENTES
+### Verificar categorías disponibles
+GET {{baseUrl}}/api/inventario/categorias/
+Authorization: Bearer {{adminToken}}
+
+### 3. CREAR INSUMO (MATERIAL)
+### Crear insumo usando la categoría anterior
+POST {{baseUrl}}/api/inventario/insumos/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "categoria": {{categoriaId}},
+  "codigo": "RES-PREM-A1",
+  "nombre": "Resina Premium 3M A1",
+  "precio_costo": 150.00,
+  "precio_venta": 300.00,
+  "stock_actual": 20,
+  "stock_minimo": 5,
+  "unidad_medida": "unidad"
+}
+
+### Resultado esperado: Insumo creado. Anota el "id" arriba en @insumoId
+
+### 4. LISTAR INSUMOS
+### Verificar insumos creados
+GET {{baseUrl}}/api/inventario/insumos/
+Authorization: Bearer {{adminToken}}
+
+### 5. AJUSTAR STOCK - REDUCIR (CU34, CU36)
+### Simular uso de material en procedimiento
+POST {{baseUrl}}/api/inventario/insumos/{{insumoId}}/ajustar_stock/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "cantidad": -3,
+  "motivo": "Uso en procedimiento - Paciente Ana Silva"
+}
+
+### Resultado esperado: Stock reducido de 20 a 17
+
+### 6. AJUSTAR STOCK - AUMENTAR
+### Simular compra de material
+POST {{baseUrl}}/api/inventario/insumos/{{insumoId}}/ajustar_stock/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "cantidad": 10,
+  "motivo": "Compra de stock - Proveedor ABC"
+}
+
+### Resultado esperado: Stock aumentado de 17 a 27
+
+### 7. CREAR INSUMO CON STOCK BAJO
+### Para probar alertas de stock
+POST {{baseUrl}}/api/inventario/insumos/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "categoria": {{categoriaId}},
+  "codigo": "RES-PREM-B2",
+  "nombre": "Resina Premium B2",
+  "precio_costo": 150.00,
+  "precio_venta": 300.00,
+  "stock_actual": 2,
+  "stock_minimo": 5,
+  "unidad_medida": "unidad"
+}
+
+### 8. VERIFICAR ALERTAS DE STOCK BAJO (CU35)
+### Consultar insumos que necesitan reposición
+GET {{baseUrl}}/api/inventario/insumos/bajo_stock/
+Authorization: Bearer {{adminToken}}
+
+### Resultado esperado: Debe aparecer la "Resina Premium B2" con stock 2 < mínimo 5
+
+### 9. CONSULTAR INSUMO ESPECÍFICO
+### Ver detalles de un insumo
+GET {{baseUrl}}/api/inventario/insumos/{{insumoId}}/
+Authorization: Bearer {{adminToken}}
+
+### ========================================
+### CRUD EXHAUSTIVO DE INVENTARIO
+### ========================================
+
+### 10. ACTUALIZAR INSUMO (PATCH)
+### Modificar campos específicos
+PATCH {{baseUrl}}/api/inventario/insumos/{{insumoId}}/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "precio_venta": 350.00,
+  "proveedor": "Proveedor Actualizado SA"
+}
+
+### 11. ACTUALIZAR INSUMO COMPLETO (PUT)
+PUT {{baseUrl}}/api/inventario/insumos/{{insumoId}}/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "categoria": {{categoriaId}},
+  "codigo": "RES-PREM-A1-UPD",
+  "nombre": "Resina Premium 3M A1 Actualizada",
+  "precio_costo": 160.00,
+  "precio_venta": 350.00,
+  "stock_actual": 25,
+  "stock_minimo": 8,
+  "unidad_medida": "unidad"
+}
+
+### 12. VER DETALLE DE CATEGORÍA
+GET {{baseUrl}}/api/inventario/categorias/{{categoriaId}}/
+Authorization: Bearer {{adminToken}}
+
+### 13. ACTUALIZAR CATEGORÍA
+PATCH {{baseUrl}}/api/inventario/categorias/{{categoriaId}}/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "descripcion": "Resinas premium de alta gama y durabilidad"
+}
+
+### 14. ELIMINAR INSUMO (Soft Delete)
+DELETE {{baseUrl}}/api/inventario/insumos/{{insumoId}}/
+Authorization: Bearer {{adminToken}}
+
+### ========================================
+### FILTROS Y BÚSQUEDAS
+### ========================================
+
+### 15. BUSCAR INSUMOS POR NOMBRE
+GET {{baseUrl}}/api/inventario/insumos/?search=resina
+Authorization: Bearer {{adminToken}}
+
+### 16. FILTRAR POR CATEGORÍA
+GET {{baseUrl}}/api/inventario/insumos/?categoria={{categoriaId}}
+Authorization: Bearer {{adminToken}}
+
+### 17. ORDENAR POR PRECIO
+GET {{baseUrl}}/api/inventario/insumos/?ordering=precio_venta
+Authorization: Bearer {{adminToken}}
+
+### 18. ORDENAR POR STOCK ASCENDENTE  
+GET {{baseUrl}}/api/inventario/insumos/?ordering=stock_actual
+Authorization: Bearer {{adminToken}}
+
+### ========================================
+### CASOS LÍMITE Y VALIDACIONES
+### ========================================
+
+### 19. CREAR INSUMO CON CÓDIGO DUPLICADO (Error esperado)
+POST {{baseUrl}}/api/inventario/insumos/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "categoria": {{categoriaId}},
+  "codigo": "RES-PREM-A1",
+  "nombre": "Duplicado",
+  "precio_costo": 10.00,
+  "precio_venta": 20.00,
+  "stock_actual": 10,
+  "stock_minimo": 5,
+  "unidad_medida": "unidad"
+}
+
+### 20. CREAR INSUMO CON DATOS INVÁLIDOS (Error esperado)
+POST {{baseUrl}}/api/inventario/insumos/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "codigo": "",
+  "nombre": "",
+  "precio_costo": -10,
+  "precio_venta": 0,
+  "stock_actual": -5,
+  "unidad_medida": ""
+}
+
+### 21. AJUSTAR STOCK CON CANTIDAD EXCESIVA (Error esperado)
+POST {{baseUrl}}/api/inventario/insumos/{{insumoId}}/ajustar_stock/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "cantidad": -9999,
+  "motivo": "Intento de stock negativo"
+}

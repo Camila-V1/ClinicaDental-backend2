@@ -1,0 +1,282 @@
+### =================================
+### FLUJO 3: AGENDA E HISTORIAL CLÍNICO
+### =================================
+### Actor: Administrador
+### Objetivo: Agendar cita y registrar procedimiento (CU09, CU14, CU24)
+
+### Variables (actualiza con datos reales)
+@baseUrl = http://clinica-demo.localhost:8000
+@adminToken = 
+@pacienteToken = 
+@pacienteId = 1
+@odontologoId = 1
+@itemPlanId = 
+@citaId = 
+@historialClinicoId = 1
+@episodioId = 
+
+### 1. LISTAR CITAS EXISTENTES
+### Ver agenda actual
+GET {{baseUrl}}/api/agenda/citas/
+Authorization: Bearer {{adminToken}}
+
+### 2. AGENDAR CITA (CU14)
+### Crear nueva cita vinculada al ítem del plan
+POST {{baseUrl}}/api/agenda/citas/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "paciente": {{pacienteId}},
+  "odontologo": {{odontologoId}},
+  "fecha_hora": "2025-11-10T10:00:00Z",
+  "motivo": "Realizar Restauración Premium P16",
+  "estado": "CONFIRMADA",
+  "item_plan": {{itemPlanId}},
+  "observaciones": "Paciente Ana Silva - Primera sesión"
+}
+
+### Resultado esperado: Cita creada. Anota el "id" arriba en @citaId
+
+### 3. CONSULTAR CITA ESPECÍFICA
+### Ver detalles de la cita
+GET {{baseUrl}}/api/agenda/citas/{{citaId}}/
+Authorization: Bearer {{adminToken}}
+
+### 4. LISTAR HISTORIALES CLÍNICOS
+### Ver historiales existentes
+GET {{baseUrl}}/api/historial/historiales/
+Authorization: Bearer {{adminToken}}
+
+### 5. CONSULTAR HISTORIAL DEL PACIENTE
+### Ver historial clínico específico (normalmente ID = ID del paciente)
+GET {{baseUrl}}/api/historial/historiales/{{historialClinicoId}}/
+Authorization: Bearer {{adminToken}}
+
+### 6. REGISTRAR EPISODIO DE ATENCIÓN (CU09, CU24)
+### El paciente asiste y el doctor registra el procedimiento
+POST {{baseUrl}}/api/historial/episodios/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "historial_clinico": {{historialClinicoId}},
+  "odontologo": {{odontologoId}},
+  "item_plan_tratamiento": {{itemPlanId}},
+  "motivo_consulta": "Restauración Pieza 16",
+  "diagnostico": "Caries profunda mesio-oclusal",
+  "descripcion_procedimiento": "Se realiza restauración con Resina Premium 3M A1. Aislamiento absoluto, preparación cavitaria, grabado ácido, adhesivo y resina por capas.",
+  "observaciones": "Procedimiento exitoso. Control en 15 días.",
+  "proxima_cita": "2025-11-25"
+}
+
+### Resultado esperado: Episodio creado vinculando Plan → Historial
+### Anota el "id" arriba en @episodioId
+
+### 7. LISTAR EPISODIOS DEL HISTORIAL
+### Ver todos los episodios del paciente
+GET {{baseUrl}}/api/historial/episodios/?historial_clinico={{historialClinicoId}}
+Authorization: Bearer {{adminToken}}
+
+### 8. CONSULTAR EPISODIO ESPECÍFICO
+### Ver detalles del episodio registrado
+GET {{baseUrl}}/api/historial/episodios/{{episodioId}}/
+Authorization: Bearer {{adminToken}}
+
+### 9. ACTUALIZAR ODONTOGRAMA (Opcional)
+### Registrar estado de las piezas dentales
+PATCH {{baseUrl}}/api/historial/odontogramas/{{historialClinicoId}}/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "estado_piezas": {
+    "16": {
+      "estado": "restaurado",
+      "material": "resina",
+      "fecha": "2025-11-10",
+      "observaciones": "Restauración MO con resina A1"
+    }
+  }
+}
+
+### 10. CONSULTAR ODONTOGRAMA
+### Ver estado actualizado del odontograma
+GET {{baseUrl}}/api/historial/odontogramas/{{historialClinicoId}}/
+Authorization: Bearer {{adminToken}}
+
+### 11. SUBIR DOCUMENTO CLÍNICO (Opcional)
+### Registrar documento relacionado (ej: radiografía)
+POST {{baseUrl}}/api/historial/documentos/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "historial_clinico": {{historialClinicoId}},
+  "tipo_documento": "RADIOGRAFIA",
+  "titulo": "Radiografía Periapical P16",
+  "descripcion": "Radiografía post-restauración para verificar adaptación"
+}
+
+### 12. LISTAR DOCUMENTOS CLÍNICOS
+### Ver documentos del historial
+GET {{baseUrl}}/api/historial/documentos/?historial_clinico={{historialClinicoId}}
+Authorization: Bearer {{adminToken}}
+
+### ========================================
+### CRUD EXHAUSTIVO DE AGENDA
+### ========================================
+
+### 13. ACTUALIZAR CITA - REPROGRAMAR (CU15)
+PATCH {{baseUrl}}/api/agenda/citas/{{citaId}}/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "fecha_hora": "2025-11-12T14:30:00Z",
+  "observaciones": "Reprogramada a solicitud del paciente"
+}
+
+### 14. CANCELAR CITA (CU16)
+POST {{baseUrl}}/api/agenda/citas/{{citaId}}/cancelar/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "motivo_cancelacion": "Paciente no puede asistir",
+  "cancelado_por": "PACIENTE"
+}
+
+### 15. MARCAR NO SHOW (CU18)
+POST {{baseUrl}}/api/agenda/citas/{{citaId}}/marcar_no_show/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "observaciones": "Paciente no asistió sin previo aviso"
+}
+
+### 16. MARCAR CITA COMO COMPLETADA
+POST {{baseUrl}}/api/agenda/citas/{{citaId}}/completar/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "observaciones": "Procedimiento realizado exitosamente"
+}
+
+### ========================================
+### FILTROS AVANZADOS DE AGENDA
+### ========================================
+
+### 17. FILTRAR CITAS POR PACIENTE
+GET {{baseUrl}}/api/agenda/citas/?paciente={{pacienteId}}
+Authorization: Bearer {{adminToken}}
+
+### 18. FILTRAR CITAS POR ESTADO
+GET {{baseUrl}}/api/agenda/citas/?estado=PROGRAMADA
+Authorization: Bearer {{adminToken}}
+
+### 19. FILTRAR CITAS POR FECHA
+GET {{baseUrl}}/api/agenda/citas/?fecha=2025-11-10
+Authorization: Bearer {{adminToken}}
+
+### 20. FILTRAR CITAS DE HOY
+GET {{baseUrl}}/api/agenda/citas/?fecha=2025-11-07
+Authorization: Bearer {{adminToken}}
+
+### 21. BUSCAR CITAS POR MOTIVO
+GET {{baseUrl}}/api/agenda/citas/?search=restauracion
+Authorization: Bearer {{adminToken}}
+
+### 22. ORDENAR CITAS POR FECHA
+GET {{baseUrl}}/api/agenda/citas/?ordering=fecha_hora
+Authorization: Bearer {{adminToken}}
+
+### ========================================
+### CRUD EXHAUSTIVO DE HISTORIAL CLÍNICO
+### ========================================
+
+### 23. ACTUALIZAR EPISODIO
+PATCH {{baseUrl}}/api/historial/episodios/{{episodioId}}/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "observaciones": "Episodio actualizado con información adicional",
+  "proxima_cita": "2025-11-20"
+}
+
+### 24. VER DETALLE DE DOCUMENTO CLÍNICO
+GET {{baseUrl}}/api/historial/documentos/[ID_DOCUMENTO]/
+Authorization: Bearer {{adminToken}}
+
+### 25. ACTUALIZAR DOCUMENTO
+PATCH {{baseUrl}}/api/historial/documentos/[ID_DOCUMENTO]/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "descripcion": "Radiografía actualizada con nuevas observaciones"
+}
+
+### 26. ELIMINAR DOCUMENTO
+DELETE {{baseUrl}}/api/historial/documentos/[ID_DOCUMENTO]/
+Authorization: Bearer {{adminToken}}
+
+### ========================================
+### CASOS LÍMITE Y VALIDACIONES
+### ========================================
+
+### 27. CREAR CITA EN FECHA PASADA (Error esperado)
+POST {{baseUrl}}/api/agenda/citas/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "paciente": {{pacienteId}},
+  "odontologo": {{odontologoId}},
+  "fecha_hora": "2020-01-01T10:00:00Z",
+  "motivo": "Cita en el pasado"
+}
+
+### 28. CREAR CITA CON SOLAPAMIENTO (Posible error)
+POST {{baseUrl}}/api/agenda/citas/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "paciente": {{pacienteId}},
+  "odontologo": {{odontologoId}},
+  "fecha_hora": "2025-11-10T10:15:00Z",
+  "motivo": "Cita que podría solaparse",
+  "duracion_minutos": 90
+}
+
+### 29. CONFIRMAR CITA YA CONFIRMADA (Idempotente)
+POST {{baseUrl}}/api/agenda/citas/{{citaId}}/confirmar/
+Authorization: Bearer {{adminToken}}
+
+### ========================================
+### PRUEBAS DE PERMISOS ESPECÍFICAS
+### ========================================
+
+### 30. PACIENTE VE SUS PROPIAS CITAS
+GET {{baseUrl}}/api/agenda/citas/
+Authorization: Bearer {{pacienteToken}}
+
+### 31. PACIENTE VE SU HISTORIAL CLÍNICO
+GET {{baseUrl}}/api/historial/historiales/
+Authorization: Bearer {{pacienteToken}}
+
+### 32. PACIENTE INTENTA CREAR CITA (Error esperado)
+POST {{baseUrl}}/api/agenda/citas/
+Authorization: Bearer {{pacienteToken}}
+Content-Type: application/json
+
+{
+  "paciente": {{pacienteId}},
+  "odontologo": {{odontologoId}},
+  "fecha_hora": "2025-11-15T10:00:00Z",
+  "motivo": "Intento de creación por paciente"
+}
