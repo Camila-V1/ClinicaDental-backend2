@@ -92,25 +92,29 @@ def test_public_admin_models():
         response = requests.get(f"{BASE_URL_PUBLIC}/admin/", allow_redirects=True)
         content = response.text.lower()
         
-        # Debe tener estos modelos
+        # Debe tener estos modelos (solo gestión de tenants)
         expected_models = {
             'clinicas': 'clinicas' in content or 'clínicas' in content,
             'domains': 'domains' in content or 'dominios' in content,
         }
         
-        # NO debe tener estos modelos
+        # NO debe tener estos modelos (son exclusivos de tenants)
         forbidden_models = {
-            'usuarios': 'usuarios' not in content or 'usuario' not in content.replace('usuarios', ''),
-            'perfil odontólogo': 'perfil' not in content or 'odontologo' not in content,
+            'usuarios': 'usuarios' not in content,
+            'perfil odontólogo': 'perfil' not in content and 'odontologo' not in content,
+            'perfil paciente': 'paciente' not in content,
             'agenda': 'agenda' not in content,
             'tratamientos': 'tratamientos' not in content,
+            'facturación': 'facturacion' not in content and 'facturación' not in content,
+            'inventario': 'inventario' not in content,
+            'historial clínico': 'historial' not in content,
         }
         
-        print(f"\n  {Colors.CYAN}Modelos esperados:{Colors.RESET}")
+        print(f"\n  {Colors.CYAN}Modelos esperados (solo gestión de tenants):{Colors.RESET}")
         for model, present in expected_models.items():
             print_test(f"  Tiene '{model}'", present, "")
         
-        print(f"\n  {Colors.CYAN}Modelos que NO debe tener:{Colors.RESET}")
+        print(f"\n  {Colors.CYAN}Modelos PROHIBIDOS (exclusivos de tenants):{Colors.RESET}")
         for model, absent in forbidden_models.items():
             print_test(f"  NO tiene '{model}'", absent, "")
         
@@ -181,7 +185,7 @@ def test_tenant_admin_login():
         
         if not csrf_token:
             print_test("Obtener CSRF token", False, "No se pudo obtener token")
-            return False
+            return False, None
         
         print_test("Obtener CSRF token", True, "Token obtenido")
         
@@ -220,11 +224,65 @@ def test_tenant_admin_login():
                 has_usuarios or has_logout,
                 "Muestra contenido del admin tenant"
             )
+            
+            return login_successful, session
         
-        return login_successful
+        return login_successful, None
         
     except Exception as e:
         print_test("Login en admin tenant", False, f"Error: {str(e)}")
+        return False, None
+
+
+def test_tenant_admin_models(session):
+    """Verifica que el admin tenant muestre solo modelos de tenant (NO públicos)"""
+    print_section("5. Admin Tenant - Modelos correctos (NO públicos)")
+    
+    if not session:
+        print_test("Verificar modelos tenant", False, "No hay sesión activa")
+        return False
+    
+    try:
+        response = session.get(f"{BASE_URL_TENANT}/admin/", allow_redirects=True)
+        content = response.text.lower()
+        
+        # Debe tener estos modelos (exclusivos de tenant) - al menos los básicos
+        expected_models = {
+            'usuarios': 'usuarios' in content,
+            'perfiles (odontólogo o paciente)': 'perfil' in content or 'odontologo' in content or 'paciente' in content,
+        }
+        
+        # NO debe tener estos modelos (son del esquema público)
+        forbidden_models = {
+            'clinicas (en sección TENANTS)': not ('tenants' in content and 'administración de clínicas' in content),
+            'domains (en sección TENANTS)': not ('domains' in content and 'tenants' in content),
+        }
+        
+        print(f"\n  {Colors.CYAN}Modelos esperados (business logic):{Colors.RESET}")
+        for model, present in expected_models.items():
+            print_test(f"  Tiene '{model}'", present, "")
+        
+        # Info sobre modelos opcionales (en desarrollo)
+        optional_present = {
+            'agenda': 'agenda' in content,
+            'tratamientos': 'tratamientos' in content,
+            'facturación': 'facturacion' in content or 'facturación' in content,
+            'inventario': 'inventario' in content,
+        }
+        
+        print(f"\n  {Colors.CYAN}Modelos opcionales (en desarrollo):{Colors.RESET}")
+        for model, present in optional_present.items():
+            status = f"{Colors.GREEN}✓{Colors.RESET}" if present else f"{Colors.YELLOW}○{Colors.RESET}"
+            print(f"  {status} | '{model}' {'presente' if present else 'pendiente'}")
+        
+        print(f"\n  {Colors.CYAN}Modelos PROHIBIDOS (gestión de sistema):{Colors.RESET}")
+        for model, absent in forbidden_models.items():
+            print_test(f"  NO tiene '{model}'", absent, "")
+        
+        return all(expected_models.values()) and all(forbidden_models.values())
+        
+    except Exception as e:
+        print_test("Verificar modelos tenant", False, f"Error: {str(e)}")
         return False
 
 # ============================================================================
@@ -233,7 +291,7 @@ def test_tenant_admin_login():
 
 def test_api_register():
     """Prueba el endpoint de registro de usuarios"""
-    print_section("5. API REST - Registro de usuarios")
+    print_section("6. API REST - Registro de usuarios")
     
     try:
         # Generar email único
@@ -266,10 +324,14 @@ def test_api_register():
         
         if success:
             response_data = response.json()
+            # La respuesta puede tener estructura: { "message": "...", "usuario": {...} }
+            user_data = response_data.get('usuario', response_data)
+            
+            has_user_info = 'email' in user_data and 'tipo_usuario' in user_data
             print_test(
                 "Respuesta contiene datos del usuario",
-                'email' in response_data and 'tipo_usuario' in response_data,
-                f"Usuario creado: {response_data.get('email', 'N/A')}"
+                has_user_info,
+                f"Usuario: {user_data.get('email', 'N/A')} - Tipo: {user_data.get('tipo_usuario', 'N/A')}"
             )
             return True, email
         
@@ -281,7 +343,7 @@ def test_api_register():
 
 def test_api_login():
     """Prueba el endpoint de login JWT"""
-    print_section("6. API REST - Login JWT")
+    print_section("7. API REST - Login JWT")
     
     try:
         data = {
@@ -324,7 +386,7 @@ def test_api_login():
 
 def test_api_current_user(access_token: str):
     """Prueba el endpoint de usuario actual con JWT"""
-    print_section("7. API REST - Usuario actual (con JWT)")
+    print_section("8. API REST - Usuario actual (con JWT)")
     
     try:
         response = requests.get(
@@ -367,7 +429,7 @@ def test_api_current_user(access_token: str):
 
 def test_data_isolation():
     """Verifica que los datos estén correctamente aislados por esquema"""
-    print_section("8. Aislamiento de datos - Verificación de esquemas")
+    print_section("9. Aislamiento de datos - Verificación de esquemas")
     
     print_test(
         "Tenant público tiene su propio esquema",
@@ -412,18 +474,27 @@ def main():
     results.append(("Admin Público - Accesible", test_public_admin_accessible()))
     results.append(("Admin Público - Modelos correctos", test_public_admin_models()))
     results.append(("Admin Tenant - Requiere login", test_tenant_admin_requires_login()))
-    results.append(("Admin Tenant - Login funcional", test_tenant_admin_login()))
+    
+    login_success, tenant_session = test_tenant_admin_login()
+    results.append(("Admin Tenant - Login funcional", login_success))
+    
+    if tenant_session:
+        results.append(("Admin Tenant - Modelos correctos", test_tenant_admin_models(tenant_session)))
+    else:
+        print_section("5. Admin Tenant - Modelos correctos")
+        print_test("Admin Tenant - Modelos correctos", False, "Skipped: No se pudo hacer login")
+        results.append(("Admin Tenant - Modelos correctos", False))
     
     register_success, new_email = test_api_register()
     results.append(("API - Registro", register_success))
     
-    login_success, access_token = test_api_login()
-    results.append(("API - Login JWT", login_success))
+    login_api_success, access_token = test_api_login()
+    results.append(("API - Login JWT", login_api_success))
     
-    if login_success and access_token:
+    if login_api_success and access_token:
         results.append(("API - Usuario actual", test_api_current_user(access_token)))
     else:
-        print_section("7. API REST - Usuario actual (con JWT)")
+        print_section("8. API REST - Usuario actual (con JWT)")
         print_test("API - Usuario actual", False, "Skipped: No se pudo obtener token")
         results.append(("API - Usuario actual", False))
     
