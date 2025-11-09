@@ -54,7 +54,7 @@ Authorization: Bearer {{adminToken}}
 
 ### 5. AJUSTAR STOCK - REDUCIR (CU34, CU36)
 ### Simular uso de material en procedimiento
-POST {{baseUrl}}/api/inventario/insumos/{{insumoId}}/ajustar_stock/
+POST {{baseUrl}}/api/inventario/insumos/{{insumoId}}/ajustar-stock/
 Authorization: Bearer {{adminToken}}
 Content-Type: application/json
 
@@ -67,7 +67,7 @@ Content-Type: application/json
 
 ### 6. AJUSTAR STOCK - AUMENTAR
 ### Simular compra de material
-POST {{baseUrl}}/api/inventario/insumos/{{insumoId}}/ajustar_stock/
+POST {{baseUrl}}/api/inventario/insumos/{{insumoId}}/ajustar-stock/
 Authorization: Bearer {{adminToken}}
 Content-Type: application/json
 
@@ -97,7 +97,7 @@ Content-Type: application/json
 
 ### 8. VERIFICAR ALERTAS DE STOCK BAJO (CU35)
 ### Consultar insumos que necesitan reposición
-GET {{baseUrl}}/api/inventario/insumos/bajo_stock/
+GET {{baseUrl}}/api/inventario/insumos/bajo-stock/
 Authorization: Bearer {{adminToken}}
 
 ### Resultado esperado: Debe aparecer la "Resina Premium B2" con stock 2 < mínimo 5
@@ -210,7 +210,7 @@ Content-Type: application/json
 }
 
 ### 21. AJUSTAR STOCK CON CANTIDAD EXCESIVA (Error esperado)
-POST {{baseUrl}}/api/inventario/insumos/{{insumoId}}/ajustar_stock/
+POST {{baseUrl}}/api/inventario/insumos/{{insumoId}}/ajustar-stock/
 Authorization: Bearer {{adminToken}}
 Content-Type: application/json
 

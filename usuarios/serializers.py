@@ -37,6 +37,21 @@ class UsuarioSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'date_joined']
 
 
+class PacienteListSerializer(serializers.ModelSerializer):
+    """
+    Serializer simplificado para listar pacientes.
+    Usado en selects y dropdowns del frontend.
+    """
+    nombre_completo = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Usuario
+        fields = ['id', 'nombre', 'apellido', 'nombre_completo', 'email', 'telefono', 'ci']
+    
+    def get_nombre_completo(self, obj):
+        return f"{obj.nombre} {obj.apellido}"
+
+
 class RegisterSerializer(serializers.ModelSerializer):
     """
     Serializer para CREAR (registrar) un nuevo usuario PACIENTE (CU01).

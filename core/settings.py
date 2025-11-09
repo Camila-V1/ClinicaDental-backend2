@@ -25,7 +25,11 @@ SECRET_KEY = 'django-insecure-8xyx^asm1uqoy7on4b(y2%e)o@)wf=fh%og*hfpbe+uiqe5tkp
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'localhost',
+    '.localhost',  # Permite todos los subdominios *.localhost (multi-tenant)
+    '127.0.0.1',
+]
 
 
 # Application definition
@@ -186,7 +190,13 @@ STATIC_URL = 'static/'
 # Orígenes (servidores de frontend) que tienen permiso para hacer peticiones
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",  # Puerto por defecto de Vite (React)
+    "http://localhost:5174",  # Puerto alternativo Vite
     "http://localhost:3000",  # Puerto por defecto de Create-React-App
+]
+
+# Permitir subdominios para multi-tenant
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^http://[\w-]+\.localhost:\d+$",  # Permite cualquier subdominio.localhost con cualquier puerto
 ]
 
 # --- Configuración de CSRF ---
@@ -194,7 +204,11 @@ CORS_ALLOWED_ORIGINS = [
 # Orígenes en los que confiamos para peticiones POST (como el login)
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",
+    "http://localhost:5174",
     "http://localhost:3000",
+    # Multi-tenant: Agregar subdominios según se necesite
+    "http://clinica-demo.localhost:5173",
+    "http://clinica-demo.localhost:5174",
 ]
 
 # Default primary key field type

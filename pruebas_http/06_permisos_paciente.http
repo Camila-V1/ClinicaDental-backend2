@@ -10,7 +10,7 @@
 
 ### 1. CONSULTAR PROPIO PERFIL (Permitido)
 ### El paciente puede ver su información personal
-GET {{baseUrl}}/api/usuarios/perfil/
+GET {{baseUrl}}/api/usuarios/me/
 Authorization: Bearer {{pacienteToken}}
 
 ### Resultado esperado: Datos del paciente "Ana Silva"
@@ -287,7 +287,7 @@ Authorization: Bearer {{pacienteToken}}
 
 ### 35. VERIFICAR QUE NO VE DATOS FINANCIEROS DE OTROS
 ### No debería ver información financiera global
-GET {{baseUrl}}/api/facturacion/facturas/reporte_financiero/
+GET {{baseUrl}}/api/facturacion/facturas/reporte-financiero/
 Authorization: Bearer {{pacienteToken}}
 
 ### 36. VERIFICAR QUE NO VE AGENDA DE OTROS ODONTÓLOGOS

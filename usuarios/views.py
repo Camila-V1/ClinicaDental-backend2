@@ -1,8 +1,8 @@
 from django.shortcuts import render
 from django.http import JsonResponse
-from rest_framework import generics, permissions, status
+from rest_framework import generics, permissions, status, viewsets
 from rest_framework.response import Response
-from .serializers import RegisterSerializer, UsuarioSerializer
+from .serializers import RegisterSerializer, UsuarioSerializer, PacienteListSerializer
 from .models import Usuario
 
 
@@ -58,6 +58,23 @@ class CurrentUserView(generics.RetrieveAPIView):
     def get_object(self):
         # Devuelve el usuario que está haciendo la petición (identificado por el token)
         return self.request.user
+
+
+class PacienteListView(generics.ListAPIView):
+    """
+    Vista para listar pacientes (sin paginación).
+    Usado para selects y dropdowns en formularios.
+    
+    GET /api/usuarios/pacientes/
+    Responde con un array directo: [{"id": 1, "nombre": "Juan", ...}, ...]
+    """
+    serializer_class = PacienteListSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    pagination_class = None  # Desactivar paginación
+    
+    def get_queryset(self):
+        # Solo devolver usuarios de tipo PACIENTE activos
+        return Usuario.objects.filter(tipo_usuario='PACIENTE', is_active=True).order_by('nombre', 'apellido')
 
 
 # --- VISTAS DE PRUEBA ---

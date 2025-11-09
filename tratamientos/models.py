@@ -492,6 +492,72 @@ class PlanDeTratamiento(models.Model):
             from django.utils import timezone
             self.fecha_aceptacion = timezone.now()
             self.save()
+    
+    def actualizar_progreso(self):
+        """
+        Actualiza automáticamente el estado del plan basado en el progreso de sus ítems.
+        
+        Este método implementa la lógica del MODELO HÍBRIDO:
+        - Se llama automáticamente desde los signals cuando se crea un episodio vinculado
+        - Actualiza el estado del plan según el progreso de los ítems
+        
+        Transiciones de estado:
+        - ACEPTADO → EN_PROGRESO: Cuando se completa el primer ítem
+        - EN_PROGRESO → COMPLETADO: Cuando se completan todos los ítems
+        
+        También actualiza las fechas de inicio y finalización.
+        """
+        from django.utils import timezone
+        
+        # Obtener estadísticas de los ítems
+        total_items = self.items.count()
+        
+        if total_items == 0:
+            return  # Plan sin ítems, no hacer nada
+        
+        items_completados = self.items.filter(estado='COMPLETADO').count()
+        items_en_progreso = self.items.filter(estado='EN_PROGRESO').count()
+        
+        # ============================================================================
+        # TRANSICIÓN: ACEPTADO → EN_PROGRESO
+        # ============================================================================
+        
+        if self.estado == self.EstadoPlan.ACEPTADO:
+            # Si hay al menos un ítem EN_PROGRESO o COMPLETADO
+            if items_en_progreso > 0 or items_completados > 0:
+                self.estado = self.EstadoPlan.EN_PROGRESO
+                self.fecha_inicio = timezone.now()
+                self.save(update_fields=['estado', 'fecha_inicio'])
+                print(f"   🚀 Plan iniciado: ACEPTADO → EN_PROGRESO")
+        
+        # ============================================================================
+        # TRANSICIÓN: EN_PROGRESO → COMPLETADO
+        # ============================================================================
+        
+        elif self.estado == self.EstadoPlan.EN_PROGRESO:
+            # Si TODOS los ítems están completados
+            if items_completados == total_items:
+                self.estado = self.EstadoPlan.COMPLETADO
+                self.fecha_finalizacion = timezone.now()
+                self.save(update_fields=['estado', 'fecha_finalizacion'])
+                print(f"   🎉 Plan completado: EN_PROGRESO → COMPLETADO")
+        
+        # ============================================================================
+        # ACTUALIZACIÓN DE METADATOS
+        # ============================================================================
+        
+        # Actualizar fecha_inicio si no existe y hay progreso
+        if not self.fecha_inicio and (items_en_progreso > 0 or items_completados > 0):
+            self.fecha_inicio = timezone.now()
+            self.save(update_fields=['fecha_inicio'])
+        
+        return {
+            'total_items': total_items,
+            'items_completados': items_completados,
+            'items_en_progreso': items_en_progreso,
+            'porcentaje': self.porcentaje_completado,
+            'estado': self.estado
+        }
 
 
 class ItemPlanTratamiento(models.Model):

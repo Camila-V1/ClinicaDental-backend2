@@ -152,7 +152,7 @@ Content-Type: application/json
 }
 
 ### 16. MARCAR FACTURA COMO PAGADA MANUALMENTE
-POST {{baseUrl}}/api/facturacion/facturas/{{facturaId}}/marcar_pagada/
+POST {{baseUrl}}/api/facturacion/facturas/{{facturaId}}/marcar-pagada/
 Authorization: Bearer {{adminToken}}
 Content-Type: application/json
 
@@ -185,11 +185,11 @@ GET {{baseUrl}}/api/facturacion/facturas/?search=Ana Silva
 Authorization: Bearer {{adminToken}}
 
 ### 22. REPORTE FINANCIERO (CU33)
-GET {{baseUrl}}/api/facturacion/facturas/reporte_financiero/?mes=2025-11
+GET {{baseUrl}}/api/facturacion/facturas/reporte-financiero/?mes=2025-11
 Authorization: Bearer {{adminToken}}
 
 ### 23. REPORTE FINANCIERO POR FECHAS
-GET {{baseUrl}}/api/facturacion/facturas/reporte_financiero/?fecha_inicio=2025-11-01&fecha_fin=2025-11-30
+GET {{baseUrl}}/api/facturacion/facturas/reporte-financiero/?fecha_inicio=2025-11-01&fecha_fin=2025-11-30
 Authorization: Bearer {{adminToken}}
 
 ### ========================================
@@ -298,5 +298,5 @@ Content-Type: application/json
 }
 
 ### 32. PACIENTE INTENTA VER REPORTE FINANCIERO (Error esperado)
-GET {{baseUrl}}/api/facturacion/facturas/reporte_financiero/
+GET {{baseUrl}}/api/facturacion/facturas/reporte-financiero/
 Authorization: Bearer {{pacienteToken}}

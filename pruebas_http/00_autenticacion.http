@@ -29,6 +29,7 @@ Content-Type: application/json
 {
   "email": "paciente-prueba@mail.com",
   "password": "paciente123",
+  "password2": "paciente123",
   "nombre": "Ana",
   "apellido": "Silva",
   "ci": "1234567",
@@ -53,12 +54,12 @@ Content-Type: application/json
 
 ### D. VERIFICAR PERFIL ADMIN (Opcional)
 ### Verificar que el token admin funciona
-GET {{baseUrl}}/api/usuarios/perfil/
+GET {{baseUrl}}/api/usuarios/me/
 Authorization: Bearer {{adminToken}}
 
 ### E. VERIFICAR PERFIL PACIENTE (Opcional)
 ### Verificar que el token paciente funciona
-GET {{baseUrl}}/api/usuarios/perfil/
+GET {{baseUrl}}/api/usuarios/me/
 Authorization: Bearer {{pacienteToken}}
 
 ### ========================================
@@ -120,6 +121,7 @@ Content-Type: application/json
 {
   "email": "admin@clinica.com",
   "password": "test123",
+  "password2": "test123",
   "nombre": "Duplicado",
   "apellido": "Test",
   "ci": "9999999",

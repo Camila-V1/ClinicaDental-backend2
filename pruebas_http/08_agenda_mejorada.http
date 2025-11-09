@@ -1,0 +1,317 @@
+### ===================================================
+### PRUEBAS DE AGENDA - SISTEMA DE CITAS MEJORADO
+### ===================================================
+### Incluye: agendar citas con diferentes motivos, 
+### vincular con planes de tratamiento, atender citas
+### ===================================================
+
+@baseUrl = http://clinica-demo.localhost:8000
+@tenant = clinica-demo
+
+
+### 1. LOGIN COMO PACIENTE
+# @name loginPaciente
+POST {{baseUrl}}/api/token/
+Content-Type: application/json
+
+{
+  "email": "juan.perez@email.com",
+  "password": "password123"
+}
+
+### Guardar token del paciente
+@tokenPaciente = {{loginPaciente.response.body.access}}
+
+
+### 2. LOGIN COMO ODONTÓLOGO
+# @name loginOdontologo
+POST {{baseUrl}}/api/token/
+Content-Type: application/json
+
+{
+  "email": "dra.maria.gomez@clinica.com",
+  "password": "password123"
+}
+
+### Guardar token del odontólogo
+@tokenOdontologo = {{loginOdontologo.response.body.access}}
+
+
+### ===================================================
+### AGENDAR CITAS (Como Paciente)
+### ===================================================
+
+### 3. VER MIS PLANES (Para obtener item_plan IDs)
+GET {{baseUrl}}/api/tratamientos/planes/
+Authorization: Bearer {{tokenPaciente}}
+Host: {{tenant}}.localhost
+
+
+### 4. AGENDAR CITA: Consulta General ($30)
+# @name agendarConsulta
+POST {{baseUrl}}/api/agenda/citas/agendar/
+Authorization: Bearer {{tokenPaciente}}
+Host: {{tenant}}.localhost
+Content-Type: application/json
+
+{
+  "odontologo": 1,
+  "fecha_hora": "2025-11-15T10:00:00",
+  "motivo_tipo": "CONSULTA",
+  "motivo": "Dolor en muela inferior derecha desde hace 3 días",
+  "observaciones": "Primera consulta"
+}
+
+### Guardar ID de la consulta
+@citaConsultaId = {{agendarConsulta.response.body.cita.id}}
+
+
+### 5. AGENDAR CITA: Urgencia ($80)
+# @name agendarUrgencia
+POST {{baseUrl}}/api/agenda/citas/agendar/
+Authorization: Bearer {{tokenPaciente}}
+Host: {{tenant}}.localhost
+Content-Type: application/json
+
+{
+  "odontologo": 1,
+  "fecha_hora": "2025-11-12T15:30:00",
+  "motivo_tipo": "URGENCIA",
+  "motivo": "Dolor agudo insoportable, necesito atención inmediata",
+  "observaciones": "Emergencia"
+}
+
+### Guardar ID de la urgencia
+@citaUrgenciaId = {{agendarUrgencia.response.body.cita.id}}
+
+
+### 6. AGENDAR CITA: Limpieza Dental ($60)
+POST {{baseUrl}}/api/agenda/citas/agendar/
+Authorization: Bearer {{tokenPaciente}}
+Host: {{tenant}}.localhost
+Content-Type: application/json
+
+{
+  "odontologo": 1,
+  "fecha_hora": "2025-11-20T11:00:00",
+  "motivo_tipo": "LIMPIEZA",
+  "motivo": "Limpieza dental de rutina",
+  "observaciones": "Limpieza semestral"
+}
+
+
+### 7. AGENDAR CITA: Revisión ($20)
+POST {{baseUrl}}/api/agenda/citas/agendar/
+Authorization: Bearer {{tokenPaciente}}
+Host: {{tenant}}.localhost
+Content-Type: application/json
+
+{
+  "odontologo": 1,
+  "fecha_hora": "2025-11-25T09:00:00",
+  "motivo_tipo": "REVISION",
+  "motivo": "Control post-tratamiento",
+  "observaciones": "Control mensual"
+}
+
+
+### 8. AGENDAR CITA: Tratamiento de mi Plan ($0 - incluido)
+# IMPORTANTE: Reemplazar item_plan con un ID real de tu plan
+POST {{baseUrl}}/api/agenda/citas/agendar/
+Authorization: Bearer {{tokenPaciente}}
+Host: {{tenant}}.localhost
+Content-Type: application/json
+
+{
+  "odontologo": 1,
+  "fecha_hora": "2025-11-18T14:00:00",
+  "motivo_tipo": "PLAN",
+  "motivo": "Primera sesión de endodoncia según plan de tratamiento",
+  "item_plan": 25,
+  "observaciones": "Tratamiento incluido en plan aceptado"
+}
+
+
+### 9. ERROR: Intentar agendar PLAN sin item_plan (debe fallar)
+POST {{baseUrl}}/api/agenda/citas/agendar/
+Authorization: Bearer {{tokenPaciente}}
+Host: {{tenant}}.localhost
+Content-Type: application/json
+
+{
+  "odontologo": 1,
+  "fecha_hora": "2025-11-19T10:00:00",
+  "motivo_tipo": "PLAN",
+  "motivo": "Sin item_plan - debe dar error"
+}
+
+
+### 10. ERROR: Intentar agendar con item_plan pero motivo != PLAN (debe fallar)
+POST {{baseUrl}}/api/agenda/citas/agendar/
+Authorization: Bearer {{tokenPaciente}}
+Host: {{tenant}}.localhost
+Content-Type: application/json
+
+{
+  "odontologo": 1,
+  "fecha_hora": "2025-11-19T10:00:00",
+  "motivo_tipo": "CONSULTA",
+  "motivo": "Consulta con item_plan - debe dar error",
+  "item_plan": 25
+}
+
+
+### ===================================================
+### VER CITAS
+### ===================================================
+
+### 11. VER TODAS MIS CITAS (Como Paciente)
+GET {{baseUrl}}/api/agenda/citas/
+Authorization: Bearer {{tokenPaciente}}
+Host: {{tenant}}.localhost
+
+
+### 12. VER CITAS PRÓXIMAS (Como Paciente)
+GET {{baseUrl}}/api/agenda/citas/proximas/
+Authorization: Bearer {{tokenPaciente}}
+Host: {{tenant}}.localhost
+
+
+### 13. VER CITAS DE HOY (Como Paciente)
+GET {{baseUrl}}/api/agenda/citas/hoy/
+Authorization: Bearer {{tokenPaciente}}
+Host: {{tenant}}.localhost
+
+
+### 14. VER DETALLE DE UNA CITA
+GET {{baseUrl}}/api/agenda/citas/{{citaConsultaId}}/
+Authorization: Bearer {{tokenPaciente}}
+Host: {{tenant}}.localhost
+
+
+### 15. VER AGENDA DEL ODONTÓLOGO
+GET {{baseUrl}}/api/agenda/citas/
+Authorization: Bearer {{tokenOdontologo}}
+Host: {{tenant}}.localhost
+
+
+### ===================================================
+### CONFIRMAR Y CANCELAR CITAS
+### ===================================================
+
+### 16. CONFIRMAR CITA
+POST {{baseUrl}}/api/agenda/citas/{{citaConsultaId}}/confirmar/
+Authorization: Bearer {{tokenPaciente}}
+Host: {{tenant}}.localhost
+
+
+### 17. CANCELAR CITA
+POST {{baseUrl}}/api/agenda/citas/{{citaUrgenciaId}}/cancelar/
+Authorization: Bearer {{tokenPaciente}}
+Host: {{tenant}}.localhost
+
+
+### ===================================================
+### ATENDER CITAS (Como Odontólogo)
+### ===================================================
+
+### 18. ATENDER CITA NORMAL (sin plan)
+POST {{baseUrl}}/api/agenda/citas/{{citaConsultaId}}/atender/
+Authorization: Bearer {{tokenOdontologo}}
+Host: {{tenant}}.localhost
+Content-Type: application/json
+
+{
+  "notas_atencion": "Paciente presenta dolor en molar inferior derecho. Se realiza evaluación y se indica tratamiento."
+}
+
+
+### 19. ATENDER CITA DE PLAN (marca item como completado)
+# IMPORTANTE: Usar el ID de una cita que tenga item_plan
+POST {{baseUrl}}/api/agenda/citas/30/atender/
+Authorization: Bearer {{tokenOdontologo}}
+Host: {{tenant}}.localhost
+Content-Type: application/json
+
+{
+  "marcar_item_completado": true,
+  "notas_atencion": "Primera sesión de endodoncia completada exitosamente. Paciente tolera bien el procedimiento."
+}
+
+
+### 20. ATENDER CITA DE PLAN SIN MARCAR COMO COMPLETADO
+POST {{baseUrl}}/api/agenda/citas/31/atender/
+Authorization: Bearer {{tokenOdontologo}}
+Host: {{tenant}}.localhost
+Content-Type: application/json
+
+{
+  "marcar_item_completado": false,
+  "notas_atencion": "Sesión parcial, requiere segunda visita para completar tratamiento."
+}
+
+
+### ===================================================
+### VERIFICAR CAMBIOS EN PLANES
+### ===================================================
+
+### 21. VER PLAN PARA VERIFICAR ITEMS COMPLETADOS
+GET {{baseUrl}}/api/tratamientos/planes/15/
+Authorization: Bearer {{tokenPaciente}}
+Host: {{tenant}}.localhost
+
+
+### 22. VER HISTORIAL CLÍNICO (verificar episodios creados)
+GET {{baseUrl}}/api/historial/episodios/
+Authorization: Bearer {{tokenPaciente}}
+Host: {{tenant}}.localhost
+
+
+### ===================================================
+### CASOS DE ERROR
+### ===================================================
+
+### 23. ERROR: Odontólogo intenta agendar cita (debe fallar)
+POST {{baseUrl}}/api/agenda/citas/agendar/
+Authorization: Bearer {{tokenOdontologo}}
+Host: {{tenant}}.localhost
+Content-Type: application/json
+
+{
+  "odontologo": 1,
+  "fecha_hora": "2025-11-16T10:00:00",
+  "motivo_tipo": "CONSULTA",
+  "motivo": "Test - odontólogo no puede agendar"
+}
+
+
+### 24. ERROR: Paciente intenta atender cita (debe fallar)
+POST {{baseUrl}}/api/agenda/citas/{{citaConsultaId}}/atender/
+Authorization: Bearer {{tokenPaciente}}
+Host: {{tenant}}.localhost
+Content-Type: application/json
+
+{
+  "notas_atencion": "Test - paciente no puede atender"
+}
+
+
+### 25. ERROR: Intentar atender cita ya atendida (debe fallar)
+POST {{baseUrl}}/api/agenda/citas/{{citaConsultaId}}/atender/
+Authorization: Bearer {{tokenOdontologo}}
+Host: {{tenant}}.localhost
+Content-Type: application/json
+
+{
+  "notas_atencion": "Ya fue atendida"
+}
+
+
+### ===================================================
+### RESUMEN DE PRECIOS
+### ===================================================
+# CONSULTA: $30.00
+# URGENCIA: $80.00
+# LIMPIEZA: $60.00
+# REVISION: $20.00
+# PLAN: $0.00 (incluido en el plan de tratamiento)

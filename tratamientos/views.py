@@ -379,20 +379,20 @@ class PlanDeTratamientoViewSet(viewsets.ModelViewSet):
         POST /api/tratamientos/planes/{id}/aceptar/
         
         El paciente acepta el plan de tratamiento.
-        Solo el paciente propietario puede aceptar.
+        SOLO el paciente propietario puede aceptar.
         """
         plan = self.get_object()
         
-        # Verificar permisos
-        if hasattr(request.user, 'perfil_paciente'):
-            if plan.paciente != request.user.perfil_paciente:
-                return Response(
-                    {'error': 'No tienes permisos para aceptar este plan'},
-                    status=status.HTTP_403_FORBIDDEN
-                )
-        elif not request.user.is_staff:
+        # Verificar permisos - SOLO el paciente puede aceptar
+        if not hasattr(request.user, 'perfil_paciente'):
             return Response(
-                {'error': 'Solo el paciente puede aceptar el plan'},
+                {'error': 'Solo un paciente puede aceptar el plan de tratamiento'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        if plan.paciente != request.user.perfil_paciente:
+            return Response(
+                {'error': 'No tienes permisos para aceptar este plan'},
                 status=status.HTTP_403_FORBIDDEN
             )
         

@@ -7,8 +7,9 @@ urlpatterns = [
     path('register/', views.RegisterView.as_view(), name='register_paciente'),
     # Obtener información del usuario actual (con token)
     path('me/', views.CurrentUserView.as_view(), name='current_user'),
+    # Listar pacientes (para selects en formularios)
+    path('pacientes/', views.PacienteListView.as_view(), name='pacientes_list'),
     
     # --- Rutas de Prueba ---
-    path('', views.index, name='usuarios-index'),
     path('health/', views.health_check, name='user_health_check'),
 ]

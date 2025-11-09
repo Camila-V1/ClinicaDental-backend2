@@ -446,17 +446,21 @@ class PlanDeTratamientoSerializer(serializers.ModelSerializer):
     def get_paciente_info(self, obj):
         """Información básica del paciente"""
         return {
-            'id': obj.paciente.id,
+            'id': obj.paciente.usuario.id,
             'nombre_completo': f"{obj.paciente.usuario.nombre} {obj.paciente.usuario.apellido}",
             'email': obj.paciente.usuario.email
         }
 
     def get_odontologo_info(self, obj):
         """Información básica del odontólogo"""
+        especialidad_nombre = None
+        if hasattr(obj.odontologo, 'especialidad') and obj.odontologo.especialidad:
+            especialidad_nombre = obj.odontologo.especialidad.nombre
+        
         return {
-            'id': obj.odontologo.id,
+            'id': obj.odontologo.usuario.id,
             'nombre_completo': f"Dr. {obj.odontologo.usuario.nombre} {obj.odontologo.usuario.apellido}",
-            'especialidad': obj.odontologo.especialidad.nombre if obj.odontologo.especialidad else None
+            'especialidad': especialidad_nombre
         }
 
 

@@ -37,12 +37,12 @@ class HistorialClinicoViewSet(viewsets.ModelViewSet):
         """
         Filtra el historial:
         - Pacientes: Solo ven su propio historial.
-        - Odontólogos/Admins (staff): Ven todos los historiales.
+        - Odontólogos/Admins (staff o ODONTOLOGO): Ven todos los historiales.
         """
         user = self.request.user
-        if not user.is_staff and user.tipo_usuario == 'PACIENTE' and hasattr(user, 'perfil_paciente'):
+        if user.tipo_usuario == 'PACIENTE' and hasattr(user, 'perfil_paciente'):
             return self.queryset.filter(paciente=user.perfil_paciente)
-        elif user.is_staff:
+        elif user.is_staff or user.tipo_usuario in ['ODONTOLOGO', 'ADMIN']:
             return self.queryset
         return self.queryset.none() # Denegar por defecto
 
@@ -114,12 +114,12 @@ class EpisodioAtencionViewSet(viewsets.ModelViewSet):
         """
         Filtra episodios:
         - Pacientes: Solo ven episodios de su propio historial.
-        - Odontólogos/Admins (staff): Ven todos.
+        - Odontólogos/Admins: Ven todos.
         """
         user = self.request.user
-        if not user.is_staff and user.tipo_usuario == 'PACIENTE' and hasattr(user, 'perfil_paciente'):
+        if user.tipo_usuario == 'PACIENTE' and hasattr(user, 'perfil_paciente'):
             return self.queryset.filter(historial_clinico__paciente=user.perfil_paciente)
-        elif user.is_staff:
+        elif user.is_staff or user.tipo_usuario in ['ODONTOLOGO', 'ADMIN']:
             return self.queryset
         return self.queryset.none()
     
@@ -131,6 +131,21 @@ class EpisodioAtencionViewSet(viewsets.ModelViewSet):
             serializer.save(odontologo=self.request.user.perfil_odontologo)
         else:
             serializer.save()
+    
+    def create(self, request, *args, **kwargs):
+        """
+        Override create para devolver el episodio completo con todos los campos.
+        """
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        
+        # Obtener el episodio recién creado con el serializer completo
+        episodio = serializer.instance
+        output_serializer = EpisodioAtencionSerializer(episodio)
+        
+        headers = self.get_success_headers(output_serializer.data)
+        return Response(output_serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     @action(detail=False, methods=['get'])
     def mis_episodios(self, request):
@@ -159,9 +174,9 @@ class OdontogramaViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         user = self.request.user
-        if not user.is_staff and user.tipo_usuario == 'PACIENTE' and hasattr(user, 'perfil_paciente'):
+        if user.tipo_usuario == 'PACIENTE' and hasattr(user, 'perfil_paciente'):
             return self.queryset.filter(historial_clinico__paciente=user.perfil_paciente)
-        elif user.is_staff:
+        elif user.is_staff or user.tipo_usuario in ['ODONTOLOGO', 'ADMIN']:
             return self.queryset
         return self.queryset.none()
 
@@ -200,9 +215,9 @@ class DocumentoClinicoViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         user = self.request.user
-        if not user.is_staff and user.tipo_usuario == 'PACIENTE' and hasattr(user, 'perfil_paciente'):
+        if user.tipo_usuario == 'PACIENTE' and hasattr(user, 'perfil_paciente'):
             return self.queryset.filter(historial_clinico__paciente=user.perfil_paciente)
-        elif user.is_staff:
+        elif user.is_staff or user.tipo_usuario in ['ODONTOLOGO', 'ADMIN']:
             return self.queryset
         return self.queryset.none()
 

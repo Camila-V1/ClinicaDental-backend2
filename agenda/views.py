@@ -2,9 +2,12 @@ from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.utils import timezone
+from django.db import transaction
 from datetime import timedelta
 from .models import Cita
 from .serializers import CitaSerializer, CitaListSerializer
+from tratamientos.models import ItemPlanTratamiento
+from historial_clinico.models import EpisodioAtencion, HistorialClinico
 
 
 class CitaViewSet(viewsets.ModelViewSet):
@@ -47,15 +50,15 @@ class CitaViewSet(viewsets.ModelViewSet):
         user = self.request.user
         
         # Si es paciente, solo sus citas
-        if hasattr(user, 'perfilpaciente'):
+        if hasattr(user, 'perfil_paciente'):
             return Cita.objects.filter(
-                paciente=user.perfilpaciente
+                paciente=user.perfil_paciente
             ).select_related('paciente__usuario', 'odontologo__usuario')
         
         # Si es odontólogo, solo sus citas asignadas
-        elif hasattr(user, 'perfilodontologo'):
+        elif hasattr(user, 'perfil_odontologo'):
             return Cita.objects.filter(
-                odontologo=user.perfilodontologo
+                odontologo=user.perfil_odontologo
             ).select_related('paciente__usuario', 'odontologo__usuario')
         
         # Si es staff/admin, todas las citas
@@ -161,27 +164,93 @@ class CitaViewSet(viewsets.ModelViewSet):
             'cita': serializer.data
         })
     
+    @action(detail=False, methods=['post'])
+    def agendar(self, request):
+        """
+        POST /api/agenda/citas/agendar/
+        
+        Agenda una nueva cita con validaciones inteligentes:
+        - Si motivo_tipo='PLAN': requiere item_plan, verifica que esté disponible
+        - Si motivo_tipo != 'PLAN': requiere pago previo (según lógica de negocio)
+        
+        Body esperado:
+        {
+            "odontologo": <id>,
+            "fecha_hora": "2025-11-15T10:00:00",
+            "motivo_tipo": "CONSULTA" | "URGENCIA" | "LIMPIEZA" | "REVISION" | "PLAN",
+            "motivo": "Descripción del motivo",
+            "item_plan": <id> (solo si motivo_tipo='PLAN'),
+            "observaciones": "Opcional"
+        }
+        """
+        user = request.user
+        
+        # Solo pacientes pueden agendar sus propias citas
+        if not hasattr(user, 'perfil_paciente'):
+            return Response(
+                {'error': 'Solo pacientes pueden agendar citas.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Agregar automáticamente el paciente
+        data = request.data.copy()
+        data['paciente'] = user.perfil_paciente.pk
+        
+        # Validar y crear la cita
+        serializer = CitaSerializer(data=data, context={'request': request})
+        
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Crear la cita
+        cita = serializer.save()
+        
+        response_data = {
+            'message': 'Cita agendada exitosamente.',
+            'cita': CitaSerializer(cita, context={'request': request}).data
+        }
+        
+        # Agregar información de pago si requiere
+        if cita.requiere_pago:
+            response_data['requiere_pago'] = True
+            response_data['monto_a_pagar'] = str(cita.precio)
+            response_data['mensaje_pago'] = f'Esta cita requiere un pago de {cita.precio_display}. Proceda con el pago para confirmar la cita.'
+        else:
+            response_data['requiere_pago'] = False
+            if cita.es_cita_plan:
+                response_data['mensaje'] = 'Cita de tratamiento agendada. Este servicio está incluido en su plan.'
+        
+        return Response(response_data, status=status.HTTP_201_CREATED)
+    
     @action(detail=True, methods=['post'])
     def atender(self, request, pk=None):
         """
         POST /api/agenda/citas/{id}/atender/
         
-        Marca una cita como ATENDIDA.
-        Solo odontólogos o staff pueden usar esta acción.
+        Marca una cita como ATENDIDA y ejecuta lógica adicional:
+        - Si es_cita_plan=True: marca el item_plan como completado
+        - Crea un episodio en el historial clínico
+        - Solo odontólogos o staff pueden usar esta acción
+        
+        Body opcional:
+        {
+            "marcar_item_completado": true/false (default: true si es cita de plan),
+            "notas_atencion": "Notas de la atención"
+        }
         """
         cita = self.get_object()
         user = request.user
         
         # Verificar que sea odontólogo o staff
-        if not (hasattr(user, 'perfilodontologo') or user.is_staff):
+        if not (hasattr(user, 'perfil_odontologo') or user.is_staff):
             return Response(
                 {'error': 'Solo odontólogos pueden marcar citas como atendidas.'},
                 status=status.HTTP_403_FORBIDDEN
             )
         
         # Si es odontólogo, verificar que sea SU cita
-        if hasattr(user, 'perfilodontologo'):
-            if cita.odontologo.id != user.perfilodontologo.id:
+        if hasattr(user, 'perfil_odontologo'):
+            if cita.odontologo.pk != user.perfil_odontologo.pk:
                 return Response(
                     {'error': 'No puedes atender citas de otros odontólogos.'},
                     status=status.HTTP_403_FORBIDDEN
@@ -193,11 +262,60 @@ class CitaViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        cita.estado = 'ATENDIDA'
-        cita.save()
+        # Obtener parámetros del request
+        marcar_completado = request.data.get('marcar_item_completado', True)
+        notas_atencion = request.data.get('notas_atencion', '')
+        
+        with transaction.atomic():
+            # Marcar cita como atendida
+            cita.estado = 'ATENDIDA'
+            cita.save()
+            
+            # Si es cita de plan, marcar ítem como completado
+            item_completado = None
+            if cita.es_cita_plan and marcar_completado and cita.item_plan:
+                if cita.item_plan.estado != 'COMPLETADO':
+                    cita.item_plan.estado = 'COMPLETADO'
+                    from django.utils import timezone
+                    cita.item_plan.fecha_realizada = timezone.now()
+                    cita.item_plan.save()
+                    item_completado = cita.item_plan
+            
+            # Obtener o crear historial clínico del paciente
+            historial, created = HistorialClinico.objects.get_or_create(
+                paciente=cita.paciente
+            )
+            
+            # Preparar descripción del procedimiento
+            descripcion_proc = cita.get_motivo_tipo_display()
+            if item_completado:
+                servicio_nombre = getattr(item_completado.servicio, 'nombre', 'Servicio') if item_completado.servicio else 'Servicio'
+                descripcion_proc += f" - {servicio_nombre}"
+            
+            # Crear episodio en historial clínico
+            episodio = EpisodioAtencion.objects.create(
+                historial_clinico=historial,
+                odontologo=cita.odontologo,
+                motivo_consulta=cita.motivo,
+                diagnostico=notas_atencion or f"Atención de cita: {cita.get_motivo_tipo_display()}",
+                descripcion_procedimiento=descripcion_proc,
+                notas_privadas=f"Cita ID: {cita.id}\n{cita.observaciones or ''}",
+                item_plan_tratamiento=cita.item_plan if cita.es_cita_plan else None
+            )
         
         serializer = self.get_serializer(cita)
-        return Response({
-            'message': 'Cita marcada como atendida.',
-            'cita': serializer.data
-        })
+        response_data = {
+            'message': 'Cita atendida exitosamente.',
+            'cita': serializer.data,
+            'episodio_id': episodio.id
+        }
+        
+        if item_completado:
+            servicio_nombre = getattr(item_completado.servicio, 'nombre', 'Servicio') if item_completado.servicio else 'Servicio'
+            response_data['item_plan_completado'] = {
+                'id': item_completado.id,
+                'servicio': servicio_nombre,
+                'mensaje': f'Tratamiento "{servicio_nombre}" marcado como completado.'
+            }
+        
+        return Response(response_data)
