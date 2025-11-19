@@ -9,6 +9,10 @@ from django.contrib.admin import AdminSite
 from django.urls import path, include
 from django.shortcuts import redirect
 from django.http import JsonResponse
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
 
 
 def health_check(request):
@@ -201,6 +205,11 @@ urlpatterns = [
     # Health check
     path('', health_check, name='health'),
     path('api/', api_root, name='api_root'),
+    
+    # JWT authentication endpoints (redirect to tenant)
+    # Note: These will work if accessing via tenant subdomain
+    path('api/v1/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/v1/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     
     # Public admin for managing tenants
     path('admin/', public_admin.urls),
