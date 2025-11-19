@@ -207,17 +207,17 @@ urlpatterns = [
     path('api/', api_root, name='api_root'),
     
     # JWT authentication endpoints
-    path('api/v1/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/v1/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     
     # API endpoints (handled by DefaultTenantMiddleware to route to clinica_demo)
-    path('api/v1/usuarios/', include('usuarios.urls')),
-    path('api/v1/agenda/', include('agenda.urls')),
-    path('api/v1/historial/', include('historial_clinico.urls')),
-    path('api/v1/tratamientos/', include('tratamientos.urls')),
-    path('api/v1/facturacion/', include('facturacion.urls')),
-    path('api/v1/inventario/', include('inventario.urls')),
-    path('api/v1/reportes/', include('reportes.urls')),
+    path('api/usuarios/', include('usuarios.urls')),
+    path('api/agenda/', include('agenda.urls')),
+    path('api/historial/', include('historial_clinico.urls')),
+    path('api/tratamientos/', include('tratamientos.urls')),
+    path('api/facturacion/', include('facturacion.urls')),
+    path('api/inventario/', include('inventario.urls')),
+    path('api/reportes/', include('reportes.urls')),
     
     # Public admin for managing tenants
     path('admin/', public_admin.urls),

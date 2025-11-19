@@ -11,7 +11,7 @@
 
 ### Login
 ```http
-POST /api/v1/token/
+POST /api/token/
 Content-Type: application/json
 
 {
@@ -30,7 +30,7 @@ Content-Type: application/json
 
 ### Refresh Token
 ```http
-POST /api/v1/token/refresh/
+POST /api/token/refresh/
 Content-Type: application/json
 
 {
@@ -40,7 +40,7 @@ Content-Type: application/json
 
 ---
 
-## 👥 USUARIOS (`/api/v1/usuarios/`)
+## 👥 USUARIOS (`/api/usuarios/`)
 
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
@@ -54,19 +54,19 @@ Content-Type: application/json
 
 **Obtener usuario actual:**
 ```http
-GET /api/v1/usuarios/me/
+GET /api/usuarios/me/
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
 **Listar odontólogos:**
 ```http
-GET /api/v1/usuarios/odontologos/
+GET /api/usuarios/odontologos/
 Authorization: Bearer <token>
 ```
 
 ---
 
-## 📅 AGENDA (`/api/v1/agenda/`)
+## 📅 AGENDA (`/api/agenda/`)
 
 ### Endpoints CRUD de Citas
 
@@ -91,7 +91,7 @@ Authorization: Bearer <token>
 
 ---
 
-## 🏥 HISTORIAL CLÍNICO (`/api/v1/historial/`)
+## 🏥 HISTORIAL CLÍNICO (`/api/historial/`)
 
 ### Historiales
 | Método | Endpoint | Descripción |
@@ -128,7 +128,7 @@ Authorization: Bearer <token>
 
 ---
 
-## 💊 TRATAMIENTOS (`/api/v1/tratamientos/`)
+## 💊 TRATAMIENTOS (`/api/tratamientos/`)
 
 ### Categorías de Servicios
 | Método | Endpoint | Descripción |
@@ -171,7 +171,7 @@ Authorization: Bearer <token>
 
 ---
 
-## 💰 FACTURACIÓN (`/api/v1/facturacion/`)
+## 💰 FACTURACIÓN (`/api/facturacion/`)
 
 ### Facturas
 | Método | Endpoint | Descripción |
@@ -197,7 +197,7 @@ Authorization: Bearer <token>
 
 ---
 
-## 📦 INVENTARIO (`/api/v1/inventario/`)
+## 📦 INVENTARIO (`/api/inventario/`)
 
 ### Categorías de Insumos
 | Método | Endpoint | Descripción |
@@ -219,7 +219,7 @@ Authorization: Bearer <token>
 
 ---
 
-## 📊 REPORTES (`/api/v1/reportes/`)
+## 📊 REPORTES (`/api/reportes/`)
 
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
@@ -232,7 +232,7 @@ Authorization: Bearer <token>
 
 ### Ejemplo: Dashboard KPIs
 ```http
-GET /api/v1/reportes/dashboard-kpis/
+GET /api/reportes/dashboard-kpis/
 Authorization: Bearer <token>
 ```
 
@@ -290,10 +290,10 @@ Content-Type: application/json
 
 ## 🚀 FLUJO DE AUTENTICACIÓN
 
-1. **Login**: `POST /api/v1/token/` → Recibe `access` y `refresh` tokens
-2. **Obtener usuario**: `GET /api/v1/usuarios/me/` con header `Authorization: Bearer <access>`
+1. **Login**: `POST /api/token/` → Recibe `access` y `refresh` tokens
+2. **Obtener usuario**: `GET /api/usuarios/me/` con header `Authorization: Bearer <access>`
 3. **Usar API**: Incluir `Authorization: Bearer <access>` en todos los requests
-4. **Refresh**: Cuando expire el access token, usar `POST /api/v1/token/refresh/`
+4. **Refresh**: Cuando expire el access token, usar `POST /api/token/refresh/`
 
 ---
 
@@ -315,11 +315,11 @@ Content-Type: application/json
 ## 📝 NOTAS IMPORTANTES
 
 1. **Todos los endpoints requieren autenticación JWT** excepto:
-   - `POST /api/v1/token/` (Login)
-   - `POST /api/v1/token/refresh/` (Refresh)
-   - `POST /api/v1/usuarios/register/` (Registro de paciente)
+   - `POST /api/token/` (Login)
+   - `POST /api/token/refresh/` (Refresh)
+   - `POST /api/usuarios/register/` (Registro de paciente)
 
-2. **Versionamiento**: Todos los endpoints usan el prefijo `/api/v1/`
+2. **Rutas simplificadas**: Todos los endpoints usan el prefijo `/api/` sin versionamiento
 
 3. **Tenant automático**: El middleware redirige automáticamente al tenant `clinica_demo`
 
