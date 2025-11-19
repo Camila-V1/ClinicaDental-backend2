@@ -96,6 +96,8 @@ MIDDLEWARE = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     # Tenant middleware must run after session middleware and before common
     'django_tenants.middleware.TenantMainMiddleware',
+    # Custom middleware para forzar tenant por defecto en dominio público
+    'core.middleware.DefaultTenantMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
