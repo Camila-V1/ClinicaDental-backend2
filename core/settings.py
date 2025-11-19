@@ -37,6 +37,10 @@ if RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
     ALLOWED_HOSTS.append(f'.{RENDER_EXTERNAL_HOSTNAME}')  # Para subdominios
 
+# Permitir subdominios de onrender.com para multi-tenant
+if not DEBUG:
+    ALLOWED_HOSTS.append('.onrender.com')  # Permite *.onrender.com
+
 
 # Application definition
 
@@ -224,8 +228,10 @@ CORS_ALLOWED_ORIGINS = list(cors_origins)
 
 # Permitir subdominios para multi-tenant
 CORS_ALLOWED_ORIGIN_REGEXES = [
-    r"^http://[\w-]+\.localhost:\d+$",  # Permite cualquier subdominio.localhost con cualquier puerto
-    r"^https://[\w-]+\.onrender\.com$",  # Permite subdominios en Render
+    r"^http://[\w-]+\.localhost:\d+$",   # Desarrollo: *.localhost:puerto
+    r"^https://[\w-]+\.onrender\.com$",  # Producción: *.onrender.com
+    r"^https://[\w-]+\.vercel\.app$",    # Frontend Vercel: *.vercel.app
+    r"^https://[\w-]+\.netlify\.app$",   # Frontend Netlify: *.netlify.app
 ]
 
 # Permitir envío de cookies y credenciales (necesario para JWT)
@@ -253,7 +259,15 @@ CSRF_TRUSTED_ORIGINS = list(csrf_trusted)
 # Agregar el dominio de Render si existe
 if RENDER_EXTERNAL_HOSTNAME:
     CSRF_TRUSTED_ORIGINS.append(f'https://{RENDER_EXTERNAL_HOSTNAME}')
-    CSRF_TRUSTED_ORIGINS.append(f'https://*.{RENDER_EXTERNAL_HOSTNAME}')
+
+# En producción, permitir subdominios de Render y plataformas de frontend
+if not DEBUG:
+    # Render permite wildcards con https://*.dominio.com
+    CSRF_TRUSTED_ORIGINS.extend([
+        'https://*.onrender.com',
+        'https://*.vercel.app',
+        'https://*.netlify.app',
+    ])
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

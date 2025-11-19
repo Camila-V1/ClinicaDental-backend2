@@ -37,21 +37,27 @@ python manage.py migrate_schemas --shared
 echo ""
 echo "   → Creando tenant clinica-demo..."
 python manage.py shell << 'PYTHON_SCRIPT'
-from tenants.models import Clinica
+from tenants.models import Clinica, Domain
 from django.db import connection
 
 # Verificar si el tenant ya existe
-if not Clinica.objects.filter(domain_url='clinica-demo').exists():
+if not Clinica.objects.filter(dominio='clinica-demo').exists():
     print("      ✓ Creando tenant clinica-demo")
     tenant = Clinica.objects.create(
         schema_name='clinica_demo',
-        name='Clínica Demo',
-        domain_url='clinica-demo',
-        telefono='000-0000',
-        direccion='Dirección de prueba',
+        nombre='Clínica Demo',
+        dominio='clinica-demo',
         activo=True
     )
-    print(f"      ✓ Tenant creado: {tenant.name}")
+    
+    # Crear el dominio asociado
+    Domain.objects.create(
+        domain='clinica-demo.localhost',  # Para desarrollo
+        tenant=tenant,
+        is_primary=True
+    )
+    print(f"      ✓ Tenant creado: {tenant.nombre}")
+    print(f"      ✓ Dominio: clinica-demo.localhost")
 else:
     print("      ✓ Tenant clinica-demo ya existe")
 PYTHON_SCRIPT

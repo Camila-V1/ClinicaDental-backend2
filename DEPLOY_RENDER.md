@@ -100,9 +100,16 @@ SECRET_KEY=tu-clave-generada-aqui
 
 #### Hosts y CORS:
 ```
+# ALLOWED_HOSTS: Permite subdominios de onrender.com (multi-tenant)
 ALLOWED_HOSTS=.onrender.com
-CORS_ALLOWED_ORIGINS=https://tu-frontend.vercel.app,https://tu-frontend.netlify.app
-CSRF_TRUSTED_ORIGINS=https://tu-frontend.vercel.app,https://clinica-dental-backend.onrender.com
+
+# CORS: Permitir peticiones del frontend
+# Nota: Los subdominios ya están permitidos por regex en settings.py
+CORS_ALLOWED_ORIGINS=https://tu-frontend.vercel.app
+
+# CSRF: Permitir subdominios (wildcards) para multi-tenant
+# Nota: Django 4.0+ soporta wildcards con *
+CSRF_TRUSTED_ORIGINS=https://*.onrender.com,https://*.vercel.app
 ```
 
 #### Base de Datos:
@@ -180,6 +187,21 @@ Login de prueba:
 ---
 
 ## 🔧 Configuración Post-Deploy
+
+### ¿Cómo Funciona el Multi-Tenant con Subdominios?
+
+Tu backend ahora soporta **subdominios dinámicos** para cada clínica registrada:
+
+```
+https://clinica1.onrender.com  → Tenant: clinica1
+https://clinica2.onrender.com  → Tenant: clinica2
+https://tu-app.onrender.com    → Tenant público (registro)
+```
+
+**Configuración aplicada:**
+- ✅ `ALLOWED_HOSTS=.onrender.com` permite `*.onrender.com`
+- ✅ `CORS_ALLOWED_ORIGIN_REGEXES` permite subdominios de Render, Vercel, Netlify
+- ✅ `CSRF_TRUSTED_ORIGINS` usa wildcards `https://*.onrender.com`
 
 ### Conectar Frontend
 
