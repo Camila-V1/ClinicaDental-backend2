@@ -8,6 +8,34 @@ usuarios.Usuario only exists in tenant schemas, not in public schema.
 from django.contrib.admin import AdminSite
 from django.urls import path, include
 from django.shortcuts import redirect
+from django.http import JsonResponse
+
+
+def health_check(request):
+    """Endpoint de salud para verificar que el backend está funcionando"""
+    return JsonResponse({
+        'status': 'ok',
+        'message': 'Backend de Clínica Dental funcionando correctamente',
+        'schema': 'public',
+        'endpoints': {
+            'admin': '/admin/',
+            'api_tenants': '/api/tenants/',
+        }
+    })
+
+
+def api_root(request):
+    """Root API endpoint para el schema público"""
+    return JsonResponse({
+        'message': 'API de Clínica Dental - Schema Público',
+        'version': '1.0',
+        'endpoints': {
+            'health': '/',
+            'admin': '/admin/',
+            'tenants': '/api/tenants/',
+        },
+        'note': 'Para acceder a las APIs de clínicas específicas, usa el subdominio correspondiente'
+    })
 
 
 # Create a custom admin site for the public schema WITHOUT authentication
@@ -170,6 +198,10 @@ public_admin.register(Domain, SimpleDomainAdmin)
 
 
 urlpatterns = [
+    # Health check
+    path('', health_check, name='health'),
+    path('api/', api_root, name='api_root'),
+    
     # Public admin for managing tenants
     path('admin/', public_admin.urls),
     

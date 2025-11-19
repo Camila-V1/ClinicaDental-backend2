@@ -170,17 +170,45 @@ Tu backend estará disponible en:
 https://clinica-dental-backend.onrender.com
 ```
 
-Prueba estos endpoints:
-```
-GET  https://clinica-dental-backend.onrender.com/api/
-POST https://clinica-dental-backend.onrender.com/api/token/
+**Prueba estos endpoints:**
+
+#### Schema Público (sin tenant específico):
+```bash
+# Health check
+GET https://clinica-dental-backend.onrender.com/
+
+# API root
+GET https://clinica-dental-backend.onrender.com/api/
+
+# Admin público (gestión de tenants)
+GET https://clinica-dental-backend.onrender.com/admin/
 ```
 
-Login de prueba:
-```json
+#### Tenant Demo (clinica-demo):
+```bash
+# Nota: En Render, acceder al tenant requiere configurar el subdominio
+# Por ahora, usa el dominio principal con el header X-DTS-SCHEMA
+
+# Login del tenant demo
+POST https://clinica-dental-backend.onrender.com/api/token/
+Content-Type: application/json
+
 {
   "email": "admin@clinica-demo.com",
   "password": "admin123"
+}
+```
+
+**Respuesta esperada del health check:**
+```json
+{
+  "status": "ok",
+  "message": "Backend de Clínica Dental funcionando correctamente",
+  "schema": "public",
+  "endpoints": {
+    "admin": "/admin/",
+    "api_tenants": "/api/tenants/"
+  }
 }
 ```
 
