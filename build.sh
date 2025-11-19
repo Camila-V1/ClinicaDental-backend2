@@ -31,7 +31,34 @@ python manage.py collectstatic --no-input --clear
 # ============================================================================
 echo ""
 echo "🔄 Ejecutando migraciones de base de datos..."
+echo "   → Migraciones compartidas (public schema)..."
 python manage.py migrate_schemas --shared
+
+echo ""
+echo "   → Creando tenant clinica-demo..."
+python manage.py shell << 'PYTHON_SCRIPT'
+from tenants.models import Clinica
+from django.db import connection
+
+# Verificar si el tenant ya existe
+if not Clinica.objects.filter(domain_url='clinica-demo').exists():
+    print("      ✓ Creando tenant clinica-demo")
+    tenant = Clinica.objects.create(
+        schema_name='clinica_demo',
+        name='Clínica Demo',
+        domain_url='clinica-demo',
+        telefono='000-0000',
+        direccion='Dirección de prueba',
+        activo=True
+    )
+    print(f"      ✓ Tenant creado: {tenant.name}")
+else:
+    print("      ✓ Tenant clinica-demo ya existe")
+PYTHON_SCRIPT
+
+echo ""
+echo "   → Migraciones del tenant (clinica_demo schema)..."
+python manage.py migrate_schemas --schema=clinica_demo
 
 # ============================================================================
 # 4. POBLAR DATOS INICIALES

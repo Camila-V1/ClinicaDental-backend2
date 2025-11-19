@@ -38,8 +38,16 @@ git push origin main
 2. Regístrate con tu cuenta de GitHub
 3. Autoriza a Render para acceder a tus repositorios
 
-### 3. **Crear Base de Datos PostgreSQL**
+### 3. **Configurar Base de Datos PostgreSQL**
 
+**⚠️ IMPORTANTE:** Render solo permite 1 base de datos gratuita por cuenta.
+
+#### **Si YA TIENES una BD PostgreSQL en Render:**
+1. Ve a tu base de datos existente en el Dashboard
+2. Copia la **Internal Database URL** (formato: `postgresql://user:pass@host/dbname`)
+3. **Salta al Paso 4** y úsala en la variable `DATABASE_URL`
+
+#### **Si NO TIENES ninguna BD en Render:**
 1. Desde el Dashboard de Render, click en **"New +"**
 2. Selecciona **"PostgreSQL"**
 3. Configura:
@@ -47,9 +55,14 @@ git push origin main
    - **Database:** `clinica_dental_prod`
    - **User:** `clinica_user`
    - **Region:** Oregon (o tu preferencia)
-   - **Plan:** Free (para empezar)
+   - **Plan:** Free
 4. Click en **"Create Database"**
-5. **IMPORTANTE:** Guarda la **Internal Database URL** y la **External Database URL**
+5. **Guarda la Internal Database URL**
+
+#### **Si el error persiste:**
+- Verifica cuántas BDs tienes: Dashboard → PostgreSQL
+- Elimina BDs que no uses: Settings → Delete Database
+- O usa una cuenta diferente de Render
 
 ### 4. **Crear Web Service**
 
@@ -229,11 +242,25 @@ Password: password123
 
 ## 🐛 Troubleshooting
 
+### Error: "relation 'facturacion_pago' does not exist"
+**Problema:** Las migraciones del tenant no se ejecutaron, solo las compartidas.
+**Solución:** El `build.sh` ahora crea automáticamente el tenant y ejecuta sus migraciones. Si ya hiciste deploy:
+```bash
+# En Render Shell
+python manage.py shell
+>>> from tenants.models import Clinica
+>>> Clinica.objects.create(schema_name='clinica_demo', name='Clínica Demo', domain_url='clinica-demo', telefono='000-0000', direccion='Dirección de prueba', activo=True)
+>>> exit()
+python manage.py migrate_schemas --schema=clinica_demo
+python poblar_sistema_completo.py
+```
+
 ### Error: "relation does not exist"
 **Solución:** Las migraciones no se ejecutaron correctamente.
 ```bash
 # En Render Shell
 python manage.py migrate_schemas --shared
+python manage.py migrate_schemas --schema=clinica_demo
 ```
 
 ### Error: "No module named 'decouple'"
