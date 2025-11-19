@@ -104,13 +104,18 @@ SECRET_KEY=tu-clave-generada-aqui
 ALLOWED_HOSTS=.onrender.com
 
 # CORS: Permitir peticiones del frontend
-# Nota: Los subdominios ya están permitidos por regex en settings.py
-CORS_ALLOWED_ORIGINS=https://tu-frontend.vercel.app
+# Agrega tu dominio de Vercel aquí
+CORS_ALLOWED_ORIGINS=https://dentaabcxy.store,https://clinica-dental-backend.onrender.com
 
 # CSRF: Permitir subdominios (wildcards) para multi-tenant
-# Nota: Django 4.0+ soporta wildcards con *
-CSRF_TRUSTED_ORIGINS=https://*.onrender.com,https://*.vercel.app
+CSRF_TRUSTED_ORIGINS=https://*.onrender.com,https://dentaabcxy.store
 ```
+
+**IMPORTANTE:** Actualiza estas variables en Render con tu dominio real:
+1. Ve a tu servicio en Render
+2. Environment → Edit
+3. Actualiza `CORS_ALLOWED_ORIGINS` y `CSRF_TRUSTED_ORIGINS`
+4. **Manual Deploy** para aplicar cambios
 
 #### Base de Datos:
 ```
@@ -236,14 +241,87 @@ https://tu-app.onrender.com    → Tenant público (registro)
 Actualiza tu frontend para apuntar a Render:
 
 ```typescript
-// axiosCore.ts
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://clinica-dental-backend.onrender.com';
+// axiosCore.ts o config.ts
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://clinica-dental-backend.onrender.com/api/v1';
 ```
 
-En tu archivo `.env` del frontend:
+### Variables de Entorno para Frontend (Vercel/Netlify)
+
+Crea un archivo `.env.production` en tu frontend con estas variables:
+
+```bash
+# ============================================================================
+# CONFIGURACIÓN PRODUCCIÓN - VERCEL/NETLIFY
+# ============================================================================
+
+# Entorno
+VITE_ENVIRONMENT=production
+
+# Backend API en Render
+# IMPORTANTE: Incluye /api/v1 al final si tu API tiene versionado
+VITE_API_URL=https://clinica-dental-backend.onrender.com/api/v1
+VITE_API_BASE_URL=https://clinica-dental-backend.onrender.com
+
+# Multi-Tenant: Dominio base (sin https://)
+VITE_BASE_DOMAIN=onrender.com
+VITE_TENANT_DOMAIN_PATTERN={tenant}.onrender.com
+
+# Dominio público (sin tenant)
+VITE_PUBLIC_DOMAIN=clinica-dental-backend.onrender.com
+
+# Frontend: Tu dominio de Vercel
+VITE_FRONTEND_URL=https://dentaabcxy.store
+VITE_USE_SUBDOMAIN=true
+
+# Configuración
+VITE_DEBUG=false
+VITE_API_TIMEOUT=15000
+
+# Stripe (si aplica)
+# VITE_STRIPE_PUBLIC_KEY=pk_test_...
+
+# Nombre de la aplicación
+VITE_APP_NAME=Clinica Dental
+VITE_APP_VERSION=1.0.0
 ```
-VITE_API_URL=https://clinica-dental-backend.onrender.com
-```
+
+### ⚠️ Correcciones Necesarias:
+
+#### 1. **VITE_API_URL debe incluir el path completo**
+   ```bash
+   # ❌ Incorrecto
+   VITE_API_URL=https://clinica-dental-backend.onrender.com
+   
+   # ✅ Correcto (si tu API usa /api/v1)
+   VITE_API_URL=https://clinica-dental-backend.onrender.com/api/v1
+   ```
+
+#### 2. **VITE_TENANT_DOMAIN_PATTERN debe usar el dominio base**
+   ```bash
+   # ❌ Incorrecto (mezcla tenant con dominio completo)
+   VITE_TENANT_DOMAIN_PATTERN={tenant}.onrender.com
+   
+   # ✅ Correcto
+   VITE_BASE_DOMAIN=onrender.com
+   VITE_TENANT_DOMAIN_PATTERN={tenant}.onrender.com
+   ```
+
+#### 3. **Agregar URL del Frontend**
+   ```bash
+   # Necesario para CORS y redirects
+   VITE_FRONTEND_URL=https://dentaabcxy.store
+   ```
+
+### Configurar Variables en Vercel:
+
+1. Ve a tu proyecto en Vercel
+2. Settings → Environment Variables
+3. Agrega cada variable:
+   - **Name:** `VITE_API_URL`
+   - **Value:** `https://clinica-dental-backend.onrender.com/api/v1`
+   - **Environment:** Production ✅
+4. Repite para todas las variables
+5. **Redeploy** para aplicar cambios
 
 ### Configurar Dominio Personalizado (Opcional)
 

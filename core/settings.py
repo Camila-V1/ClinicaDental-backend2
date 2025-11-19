@@ -232,6 +232,8 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https://[\w-]+\.onrender\.com$",  # Producción: *.onrender.com
     r"^https://[\w-]+\.vercel\.app$",    # Frontend Vercel: *.vercel.app
     r"^https://[\w-]+\.netlify\.app$",   # Frontend Netlify: *.netlify.app
+    r"^https://.*\.dentaabcxy\.store$",  # Frontend custom domain: *.dentaabcxy.store
+    r"^https://dentaabcxy\.store$",      # Frontend custom domain: dentaabcxy.store (sin www)
 ]
 
 # Permitir envío de cookies y credenciales (necesario para JWT)
