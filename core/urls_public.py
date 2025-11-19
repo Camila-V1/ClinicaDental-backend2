@@ -211,6 +211,9 @@ urlpatterns = [
     path('api/v1/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/v1/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     
+    # User endpoints (required after login)
+    path('api/v1/usuarios/', include('usuarios.urls')),
+    
     # Public admin for managing tenants
     path('admin/', public_admin.urls),
     
