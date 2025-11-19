@@ -11,6 +11,9 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+from decouple import config, Csv
+import dj_database_url
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,16 +23,19 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-8xyx^asm1uqoy7on4b(y2%e)o@)wf=fh%og*hfpbe+uiqe5tkp'
+SECRET_KEY = config('SECRET_KEY', default='django-insecure-8xyx^asm1uqoy7on4b(y2%e)o@)wf=fh%og*hfpbe+uiqe5tkp')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = [
-    'localhost',
-    '.localhost',  # Permite todos los subdominios *.localhost (multi-tenant)
-    '127.0.0.1',
-]
+# Hosts permitidos
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,.localhost,127.0.0.1', cast=Csv())
+
+# Si estamos en producción, agregar el dominio de Render
+RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+    ALLOWED_HOSTS.append(f'.{RENDER_EXTERNAL_HOSTNAME}')  # Para subdominios
 
 
 # Application definition
@@ -128,20 +134,34 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 # Use PostgreSQL with django-tenants for multi-tenant schemas.
-# Development DB settings (Postgres via Docker). Credentials per request:
-DATABASES = {
-    'default': {
-        'ENGINE': 'django_tenants.postgresql_backend',
-        'NAME': 'db_clinica_multitenant',
-        'USER': 'postgres',
-        'PASSWORD': '12345678',
-        'HOST': '127.0.0.1',
-        'PORT': '5432',
-        'OPTIONS': {
-            'client_encoding': 'UTF8',
-        },
+# Configuración de base de datos con soporte para DATABASE_URL (Render)
+DATABASE_URL = config('DATABASE_URL', default=None)
+
+if DATABASE_URL:
+    # Producción: Usar DATABASE_URL de Render
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            conn_health_checks=True,
+            engine='django_tenants.postgresql_backend',
+        )
     }
-}
+else:
+    # Desarrollo: Usar configuración local
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django_tenants.postgresql_backend',
+            'NAME': config('DB_NAME', default='db_clinica_multitenant'),
+            'USER': config('DB_USER', default='postgres'),
+            'PASSWORD': config('DB_PASSWORD', default='12345678'),
+            'HOST': config('DB_HOST', default='127.0.0.1'),
+            'PORT': config('DB_PORT', default='5432'),
+            'OPTIONS': {
+                'client_encoding': 'UTF8',
+            },
+        }
+    }
 
 # Database router required by django-tenants (keeps migrations in sync)
 DATABASE_ROUTERS = (
@@ -183,33 +203,57 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# Configuración de WhiteNoise para servir archivos estáticos en producción
+if not DEBUG:
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+    # Agregar WhiteNoise al middleware
+    MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
+
+# Archivos de media (uploads de usuarios)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # --- Configuración de CORS ---
 
 # Orígenes (servidores de frontend) que tienen permiso para hacer peticiones
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",  # Puerto por defecto de Vite (React)
-    "http://localhost:5174",  # Puerto alternativo Vite
-    "http://localhost:3000",  # Puerto por defecto de Create-React-App
-]
+cors_origins = config('CORS_ALLOWED_ORIGINS', default='http://localhost:5173,http://localhost:3000', cast=Csv())
+CORS_ALLOWED_ORIGINS = list(cors_origins)
 
 # Permitir subdominios para multi-tenant
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^http://[\w-]+\.localhost:\d+$",  # Permite cualquier subdominio.localhost con cualquier puerto
+    r"^https://[\w-]+\.onrender\.com$",  # Permite subdominios en Render
+]
+
+# Permitir envío de cookies y credenciales (necesario para JWT)
+CORS_ALLOW_CREDENTIALS = True
+
+# Permitir headers específicos (necesarios para JWT)
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
 ]
 
 # --- Configuración de CSRF ---
 
 # Orígenes en los que confiamos para peticiones POST (como el login)
-CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:5173",
-    "http://localhost:5174",
-    "http://localhost:3000",
-    # Multi-tenant: Agregar subdominios según se necesite
-    "http://clinica-demo.localhost:5173",
-    "http://clinica-demo.localhost:5174",
-]
+csrf_trusted = config('CSRF_TRUSTED_ORIGINS', default='http://localhost:5173,http://localhost:3000', cast=Csv())
+CSRF_TRUSTED_ORIGINS = list(csrf_trusted)
+
+# Agregar el dominio de Render si existe
+if RENDER_EXTERNAL_HOSTNAME:
+    CSRF_TRUSTED_ORIGINS.append(f'https://{RENDER_EXTERNAL_HOSTNAME}')
+    CSRF_TRUSTED_ORIGINS.append(f'https://*.{RENDER_EXTERNAL_HOSTNAME}')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

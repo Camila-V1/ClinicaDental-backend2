@@ -15,12 +15,13 @@ def subir_documento_paciente(instance, filename):
     organizada por paciente y tenant (schema).
     Ej: tenants/clinica_demo/pacientes/uuid-paciente/documentos/radiografia.pdf
     """
-    # Obtenemos el UUID del paciente
-    paciente_uuid = instance.historial_clinico.paciente.usuario.id
+    # Usamos historial_clinico_id directamente (el objeto aún no está guardado)
+    # El historial_clinico_id es el mismo que el paciente_id (OneToOne con primary_key=True)
+    paciente_id = instance.historial_clinico_id
     extension = filename.split('.')[-1]
     nuevo_nombre = f"{uuid.uuid4()}.{extension}"
     
-    return f'tenants/documentos/pacientes/{paciente_uuid}/documentos/{nuevo_nombre}'
+    return f'tenants/documentos/pacientes/{paciente_id}/documentos/{nuevo_nombre}'
 
 
 class HistorialClinico(models.Model):
@@ -156,12 +157,24 @@ class Odontograma(models.Model):
 class DocumentoClinico(models.Model):
     """
     Un archivo adjunto al historial (Radiografía, Foto, PDF, etc.) (CU11)
+    Puede estar vinculado opcionalmente a un episodio de atención específico.
     """
     historial_clinico = models.ForeignKey(
         HistorialClinico,
         on_delete=models.CASCADE,
         related_name='documentos'
     )
+    
+    # Vinculación opcional a un episodio específico
+    episodio = models.ForeignKey(
+        'EpisodioAtencion',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='documentos',
+        help_text="Episodio de atención al que pertenece este documento (opcional)"
+    )
+    
     descripcion = models.CharField(
         max_length=255,
         help_text="Descripción del documento"

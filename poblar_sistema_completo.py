@@ -21,11 +21,12 @@ django.setup()
 
 from django.db import connection
 from django.contrib.auth.hashers import make_password
+from django.core.files import File
 from usuarios.models import Usuario, PerfilOdontologo, PerfilPaciente, Especialidad
 from agenda.models import Cita
 from inventario.models import CategoriaInsumo, Insumo
 from tratamientos.models import Servicio, PlanDeTratamiento, ItemPlanTratamiento, CategoriaServicio, MaterialServicioFijo, MaterialServicioOpcional
-from historial_clinico.models import HistorialClinico, Odontograma, EpisodioAtencion
+from historial_clinico.models import HistorialClinico, Odontograma, EpisodioAtencion, DocumentoClinico
 from facturacion.models import Factura, Pago
 
 print('=' * 80)
@@ -47,6 +48,7 @@ def limpiar_tenant():
     modelos_a_limpiar = [
         ('Pagos', Pago),
         ('Facturas', Factura),
+        ('Documentos Clínicos', DocumentoClinico),
         ('Episodios Atención', EpisodioAtencion),
         ('Items Plan Tratamiento', ItemPlanTratamiento),
         ('Planes de Tratamiento', PlanDeTratamiento),
@@ -673,6 +675,106 @@ def crear_episodios(citas_atendidas, odontologo):
 
 
 # ============================================================================
+# PASO 6.5: CREAR DOCUMENTOS CLÍNICOS
+# ============================================================================
+def crear_documentos(episodios, pacientes):
+    print('📄 PASO 6.5: CREANDO DOCUMENTOS CLÍNICOS')
+    print('-' * 80)
+    
+    connection.set_schema('clinica_demo')
+    
+    # Ruta del PDF de prueba
+    pdf_path = os.path.join(os.path.dirname(__file__), 'Informe de Auxiliares - Octubre[1].pdf')
+    
+    if not os.path.exists(pdf_path):
+        print(f'  ⚠️  Archivo PDF no encontrado: {pdf_path}')
+        print(f'  ℹ️  Saltando creación de documentos')
+        print()
+        return []
+    
+    documentos_creados = []
+    
+    # Documento 1: Informe para el primer paciente
+    if len(episodios) > 0:
+        with open(pdf_path, 'rb') as pdf_file:
+            doc1 = DocumentoClinico.objects.create(
+                historial_clinico=episodios[0].historial_clinico,
+                tipo_documento='INFORME',
+                descripcion='Informe de valoración inicial - Primer episodio de atención',
+                archivo=File(pdf_file, name='informe_valoracion_inicial.pdf')
+            )
+            documentos_creados.append(doc1)
+            print(f'  ✅ Documento creado: Informe de valoración (INFORME)')
+    
+    # Documento 2: Radiografía para el segundo paciente
+    if len(episodios) > 1:
+        with open(pdf_path, 'rb') as pdf_file:
+            doc2 = DocumentoClinico.objects.create(
+                historial_clinico=episodios[1].historial_clinico,
+                tipo_documento='RADIOGRAFIA',
+                descripcion='Radiografía panorámica - Evaluación dental completa',
+                archivo=File(pdf_file, name='radiografia_panoramica.pdf')
+            )
+            documentos_creados.append(doc2)
+            print(f'  ✅ Documento creado: Radiografía panorámica (RADIOGRAFIA)')
+    
+    # Documento 3: Consentimiento informado para el tercer paciente
+    if len(episodios) > 2:
+        with open(pdf_path, 'rb') as pdf_file:
+            doc3 = DocumentoClinico.objects.create(
+                historial_clinico=episodios[2].historial_clinico,
+                tipo_documento='CONSENTIMIENTO',
+                descripcion='Consentimiento informado - Restauración dental',
+                archivo=File(pdf_file, name='consentimiento_restauracion.pdf')
+            )
+            documentos_creados.append(doc3)
+            print(f'  ✅ Documento creado: Consentimiento informado (CONSENTIMIENTO)')
+    
+    # Documento 4: Receta para el primer paciente (documento adicional)
+    if len(pacientes) > 0:
+        historial = HistorialClinico.objects.get(paciente=pacientes[0])
+        with open(pdf_path, 'rb') as pdf_file:
+            doc4 = DocumentoClinico.objects.create(
+                historial_clinico=historial,
+                tipo_documento='RECETA',
+                descripcion='Receta médica - Medicación post-procedimiento',
+                archivo=File(pdf_file, name='receta_medicacion.pdf')
+            )
+            documentos_creados.append(doc4)
+            print(f'  ✅ Documento creado: Receta médica (RECETA)')
+    
+    # Documento 5: Examen de laboratorio para el segundo paciente
+    if len(pacientes) > 1:
+        historial = HistorialClinico.objects.get(paciente=pacientes[1])
+        with open(pdf_path, 'rb') as pdf_file:
+            doc5 = DocumentoClinico.objects.create(
+                historial_clinico=historial,
+                tipo_documento='LABORATORIO',
+                descripcion='Examen de laboratorio - Análisis de sangre pre-operatorio',
+                archivo=File(pdf_file, name='examen_laboratorio.pdf')
+            )
+            documentos_creados.append(doc5)
+            print(f'  ✅ Documento creado: Examen de laboratorio (LABORATORIO)')
+    
+    # Documento 6: Fotografía para el tercer paciente
+    if len(pacientes) > 2:
+        historial = HistorialClinico.objects.get(paciente=pacientes[2])
+        with open(pdf_path, 'rb') as pdf_file:
+            doc6 = DocumentoClinico.objects.create(
+                historial_clinico=historial,
+                tipo_documento='FOTOGRAFIA',
+                descripcion='Fotografía intraoral - Estado inicial de tratamiento',
+                archivo=File(pdf_file, name='fotografia_intraoral.pdf')
+            )
+            documentos_creados.append(doc6)
+            print(f'  ✅ Documento creado: Fotografía intraoral (FOTOGRAFIA)')
+    
+    print(f'\n  ✅ Total: {len(documentos_creados)} documentos clínicos creados')
+    print()
+    return documentos_creados
+
+
+# ============================================================================
 # PASO 7: CREAR PLANES DE TRATAMIENTO
 # ============================================================================
 def crear_planes(pacientes, servicios, odontologo):
@@ -1012,6 +1114,9 @@ def main():
         # Paso 6: Episodios
         episodios = crear_episodios(citas_atendidas, perfil_odontologo)
         
+        # Paso 6.5: Documentos
+        documentos = crear_documentos(episodios, pacientes)
+        
         # Paso 7: Planes
         planes = crear_planes(pacientes, servicios, perfil_odontologo)
         
@@ -1039,7 +1144,8 @@ def main():
         print(f'      • Normales:             {len(citas)}')
         print(f'      • Vinculadas a Plan:    {len(citas_plan)}')
         print(f'  📋 Episodios:               {len(episodios)}')
-        print(f'  📝 Planes de tratamiento:   {len(planes)}')
+        print(f'  � Documentos Clínicos:     {len(documentos)}')
+        print(f'  �📝 Planes de tratamiento:   {len(planes)}')
         print(f'  💰 Facturas:                {len(facturas)}')
         print()
         

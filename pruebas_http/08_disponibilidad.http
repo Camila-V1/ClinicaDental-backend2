@@ -1,0 +1,119 @@
+###
+# 🗓️ PRUEBAS: Endpoint de Disponibilidad de Horarios
+# Endpoint: GET /api/agenda/citas/disponibilidad/
+#
+# 🔑 TOKENS Y IDS FIJOS (simplificado):
+# - Token Odontólogo: Ejecuta PASO 0 primero
+# - Token Paciente: Ejecuta PASO 1 primero
+# - ID Odontólogo: 1 (Dr. Juan Pérez - perfil_odontologo.id)
+###
+
+### PASO 0: Login como ODONTÓLOGO (para consultas como odontólogo)
+# @name loginOdonto
+POST http://clinica-demo.localhost:8000/api/token/
+Content-Type: application/json
+
+{
+  "email": "odontologo@clinica-demo.com",
+  "password": "odontologo123"
+}
+
+###
+
+### PASO 1: Login como PACIENTE (para consultas como paciente)
+# @name loginPaciente
+POST http://clinica-demo.localhost:8000/api/token/
+Content-Type: application/json
+
+{
+  "email": "paciente@test.com",
+  "password": "paciente123"
+}
+
+###
+
+### 2. 📅 Consultar disponibilidad - Fecha y odontólogo válidos (como PACIENTE)
+# Fecha: 2025-11-20 (miércoles futuro)
+# ID Odontólogo: 1 (Dr. Juan Pérez)
+GET http://clinica-demo.localhost:8000/api/agenda/citas/disponibilidad/?fecha=2025-11-20&odontologo_id=1
+Authorization: Bearer {{loginPaciente.response.body.access}}
+Host: clinica-demo.localhost
+
+### 3. 📅 Consultar disponibilidad - Mañana (como PACIENTE)
+GET http://clinica-demo.localhost:8000/api/agenda/citas/disponibilidad/?fecha=2025-11-10&odontologo_id=1
+Authorization: Bearer {{loginPaciente.response.body.access}}
+Host: clinica-demo.localhost
+
+### 4. 📅 Consultar disponibilidad - Hoy (como PACIENTE)
+GET http://clinica-demo.localhost:8000/api/agenda/citas/disponibilidad/?fecha=2025-11-09&odontologo_id=1
+Authorization: Bearer {{loginPaciente.response.body.access}}
+Host: clinica-demo.localhost
+
+### 5. 📅 Odontólogo consulta su propia disponibilidad
+GET http://clinica-demo.localhost:8000/api/agenda/citas/disponibilidad/?fecha=2025-11-20&odontologo_id=1
+Authorization: Bearer {{loginOdonto.response.body.access}}
+Host: clinica-demo.localhost
+
+### 6. 📅 Consultar disponibilidad - Fin de semana (debería estar todo libre)
+GET http://clinica-demo.localhost:8000/api/agenda/citas/disponibilidad/?fecha=2025-11-15&odontologo_id=1
+Authorization: Bearer {{loginPaciente.response.body.access}}
+Host: clinica-demo.localhost
+
+###
+# ❌ PRUEBAS DE ERROR
+###
+
+### 7. ❌ ERROR: Sin parámetro fecha
+GET http://clinica-demo.localhost:8000/api/agenda/citas/disponibilidad/?odontologo_id=1
+Authorization: Bearer {{loginPaciente.response.body.access}}
+Host: clinica-demo.localhost
+
+### 8. ❌ ERROR: Sin parámetro odontologo_id
+GET http://clinica-demo.localhost:8000/api/agenda/citas/disponibilidad/?fecha=2025-11-20
+Authorization: Bearer {{loginPaciente.response.body.access}}
+Host: clinica-demo.localhost
+
+### 9. ❌ ERROR: Formato de fecha inválido
+GET http://clinica-demo.localhost:8000/api/agenda/citas/disponibilidad/?fecha=20-11-2025&odontologo_id=1
+Authorization: Bearer {{loginPaciente.response.body.access}}
+Host: clinica-demo.localhost
+
+### 10. ❌ ERROR: Odontólogo no existe
+GET http://clinica-demo.localhost:8000/api/agenda/citas/disponibilidad/?fecha=2025-11-20&odontologo_id=999
+Authorization: Bearer {{loginPaciente.response.body.access}}
+Host: clinica-demo.localhost
+
+###
+# 📝 RESPUESTA ESPERADA:
+# {
+#   "fecha": "2025-11-20",
+#   "odontologo": {
+#     "id": 1,
+#     "nombre_completo": "Dr. Juan Pérez",
+#     "especialidad": "Odontología General"
+#   },
+#   "horarios_disponibles": [
+#     "09:00", "09:30", "10:00", "10:30", "11:00", 
+#     "11:30", "12:00", "12:30", "13:00", "13:30",
+#     "14:00", "14:30", "15:00", "15:30", "16:00",
+#     "16:30", "17:00", "17:30"
+#   ],
+#   "horarios_ocupados": ["11:00", "14:30"],
+#   "horario_atencion": {
+#     "inicio": "09:00",
+#     "fin": "18:00",
+#     "intervalo_minutos": 30
+#   },
+#   "total_disponibles": 16,
+#   "total_ocupados": 2
+# }
+###
+
+###
+# 📌 NOTAS:
+# - El horario por defecto es 9am - 6pm
+# - Intervalo de 30 minutos entre citas
+# - Solo se muestran horarios donde NO hay citas PENDIENTES, CONFIRMADAS o ATENDIDAS
+# - Las citas CANCELADAS NO ocupan el horario
+# - En el futuro, el horario debería ser configurable por odontólogo
+###

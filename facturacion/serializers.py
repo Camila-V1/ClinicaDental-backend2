@@ -175,12 +175,30 @@ class FacturaListSerializer(serializers.ModelSerializer):
     saldo_pendiente = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     total_pagos = serializers.SerializerMethodField()
     
+    # Campos adicionales para compatibilidad con frontend
+    numero = serializers.IntegerField(source='id', read_only=True)
+    fecha = serializers.DateTimeField(source='fecha_emision', read_only=True)
+    monto = serializers.DecimalField(source='monto_total', max_digits=10, decimal_places=2, read_only=True)
+    total = serializers.DecimalField(source='monto_total', max_digits=10, decimal_places=2, read_only=True)
+    saldo = serializers.DecimalField(source='saldo_pendiente', max_digits=10, decimal_places=2, read_only=True)
+    descripcion = serializers.SerializerMethodField()
+    estado_display = serializers.CharField(source='get_estado_display', read_only=True)
+    
     class Meta:
         model = Factura
         fields = (
-            'id', 'paciente_nombre', 'estado', 'monto_total', 
-            'monto_pagado', 'saldo_pendiente', 'fecha_emision', 'total_pagos'
+            # Campos originales
+            'id', 'paciente_nombre', 'estado', 'estado_display', 'monto_total', 
+            'monto_pagado', 'saldo_pendiente', 'fecha_emision', 'total_pagos',
+            # Campos compatibilidad frontend
+            'numero', 'fecha', 'monto', 'total', 'saldo', 'descripcion'
         )
     
     def get_total_pagos(self, obj):
         return obj.pagos.count()
+    
+    def get_descripcion(self, obj):
+        """Generar descripción automática de la factura."""
+        if obj.presupuesto:
+            return f"Factura por tratamiento - Presupuesto #{obj.presupuesto.id}"
+        return f"Factura #{obj.id}"

@@ -1,0 +1,225 @@
+###
+# 🦷 PRUEBAS: Endpoints de Odontograma
+# Base URL: /api/historial/odontogramas/
+###
+
+### 1. Login como odontólogo
+POST http://clinica-demo.localhost:8000/api/token/
+Content-Type: application/json
+
+{
+  "email": "odontologo1@test.com",
+  "password": "odonto123"
+}
+
+### Variable para token
+# @token = {{$1.response.body.access}}
+
+### 2. 📋 Listar todos los odontogramas (del tenant)
+GET http://clinica-demo.localhost:8000/api/historial/odontogramas/
+Authorization: Bearer {{token}}
+Host: clinica-demo.localhost
+
+### 3. 📄 Ver detalle de un odontograma específico
+GET http://clinica-demo.localhost:8000/api/historial/odontogramas/1/
+Authorization: Bearer {{token}}
+Host: clinica-demo.localhost
+
+### 4. ➕ Crear nuevo odontograma (historial_clinico_id debe existir)
+POST http://clinica-demo.localhost:8000/api/historial/odontogramas/
+Authorization: Bearer {{token}}
+Host: clinica-demo.localhost
+Content-Type: application/json
+
+{
+  "historial_clinico": 1,
+  "estado_piezas": {
+    "11": {
+      "estado": "sano",
+      "notas": ""
+    },
+    "12": {
+      "estado": "caries",
+      "superficie": ["oclusal"],
+      "notas": "Caries profunda"
+    },
+    "13": {
+      "estado": "restaurado",
+      "material": "resina",
+      "notas": "Restauración reciente"
+    },
+    "21": {
+      "estado": "sano"
+    },
+    "22": {
+      "estado": "endodoncia",
+      "notas": "Tratamiento de conducto completado"
+    },
+    "31": {
+      "estado": "corona",
+      "material": "porcelana",
+      "notas": "Corona de porcelana"
+    },
+    "32": {
+      "estado": "extraido",
+      "fecha_extraccion": "2024-05-10",
+      "notas": "Extracción quirúrgica"
+    }
+  },
+  "notas": "Primera evaluación completa. Paciente presenta múltiples caries."
+}
+
+### 5. ✏️ Actualizar odontograma existente
+PUT http://clinica-demo.localhost:8000/api/historial/odontogramas/1/
+Authorization: Bearer {{token}}
+Host: clinica-demo.localhost
+Content-Type: application/json
+
+{
+  "estado_piezas": {
+    "11": {
+      "estado": "sano"
+    },
+    "12": {
+      "estado": "restaurado",
+      "superficie": ["oclusal"],
+      "material": "resina",
+      "notas": "Caries tratada exitosamente"
+    },
+    "13": {
+      "estado": "restaurado",
+      "material": "resina"
+    }
+  },
+  "notas": "Actualización post-tratamiento. Caries de pieza 12 restaurada."
+}
+
+### 6. 📋 Actualización parcial (PATCH)
+PATCH http://clinica-demo.localhost:8000/api/historial/odontogramas/1/
+Authorization: Bearer {{token}}
+Host: clinica-demo.localhost
+Content-Type: application/json
+
+{
+  "notas": "Notas adicionales: Paciente reporta sensibilidad en pieza 12."
+}
+
+### 7. 📋 Duplicar odontograma (crear nueva versión)
+POST http://clinica-demo.localhost:8000/api/historial/odontogramas/1/duplicar_odontograma/
+Authorization: Bearer {{token}}
+Host: clinica-demo.localhost
+
+### 8. 🗑️ Eliminar odontograma
+DELETE http://clinica-demo.localhost:8000/api/historial/odontogramas/2/
+Authorization: Bearer {{token}}
+Host: clinica-demo.localhost
+
+### 9. 📋 Crear odontograma COMPLETO (32 piezas adulto - FDI)
+POST http://clinica-demo.localhost:8000/api/historial/odontogramas/
+Authorization: Bearer {{token}}
+Host: clinica-demo.localhost
+Content-Type: application/json
+
+{
+  "historial_clinico": 1,
+  "estado_piezas": {
+    "11": {"estado": "sano"},
+    "12": {"estado": "sano"},
+    "13": {"estado": "sano"},
+    "14": {"estado": "sano"},
+    "15": {"estado": "sano"},
+    "16": {"estado": "restaurado", "material": "amalgama"},
+    "17": {"estado": "sano"},
+    "18": {"estado": "extraido"},
+    "21": {"estado": "sano"},
+    "22": {"estado": "sano"},
+    "23": {"estado": "sano"},
+    "24": {"estado": "sano"},
+    "25": {"estado": "sano"},
+    "26": {"estado": "corona", "material": "porcelana"},
+    "27": {"estado": "sano"},
+    "28": {"estado": "extraido"},
+    "31": {"estado": "sano"},
+    "32": {"estado": "sano"},
+    "33": {"estado": "sano"},
+    "34": {"estado": "sano"},
+    "35": {"estado": "caries", "superficie": ["oclusal", "distal"]},
+    "36": {"estado": "endodoncia"},
+    "37": {"estado": "sano"},
+    "38": {"estado": "sano"},
+    "41": {"estado": "sano"},
+    "42": {"estado": "sano"},
+    "43": {"estado": "sano"},
+    "44": {"estado": "sano"},
+    "45": {"estado": "sano"},
+    "46": {"estado": "restaurado", "material": "resina"},
+    "47": {"estado": "sano"},
+    "48": {"estado": "sano"}
+  },
+  "notas": "Odontograma completo - 32 piezas. Nomenclatura FDI."
+}
+
+### 10. 📋 Login como paciente y ver SU odontograma
+POST http://clinica-demo.localhost:8000/api/token/
+Content-Type: application/json
+
+{
+  "email": "paciente1@test.com",
+  "password": "paciente123"
+}
+
+### Variable para token paciente
+# @token_paciente = {{$10.response.body.access}}
+
+### 11. 📋 Paciente lista sus odontogramas
+GET http://clinica-demo.localhost:8000/api/historial/odontogramas/
+Authorization: Bearer {{token_paciente}}
+Host: clinica-demo.localhost
+
+###
+# 📝 ESTRUCTURA DEL CAMPO estado_piezas (JSON):
+# {
+#   "11": {  // Número de pieza dental (FDI)
+#     "estado": "sano|caries|restaurado|corona|endodoncia|extraido",
+#     "superficie": ["oclusal", "mesial", "distal", "vestibular", "lingual"],
+#     "material": "resina|amalgama|porcelana|zirconio",
+#     "notas": "Observaciones específicas de la pieza",
+#     "fecha_extraccion": "YYYY-MM-DD" // Si aplica
+#   }
+# }
+#
+# NOMENCLATURA FDI (Internacional):
+# - Adultos (32 piezas): 11-18, 21-28, 31-38, 41-48
+# - Niños (20 piezas): 51-55, 61-65, 71-75, 81-85
+#
+# Estados comunes:
+# - sano: Diente sin patologías
+# - caries: Diente con caries activa
+# - restaurado: Diente con obturación/restauración
+# - corona: Diente con corona protésica
+# - endodoncia: Tratamiento de conducto
+# - extraido: Pieza ausente
+# - implante: Implante dental
+# - fracturado: Diente fracturado
+# - movilidad: Diente con movilidad
+#
+# Superficies dentales:
+# - oclusal: Superficie de masticación
+# - mesial: Cara hacia el centro
+# - distal: Cara hacia afuera
+# - vestibular: Cara externa (hacia labios/mejillas)
+# - lingual: Cara interna (hacia lengua)
+###
+
+###
+# 📌 RESPUESTA ESPERADA:
+# {
+#   "id": 1,
+#   "fecha_snapshot": "2025-11-09T21:30:00.000000Z",
+#   "estado_piezas": {
+#     "11": {"estado": "sano"},
+#     "12": {"estado": "caries", "superficie": ["oclusal"], "notas": "Caries profunda"}
+#   },
+#   "notas": "Primera evaluación completa"
+# }
+###

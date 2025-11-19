@@ -1,0 +1,240 @@
+### ============================================================================
+### PRUEBAS: Odontograma - Configuración y Estructura
+### ============================================================================
+### Endpoint nuevo: /api/historial/odontogramas/configuracion/
+### Proporciona toda la estructura del odontograma para el frontend
+### ============================================================================
+
+@baseUrl = http://clinica-demo.localhost:8000/api
+@token = {{login.response.body.access}}
+
+### ============================================================================
+### 1. LOGIN COMO ODONTÓLOGO
+### ============================================================================
+# @name login
+POST {{baseUrl}}/token/
+Content-Type: application/json
+
+{
+  "email": "odontologo@clinica-demo.com",
+  "password": "odontologo123"
+}
+
+### ============================================================================
+### 2. OBTENER CONFIGURACIÓN DEL ODONTOGRAMA
+### ============================================================================
+### Este endpoint retorna toda la estructura del odontograma:
+### - Cuadrantes (1-4)
+### - Dientes por cuadrante (11-48)
+### - Estados disponibles (sano, caries, restaurado, etc.)
+### - Colores asociados a cada estado
+### - Superficies dentales (oclusal, mesial, distal, etc.)
+### - Materiales comunes
+### ============================================================================
+
+GET {{baseUrl}}/historial/odontogramas/configuracion/
+Authorization: Bearer {{token}}
+
+### ============================================================================
+### 3. CREAR ODONTOGRAMA CON ESTRUCTURA COMPLETA
+### ============================================================================
+### Usa los datos de configuración para crear un odontograma completo
+### con todas las 32 piezas dentales
+### ============================================================================
+
+POST {{baseUrl}}/historial/odontogramas/
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "historial_clinico": 1,
+  "estado_piezas": {
+    "11": {"estado": "sano"},
+    "12": {"estado": "sano"},
+    "13": {"estado": "sano"},
+    "14": {"estado": "sano"},
+    "15": {"estado": "sano"},
+    "16": {"estado": "caries", "superficie": ["oclusal"], "notas": "Caries profunda"},
+    "17": {"estado": "sano"},
+    "18": {"estado": "extraido", "fecha_extraccion": "2024-08-15", "notas": "Extracción quirúrgica"},
+    
+    "21": {"estado": "sano"},
+    "22": {"estado": "sano"},
+    "23": {"estado": "sano"},
+    "24": {"estado": "sano"},
+    "25": {"estado": "sano"},
+    "26": {"estado": "sano"},
+    "27": {"estado": "sano"},
+    "28": {"estado": "sano"},
+    
+    "31": {"estado": "sano"},
+    "32": {"estado": "sano"},
+    "33": {"estado": "sano"},
+    "34": {"estado": "sano"},
+    "35": {"estado": "sano"},
+    "36": {"estado": "restaurado", "material": "resina", "superficie": ["oclusal"]},
+    "37": {"estado": "sano"},
+    "38": {"estado": "sano"},
+    
+    "41": {"estado": "sano"},
+    "42": {"estado": "sano"},
+    "43": {"estado": "sano"},
+    "44": {"estado": "sano"},
+    "45": {"estado": "sano"},
+    "46": {"estado": "endodoncia", "notas": "Tratamiento de conducto completado"},
+    "47": {"estado": "sano"},
+    "48": {"estado": "sano"}
+  },
+  "notas": "Evaluación completa del paciente. Total: 32 dientes (1 extraído, 1 con caries, 1 restaurado, 1 con endodoncia)"
+}
+
+### ============================================================================
+### 4. LISTAR ODONTOGRAMAS CON INFORMACIÓN ENRIQUECIDA
+### ============================================================================
+### El serializer ahora incluye:
+### - total_dientes_registrados
+### - resumen_estados (conteo por estado)
+### - paciente_info (datos básicos del paciente)
+### ============================================================================
+
+GET {{baseUrl}}/historial/odontogramas/
+Authorization: Bearer {{token}}
+
+### ============================================================================
+### 5. VER DETALLE DE ODONTOGRAMA
+### ============================================================================
+
+GET {{baseUrl}}/historial/odontogramas/1/
+Authorization: Bearer {{token}}
+
+### ============================================================================
+### 6. ACTUALIZAR ESTADO DE PIEZAS ESPECÍFICAS
+### ============================================================================
+### Actualizar solo algunas piezas (PATCH)
+### ============================================================================
+
+PATCH {{baseUrl}}/historial/odontogramas/1/
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "estado_piezas": {
+    "16": {
+      "estado": "tratado",
+      "superficie": ["oclusal"],
+      "notas": "Tratamiento iniciado - segunda sesión"
+    },
+    "36": {
+      "estado": "restaurado",
+      "material": "composite",
+      "superficie": ["oclusal", "mesial"],
+      "notas": "Restauración ampliada"
+    }
+  },
+  "notas": "Actualización: tratamiento en pieza 16, ampliación de restauración en pieza 36"
+}
+
+### ============================================================================
+### 7. EJEMPLO: CREAR ODONTOGRAMA SOLO CON PROBLEMAS
+### ============================================================================
+### En lugar de registrar todos los dientes, registrar solo los que tienen
+### alguna condición especial (el resto se asume sano)
+### ============================================================================
+
+POST {{baseUrl}}/historial/odontogramas/
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "historial_clinico": 1,
+  "estado_piezas": {
+    "16": {
+      "estado": "caries",
+      "superficie": ["oclusal", "mesial"],
+      "notas": "Caries profunda clase II"
+    },
+    "26": {
+      "estado": "caries",
+      "superficie": ["distal"],
+      "notas": "Caries incipiente"
+    },
+    "36": {
+      "estado": "restaurado",
+      "material": "amalgama",
+      "superficie": ["oclusal"],
+      "notas": "Restauración antigua, buen estado"
+    },
+    "46": {
+      "estado": "endodoncia",
+      "material": "gutapercha",
+      "notas": "Endodoncia hace 2 años"
+    },
+    "48": {
+      "estado": "extraido",
+      "fecha_extraccion": "2023-05-10",
+      "notas": "Muela del juicio - extracción simple"
+    }
+  },
+  "notas": "Odontograma inicial - Registrados solo dientes con condiciones especiales (27 dientes restantes asumidos sanos)"
+}
+
+### ============================================================================
+### 8. DUPLICAR ODONTOGRAMA (SEGUIMIENTO DE EVOLUCIÓN)
+### ============================================================================
+### Crear una nueva versión del odontograma para comparar evolución
+### ============================================================================
+
+POST {{baseUrl}}/historial/odontogramas/1/duplicar_odontograma/
+Authorization: Bearer {{token}}
+
+### ============================================================================
+### 9. LOGIN COMO PACIENTE
+### ============================================================================
+
+# @name login_paciente
+POST {{baseUrl}}/token/
+Content-Type: application/json
+
+{
+  "email": "paciente@test.com",
+  "password": "paciente123"
+}
+
+### ============================================================================
+### 10. VER MIS ODONTOGRAMAS (COMO PACIENTE)
+### ============================================================================
+### El paciente solo ve sus propios odontogramas
+### ============================================================================
+
+GET {{baseUrl}}/historial/odontogramas/
+Authorization: Bearer {{login_paciente.response.body.access}}
+
+### ============================================================================
+### NOTAS DE USO PARA EL FRONTEND:
+### ============================================================================
+### 
+### 1. Al iniciar la aplicación, llamar a /configuracion/ una vez
+###    y cachear la respuesta (estados, colores, cuadrantes, etc.)
+### 
+### 2. Usar los datos de configuración para:
+###    - Renderizar el odontograma visual con los 32 dientes
+###    - Mostrar los colores correctos según el estado
+###    - Poblar los selectores de estado, superficies y materiales
+###    - Organizar los dientes por cuadrantes
+### 
+### 3. Estructura visual recomendada:
+###    Superior Derecho: 18 17 16 15 14 13 12 11
+###    Superior Izquierdo: 21 22 23 24 25 26 27 28
+###    Inferior Izquierdo: 31 32 33 34 35 36 37 38
+###    Inferior Derecho: 48 47 46 45 44 43 42 41
+### 
+### 4. Guardar odontogramas:
+###    - POST completo al crear
+###    - PATCH para actualizar solo piezas modificadas
+### 
+### 5. Comparación de evolución:
+###    - Duplicar odontograma antes de iniciar tratamiento
+###    - Crear nuevo odontograma después del tratamiento
+###    - Comparar visualmente ambas versiones
+### 
+### ============================================================================

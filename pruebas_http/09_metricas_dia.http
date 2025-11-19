@@ -1,0 +1,77 @@
+###
+# 📊 PRUEBAS: Endpoint de Métricas del Día
+# Endpoint: GET /api/agenda/citas/metricas-dia/
+#
+# 🔑 TOKENS FIJOS:
+# - Token Odontólogo: Ejecuta PASO 0 primero
+# - Devuelve métricas del día actual para el dashboard
+###
+
+### PASO 0: Login como ODONTÓLOGO
+# @name loginOdonto
+POST http://clinica-demo.localhost:8000/api/token/
+Content-Type: application/json
+
+{
+  "email": "odontologo@clinica-demo.com",
+  "password": "odontologo123"
+}
+
+###
+
+### 1. 📊 Obtener métricas del día (Odontólogo)
+GET http://clinica-demo.localhost:8000/api/agenda/citas/metricas-dia/
+Authorization: Bearer {{loginOdonto.response.body.access}}
+Host: clinica-demo.localhost
+
+###
+
+### 2. ❌ ERROR: Intentar acceder como paciente (debe fallar)
+# @name loginPaciente
+POST http://clinica-demo.localhost:8000/api/token/
+Content-Type: application/json
+
+{
+  "email": "paciente@test.com",
+  "password": "paciente123"
+}
+
+### 2B. Intentar métricas como paciente
+GET http://clinica-demo.localhost:8000/api/agenda/citas/metricas-dia/
+Authorization: Bearer {{loginPaciente.response.body.access}}
+Host: clinica-demo.localhost
+
+###
+# 📝 RESPUESTA ESPERADA (Odontólogo):
+# {
+#   "fecha": "2025-11-09",
+#   "citas_hoy": 5,
+#   "citas_pendientes": 2,
+#   "citas_confirmadas": 1,
+#   "citas_atendidas": 2,
+#   "pacientes_atendidos": 2,
+#   "proxima_cita": {
+#     "id": 1,
+#     "hora": "15:00",
+#     "paciente": "Juan Pérez",
+#     "motivo": "Revisión",
+#     "estado": "CONFIRMADA",
+#     "minutos_restantes": 45
+#   }
+# }
+#
+# Si no hay próxima cita:
+# {
+#   ...
+#   "proxima_cita": null
+# }
+###
+
+###
+# 📌 NOTAS:
+# - Solo odontólogos pueden acceder a este endpoint
+# - Muestra solo las citas del odontólogo autenticado
+# - La fecha siempre es la fecha actual del servidor
+# - minutos_restantes puede ser 0 si la cita ya pasó pero aún está pendiente
+# - pacientes_atendidos cuenta pacientes únicos (un paciente puede tener varias citas)
+###

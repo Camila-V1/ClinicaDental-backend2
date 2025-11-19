@@ -473,6 +473,18 @@ class PlanDeTratamientoListSerializer(serializers.ModelSerializer):
     cantidad_items = serializers.IntegerField(read_only=True)
     porcentaje_completado = serializers.IntegerField(read_only=True)
     estado_display = serializers.CharField(source='get_estado_display', read_only=True)
+    
+    # Campos adicionales para compatibilidad con frontend
+    nombre = serializers.CharField(source='titulo', read_only=True)
+    total = serializers.DecimalField(source='precio_total_plan', max_digits=10, decimal_places=2, read_only=True)
+    monto_total = serializers.DecimalField(source='precio_total_plan', max_digits=10, decimal_places=2, read_only=True)
+    costo_total = serializers.DecimalField(source='precio_total_plan', max_digits=10, decimal_places=2, read_only=True)
+    progreso = serializers.IntegerField(source='porcentaje_completado', read_only=True)
+    num_items = serializers.IntegerField(source='cantidad_items', read_only=True)
+    total_items = serializers.IntegerField(source='cantidad_items', read_only=True)
+    items_completados = serializers.SerializerMethodField()
+    paciente_id = serializers.IntegerField(source='paciente.usuario.id', read_only=True)
+    observaciones = serializers.CharField(default='', read_only=True)
 
     class Meta:
         model = PlanDeTratamiento
@@ -488,8 +500,23 @@ class PlanDeTratamientoListSerializer(serializers.ModelSerializer):
             'cantidad_items',
             'porcentaje_completado',
             'fecha_creacion',
-            'items_simples'
+            'items_simples',
+            # Campos compatibilidad
+            'nombre',
+            'total',
+            'monto_total',
+            'costo_total',
+            'progreso',
+            'num_items',
+            'total_items',
+            'items_completados',
+            'paciente_id',
+            'observaciones'
         ]
+    
+    def get_items_completados(self, obj):
+        """Calcula cuántos items están completados"""
+        return obj.items.filter(estado='COMPLETADO').count()
 
     def get_paciente_nombre(self, obj):
         return f"{obj.paciente.usuario.nombre} {obj.paciente.usuario.apellido}"

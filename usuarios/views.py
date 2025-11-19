@@ -77,6 +77,50 @@ class PacienteListView(generics.ListAPIView):
         return Usuario.objects.filter(tipo_usuario='PACIENTE', is_active=True).order_by('nombre', 'apellido')
 
 
+class OdontologoListView(generics.ListAPIView):
+    """
+    Vista para listar odontólogos disponibles.
+    Usado para selects al agendar citas.
+    
+    GET /api/usuarios/odontologos/
+    Responde con un array: [{"id": 103, "nombre": "Juan", "apellido": "Pérez", ...}, ...]
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    pagination_class = None  # Sin paginación
+    
+    def get(self, request, *args, **kwargs):
+        # Obtener solo usuarios ODONTOLOGO activos
+        odontologos = Usuario.objects.filter(
+            tipo_usuario='ODONTOLOGO',
+            is_active=True
+        ).select_related('perfil_odontologo').order_by('nombre', 'apellido')
+        
+        # Serializar manualmente para incluir datos del perfil
+        data = []
+        for odontologo in odontologos:
+            odontologo_data = {
+                'id': odontologo.id,
+                'email': odontologo.email,
+                'nombre': odontologo.nombre,
+                'apellido': odontologo.apellido,
+                'nombre_completo': f"Dr. {odontologo.nombre} {odontologo.apellido}",
+                'telefono': odontologo.telefono,
+            }
+            
+            # Agregar datos del perfil si existe
+            if hasattr(odontologo, 'perfil_odontologo'):
+                perfil = odontologo.perfil_odontologo
+                odontologo_data.update({
+                    'especialidad': perfil.especialidad.nombre if perfil.especialidad else None,
+                    'cedula_profesional': perfil.cedulaProfesional,
+                    'experiencia': perfil.experienciaProfesional,
+                })
+            
+            data.append(odontologo_data)
+        
+        return Response(data, status=status.HTTP_200_OK)
+
+
 # --- VISTAS DE PRUEBA ---
 
 def index(request):

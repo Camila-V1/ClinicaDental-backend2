@@ -98,9 +98,9 @@ class ServicioViewSet(viewsets.ModelViewSet):
         """
         Retorna el serializer apropiado según la acción.
         """
-        if self.action == 'list':
-            return ServicioListSerializer
-        elif self.action == 'catalogo':
+        # Siempre usar el serializer completo para que incluya opciones_disponibles
+        # Esto es necesario para el modal de agregar ítems al plan
+        if self.action == 'catalogo':
             return ServicioCatalogoSerializer
         return ServicioSerializer
 
@@ -313,6 +313,11 @@ class PlanDeTratamientoViewSet(viewsets.ModelViewSet):
             # En el futuro podrías filtrar solo por planes propios
             pass
         
+        # Normalizar filtro de estado: ACTIVO -> EN_PROGRESO
+        estado_param = self.request.query_params.get('estado')
+        if estado_param == 'ACTIVO':
+            queryset = queryset.filter(estado='en_progreso')
+        
         return queryset
 
     def perform_create(self, serializer):
@@ -415,6 +420,112 @@ class PlanDeTratamientoViewSet(viewsets.ModelViewSet):
         })
 
     @action(detail=True, methods=['post'])
+    def aprobar(self, request, pk=None):
+        """
+        POST /api/tratamientos/planes/{id}/aprobar/
+        
+        El paciente aprueba el plan de tratamiento propuesto.
+        Alias de 'aceptar' para compatibilidad con frontend.
+        """
+        plan = self.get_object()
+        
+        # Verificar permisos - SOLO el paciente puede aprobar
+        if not hasattr(request.user, 'perfil_paciente'):
+            return Response(
+                {'error': 'Solo un paciente puede aprobar el plan de tratamiento'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        if plan.paciente != request.user.perfil_paciente:
+            return Response(
+                {'error': 'No tiene permiso para aprobar este plan'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Verificar estado del plan (debe ser PROPUESTO)
+        if plan.estado not in ['propuesto', 'presentado']:
+            return Response(
+                {'error': f'El plan no está en estado PROPUESTO'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Obtener comentarios opcionales
+        comentarios = request.data.get('comentarios', '')
+        
+        # Cambiar estado a APROBADO
+        plan.estado = 'aprobado'
+        plan.fecha_aceptacion = timezone.now()
+        if comentarios:
+            plan.notas_internas = (plan.notas_internas or '') + f'\n\nComentarios del paciente: {comentarios}'
+        plan.save()
+        
+        return Response({
+            'id': plan.id,
+            'titulo': plan.titulo,
+            'estado': plan.estado,
+            'estado_display': plan.get_estado_display(),
+            'fecha_aceptacion': plan.fecha_aceptacion,
+            'mensaje': 'Plan de tratamiento aprobado exitosamente'
+        }, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'])
+    def rechazar(self, request, pk=None):
+        """
+        POST /api/tratamientos/planes/{id}/rechazar/
+        
+        El paciente rechaza el plan de tratamiento propuesto.
+        Requiere motivo obligatorio.
+        """
+        plan = self.get_object()
+        
+        # Verificar permisos - SOLO el paciente puede rechazar
+        if not hasattr(request.user, 'perfil_paciente'):
+            return Response(
+                {'error': 'Solo un paciente puede rechazar el plan de tratamiento'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        if plan.paciente != request.user.perfil_paciente:
+            return Response(
+                {'error': 'No tiene permiso para rechazar este plan'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Verificar estado del plan
+        if plan.estado not in ['propuesto', 'presentado']:
+            return Response(
+                {'error': 'El plan no está en estado PROPUESTO'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Validar motivo (requerido)
+        motivo = request.data.get('motivo', '').strip()
+        if not motivo:
+            return Response(
+                {'error': 'El campo \'motivo\' es requerido'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Obtener comentarios adicionales
+        comentarios = request.data.get('comentarios', '')
+        
+        # Cambiar estado a RECHAZADO
+        plan.estado = 'rechazado'
+        plan.notas_internas = (plan.notas_internas or '') + f'\n\nMOTIVO DE RECHAZO: {motivo}'
+        if comentarios:
+            plan.notas_internas += f'\nComentarios adicionales: {comentarios}'
+        plan.save()
+        
+        return Response({
+            'id': plan.id,
+            'titulo': plan.titulo,
+            'estado': plan.estado,
+            'estado_display': plan.get_estado_display(),
+            'motivo_rechazo': motivo,
+            'mensaje': 'Plan de tratamiento rechazado'
+        }, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'])
     def iniciar(self, request, pk=None):
         """
         POST /api/tratamientos/planes/{id}/iniciar/
@@ -504,6 +615,37 @@ class PlanDeTratamientoViewSet(viewsets.ModelViewSet):
         })
 
     @action(detail=False, methods=['get'])
+    def propuestos(self, request):
+        """
+        GET /api/tratamientos/planes/propuestos/
+        
+        Lista planes propuestos (solicitudes) para el paciente actual.
+        Permite filtrar por estado.
+        """
+        if not hasattr(request.user, 'perfil_paciente'):
+            return Response(
+                {'error': 'Solo pacientes pueden ver solicitudes'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Filtrar planes del paciente
+        queryset = self.get_queryset().filter(paciente=request.user.perfil_paciente)
+        
+        # Filtrar por estado si se especifica
+        estado_param = request.query_params.get('estado', 'PROPUESTO')
+        if estado_param:
+            queryset = queryset.filter(estado=estado_param.lower())
+        
+        # Aplicar paginación
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
     def mis_planes(self, request):
         """
         GET /api/tratamientos/planes/mis_planes/
@@ -531,6 +673,32 @@ class PlanDeTratamientoViewSet(viewsets.ModelViewSet):
         if page is not None:
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
+        
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def activos(self, request):
+        """
+        GET /api/tratamientos/planes/activos/
+        
+        Retorna planes activos (ACEPTADO, EN_PROGRESO) del usuario actual.
+        Usado por el frontend para seleccionar planes al agendar citas.
+        """
+        queryset = self.get_queryset()
+        
+        # Solo pacientes pueden usar este endpoint
+        if not hasattr(request.user, 'perfil_paciente'):
+            return Response(
+                {'error': 'Solo pacientes pueden acceder a este endpoint'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Filtrar por estados activos
+        queryset = queryset.filter(
+            paciente=request.user.perfil_paciente,
+            estado__in=['ACEPTADO', 'EN_PROGRESO']
+        )
         
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)

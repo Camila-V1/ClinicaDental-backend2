@@ -9,27 +9,27 @@ router.register(r'facturas', FacturaViewSet, basename='facturas')
 router.register(r'pagos', PagoViewSet, basename='pagos')
 
 urlpatterns = [
-    # API REST endpoints
-    path('api/', include(router.urls)),
+    # API REST endpoints (ya incluido en urls_tenant como /api/facturacion/)
+    path('', include(router.urls)),
     
     # Endpoints personalizados adicionales
-    path('api/facturas/<int:pk>/marcar-pagada/', 
+    path('facturas/<int:pk>/marcar-pagada/', 
          FacturaViewSet.as_view({'post': 'marcar_pagada'}), 
          name='factura-marcar-pagada'),
     
-    path('api/facturas/<int:pk>/cancelar/', 
+    path('facturas/<int:pk>/cancelar/', 
          FacturaViewSet.as_view({'post': 'cancelar'}), 
          name='factura-cancelar'),
     
-    path('api/facturas/reporte-financiero/', 
+    path('facturas/reporte-financiero/', 
          FacturaViewSet.as_view({'get': 'reporte_financiero'}), 
          name='factura-reporte-financiero'),
     
-    path('api/pagos/<int:pk>/anular/', 
+    path('pagos/<int:pk>/anular/', 
          PagoViewSet.as_view({'post': 'anular'}), 
          name='pago-anular'),
     
-    path('api/pagos/por-factura/', 
+    path('pagos/por-factura/', 
          PagoViewSet.as_view({'get': 'por_factura'}), 
          name='pagos-por-factura'),
 ]

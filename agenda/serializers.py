@@ -86,15 +86,18 @@ class CitaSerializer(serializers.ModelSerializer):
         item = obj.item_plan
         return {
             'id': item.id,
+            'servicio_id': item.servicio.id if item.servicio else None,  # 🆕 Agregado para el frontend
             'servicio_nombre': item.servicio.nombre if item.servicio else None,
             'servicio_descripcion': item.servicio.descripcion if item.servicio else None,
-            'descripcion': item.descripcion,
-            'precio_unitario': str(item.precio_unitario),
-            'cantidad': item.cantidad,
-            'subtotal': str(item.subtotal),
-            'completado': item.completado,
+            'notas': item.notas or '',
+            'precio_servicio': str(item.precio_servicio_snapshot),
+            'precio_materiales': str(item.precio_materiales_fijos_snapshot),
+            'precio_insumo': str(item.precio_insumo_seleccionado_snapshot),
+            'precio_total': str(item.precio_total),
+            'estado': item.estado,
+            'completado': item.estado == 'COMPLETADO',
             'plan_id': item.plan.id,
-            'plan_nombre': item.plan.nombre,
+            'plan_nombre': item.plan.titulo if hasattr(item.plan, 'titulo') else 'Plan de Tratamiento',
             'paciente_nombre': item.plan.paciente.usuario.nombre_completo if hasattr(item.plan.paciente.usuario, 'nombre_completo') else f"{item.plan.paciente.usuario.nombre} {item.plan.paciente.usuario.apellido}"
         }
     
@@ -130,7 +133,7 @@ class CitaSerializer(serializers.ModelSerializer):
                 })
             
             # Verificar que el ítem no esté completado
-            if item_plan.completado:
+            if item_plan.estado == 'COMPLETADO':
                 raise serializers.ValidationError({
                     'item_plan': f'El tratamiento "{item_plan.servicio.nombre}" ya ha sido completado.'
                 })
@@ -173,6 +176,31 @@ class CitaListSerializer(serializers.ModelSerializer):
     precio_display = serializers.CharField(read_only=True)
     es_cita_plan = serializers.BooleanField(read_only=True)
     
+    # 🔑 Información del ítem del plan (igual que CitaSerializer)
+    item_plan_info = serializers.SerializerMethodField()
+    
+    def get_item_plan_info(self, obj):
+        """
+        Retorna información detallada del ítem del plan si existe.
+        """
+        if not obj.item_plan:
+            return None
+        
+        item = obj.item_plan
+        return {
+            'id': item.id,
+            'servicio_id': item.servicio.id if item.servicio else None,
+            'servicio_nombre': item.servicio.nombre if item.servicio else None,
+            'servicio_descripcion': item.servicio.descripcion if item.servicio else None,
+            'notas': item.notas or '',
+            'precio_servicio': str(item.precio_servicio_snapshot),
+            'precio_total': str(item.precio_total),
+            'estado': item.estado,
+            'completado': item.estado == 'COMPLETADO',
+            'plan_id': item.plan.id,
+            'plan_nombre': item.plan.titulo if hasattr(item.plan, 'titulo') else 'Plan de Tratamiento',
+        }
+    
     class Meta:
         model = Cita
         fields = [
@@ -189,5 +217,7 @@ class CitaListSerializer(serializers.ModelSerializer):
             'motivo',
             'observaciones',
             'precio_display',
-            'es_cita_plan'
+            'es_cita_plan',
+            'item_plan',  # 🔑 Agregar item_plan (ID)
+            'item_plan_info'  # 🔑 Agregar item_plan_info (objeto completo)
         ]

@@ -42,16 +42,16 @@ class FacturaViewSet(viewsets.ModelViewSet):
             return queryset
         
         # Doctor ve facturas de sus pacientes
-        if hasattr(user, 'perfilprofesional'):
+        if hasattr(user, 'perfil_odontologo'):
             # Obtener pacientes del doctor
             pacientes_ids = PerfilPaciente.objects.filter(
-                historialclinico__episodioatencion__doctor=user.perfilprofesional
-            ).values_list('id', flat=True).distinct()
-            return queryset.filter(paciente_id__in=pacientes_ids)
+                historialclinico__episodioatencion__odontologo=user.perfil_odontologo
+            ).values_list('usuario_id', flat=True).distinct()
+            return queryset.filter(paciente__usuario_id__in=pacientes_ids)
         
         # Paciente solo ve sus facturas
-        if hasattr(user, 'perfilpaciente'):
-            return queryset.filter(paciente=user.perfilpaciente)
+        if hasattr(user, 'perfil_paciente'):
+            return queryset.filter(paciente=user.perfil_paciente)
         
         return queryset.none()
     
@@ -133,6 +133,91 @@ class FacturaViewSet(viewsets.ModelViewSet):
             'message': 'Factura cancelada exitosamente',
             'factura': self.get_serializer(factura).data
         })
+    
+    @action(detail=False, methods=['get'])
+    def estado_cuenta(self, request):
+        """
+        GET /api/facturacion/facturas/estado-cuenta/
+        
+        Obtener estado de cuenta del paciente actual.
+        Retorna resumen de facturas y saldo pendiente.
+        """
+        # Solo pacientes pueden ver su estado de cuenta
+        if not hasattr(request.user, 'perfil_paciente'):
+            return Response(
+                {'error': 'Solo los pacientes pueden ver su estado de cuenta'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Obtener facturas del paciente
+        queryset = self.get_queryset().filter(paciente=request.user.perfil_paciente)
+        
+        # Calcular totales
+        total_facturas = queryset.count()
+        facturas_pendientes = queryset.filter(estado='PENDIENTE').count()
+        facturas_pagadas = queryset.filter(estado='PAGADA').count()
+        
+        monto_total = queryset.aggregate(total=Sum('monto_total'))['total'] or 0
+        monto_pagado = queryset.aggregate(total=Sum('monto_pagado'))['total'] or 0
+        saldo_pendiente = monto_total - monto_pagado
+        
+        return Response({
+            # Valores numéricos sin formato (para frontend)
+            'saldo_pendiente': float(saldo_pendiente),
+            'monto_total': float(monto_total),
+            'monto_pagado': float(monto_pagado),
+            
+            # Valores formateados (legibles)
+            'saldo_pendiente_formatted': f'${saldo_pendiente:,.2f}',
+            'monto_total_formatted': f'${monto_total:,.2f}',
+            'monto_pagado_formatted': f'${monto_pagado:,.2f}',
+            
+            # Aliases adicionales para compatibilidad
+            'total_facturado': float(monto_total),
+            'total_pagado': float(monto_pagado),
+            'total_pendiente': float(saldo_pendiente),
+            
+            # Contadores
+            'total_facturas': total_facturas,
+            'facturas_pendientes': facturas_pendientes,
+            'facturas_pagadas': facturas_pagadas,
+            
+            # Lista de facturas pendientes (primeras 5)
+            'facturas': FacturaListSerializer(
+                queryset.filter(estado='PENDIENTE').order_by('-fecha_emision')[:5],
+                many=True
+            ).data
+        })
+    
+    @action(detail=False, methods=['get'])
+    def mis_facturas(self, request):
+        """
+        GET /api/facturacion/facturas/mis_facturas/
+        
+        Obtener todas las facturas del paciente autenticado.
+        Solo para PACIENTES.
+        """
+        # Verificar que el usuario sea paciente
+        if not hasattr(request.user, 'perfil_paciente'):
+            return Response(
+                {'error': 'Solo los pacientes pueden acceder a este endpoint'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Obtener facturas del paciente con filtros opcionales
+        queryset = self.get_queryset()
+        
+        # Filtro por estado
+        estado = request.query_params.get('estado')
+        if estado:
+            queryset = queryset.filter(estado=estado.upper())
+        
+        # Ordenar por fecha de emisión descendente
+        queryset = queryset.order_by('-fecha_emision')
+        
+        # Serializar y devolver
+        serializer = FacturaListSerializer(queryset, many=True)
+        return Response(serializer.data)
     
     @action(detail=False, methods=['get'])
     def reporte_financiero(self, request):

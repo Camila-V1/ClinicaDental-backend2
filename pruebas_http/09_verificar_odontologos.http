@@ -1,0 +1,18 @@
+###
+# 🔍 Verificar Odontólogos Disponibles
+###
+
+### 1. Login como admin
+# @name loginAdmin
+POST http://clinica-demo.localhost:8000/api/token/
+Content-Type: application/json
+
+{
+  "email": "admin@clinica-demo.com",
+  "password": "admin123"
+}
+
+### 2. Listar todos los odontólogos
+GET http://clinica-demo.localhost:8000/api/usuarios/odontologos/
+Authorization: Bearer {{loginAdmin.response.body.access}}
+Host: clinica-demo.localhost

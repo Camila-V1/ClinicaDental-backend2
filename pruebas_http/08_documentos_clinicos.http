@@ -1,0 +1,29 @@
+### TEST: Endpoint de Documentos Anidado
+### Verificar que /api/historial/historiales/{id}/documentos/ funcione
+
+### 1. Login como odontólogo
+POST http://clinica-demo.localhost:8000/api/token/
+Content-Type: application/json
+
+{
+  "email": "odontologo@clinica-demo.com",
+  "password": "odontologo123"
+}
+
+###
+
+### 2. Obtener documentos del historial del paciente 105
+GET http://clinica-demo.localhost:8000/api/historial/historiales/105/documentos/
+Authorization: Bearer {{access_token}}
+
+###
+
+### 3. Filtrar documentos por tipo (RADIOGRAFIA)
+GET http://clinica-demo.localhost:8000/api/historial/historiales/105/documentos/?tipo=RADIOGRAFIA
+Authorization: Bearer {{access_token}}
+
+###
+
+### 4. Obtener historial completo (debe incluir documentos)
+GET http://clinica-demo.localhost:8000/api/historial/historiales/105/
+Authorization: Bearer {{access_token}}

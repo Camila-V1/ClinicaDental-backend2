@@ -6,19 +6,90 @@ from .models import HistorialClinico, EpisodioAtencion, Odontograma, DocumentoCl
 class DocumentoClinicoSerializer(serializers.ModelSerializer):
     """Serializer para documentos clínicos."""
     
+    # Campo opcional para información del episodio vinculado
+    episodio_info = serializers.SerializerMethodField(read_only=True)
+    
+    # Campos calculados para el frontend
+    nombre_archivo = serializers.SerializerMethodField(read_only=True)
+    tamano_bytes = serializers.SerializerMethodField(read_only=True)
+    
     class Meta:
         model = DocumentoClinico
-        fields = ('id', 'descripcion', 'archivo', 'tipo_documento', 'creado')
-        read_only_fields = ('id', 'creado')
+        fields = (
+            'id', 'historial_clinico', 'tipo_documento', 'archivo', 
+            'descripcion', 'episodio', 'episodio_info', 'creado',
+            'nombre_archivo', 'tamano_bytes'
+        )
+        read_only_fields = ('id', 'creado', 'episodio_info', 'nombre_archivo', 'tamano_bytes')
+    
+    def get_episodio_info(self, obj):
+        """Retorna información básica del episodio si está vinculado."""
+        if obj.episodio:
+            return {
+                'id': obj.episodio.id,
+                'fecha': obj.episodio.fecha_atencion.isoformat(),
+                'motivo': obj.episodio.motivo_consulta
+            }
+        return None
+    
+    def get_nombre_archivo(self, obj):
+        """Extrae el nombre del archivo desde la URL."""
+        import os
+        if obj.archivo:
+            return os.path.basename(obj.archivo.name)
+        return None
+    
+    def get_tamano_bytes(self, obj):
+        """Retorna el tamaño del archivo en bytes."""
+        if obj.archivo:
+            try:
+                return obj.archivo.size
+            except:
+                return None
+        return None
 
 
 class OdontogramaSerializer(serializers.ModelSerializer):
     """Serializer para odontogramas."""
     
+    # Campos calculados para el frontend
+    total_dientes_registrados = serializers.SerializerMethodField(read_only=True)
+    resumen_estados = serializers.SerializerMethodField(read_only=True)
+    paciente_info = serializers.SerializerMethodField(read_only=True)
+    
     class Meta:
         model = Odontograma
-        fields = ('id', 'fecha_snapshot', 'estado_piezas', 'notas')
-        read_only_fields = ('id', 'fecha_snapshot')
+        fields = (
+            'id', 'historial_clinico', 'fecha_snapshot', 'estado_piezas', 'notas',
+            'total_dientes_registrados', 'resumen_estados', 'paciente_info'
+        )
+        read_only_fields = ('id', 'fecha_snapshot', 'total_dientes_registrados', 'resumen_estados', 'paciente_info')
+    
+    def get_total_dientes_registrados(self, obj):
+        """Cuenta cuántas piezas dentales tienen información registrada."""
+        if obj.estado_piezas:
+            return len(obj.estado_piezas)
+        return 0
+    
+    def get_resumen_estados(self, obj):
+        """Genera un resumen de estados de las piezas dentales."""
+        if not obj.estado_piezas:
+            return {}
+        
+        resumen = {}
+        for pieza, datos in obj.estado_piezas.items():
+            estado = datos.get('estado', 'sin_datos')
+            resumen[estado] = resumen.get(estado, 0) + 1
+        
+        return resumen
+    
+    def get_paciente_info(self, obj):
+        """Información básica del paciente para mostrar en listas."""
+        return {
+            'id': obj.historial_clinico.paciente.pk,
+            'nombre': obj.historial_clinico.paciente.usuario.full_name,
+            'email': obj.historial_clinico.paciente.usuario.email
+        }
 
 
 class EpisodioAtencionSerializer(serializers.ModelSerializer):
@@ -142,7 +213,7 @@ class EpisodioAtencionCreateSerializer(serializers.ModelSerializer):
         if data.get('item_plan_tratamiento'):
             item_plan = data['item_plan_tratamiento']
             historial_paciente = data['historial_clinico'].paciente
-            plan_paciente = item_plan.plan_tratamiento.paciente
+            plan_paciente = item_plan.plan.paciente  # ✅ Corregido: plan, no plan_tratamiento
             
             if historial_paciente != plan_paciente:
                 raise serializers.ValidationError(

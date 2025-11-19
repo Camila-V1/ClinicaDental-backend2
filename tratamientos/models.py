@@ -380,12 +380,14 @@ class PlanDeTratamiento(models.Model):
     
     # Estados del plan
     class EstadoPlan(models.TextChoices):
-        PROPUESTO = 'PROPUESTO', 'Propuesto'
-        PRESENTADO = 'PRESENTADO', 'Presentado al paciente'
-        ACEPTADO = 'ACEPTADO', 'Aceptado por el paciente'
-        EN_PROGRESO = 'EN_PROGRESO', 'En progreso'
-        COMPLETADO = 'COMPLETADO', 'Completado'
-        CANCELADO = 'CANCELADO', 'Cancelado'
+        PROPUESTO = 'propuesto', 'Propuesto'
+        PRESENTADO = 'presentado', 'Presentado al paciente'
+        ACEPTADO = 'aceptado', 'Aceptado por el paciente'
+        APROBADO = 'aprobado', 'Aprobado por el paciente'  # Alias de ACEPTADO
+        RECHAZADO = 'rechazado', 'Rechazado por el paciente'
+        EN_PROGRESO = 'en_progreso', 'En progreso'
+        COMPLETADO = 'completado', 'Completado'
+        CANCELADO = 'cancelado', 'Cancelado'
     
     estado = models.CharField(
         max_length=20,

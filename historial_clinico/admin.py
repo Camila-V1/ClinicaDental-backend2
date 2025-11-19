@@ -153,7 +153,7 @@ class OdontogramaAdmin(admin.ModelAdmin):
 
 @admin.register(DocumentoClinico)
 class DocumentoClinicoAdmin(admin.ModelAdmin):
-    list_display = ('historial_clinico', 'descripcion', 'tipo_documento', 'tiene_archivo', 'creado')
+    list_display = ('historial_clinico', 'episodio', 'descripcion', 'tipo_documento', 'tiene_archivo', 'creado')
     list_filter = ('tipo_documento', 'creado')
     search_fields = (
         'historial_clinico__paciente__usuario__email', 
@@ -161,12 +161,12 @@ class DocumentoClinicoAdmin(admin.ModelAdmin):
         'historial_clinico__paciente__usuario__apellido',
         'descripcion'
     )
-    autocomplete_fields = ['historial_clinico']
+    autocomplete_fields = ['historial_clinico', 'episodio']
     date_hierarchy = 'creado'
     
     fieldsets = (
         ('Información Básica', {
-            'fields': ('historial_clinico', 'descripcion', 'tipo_documento')
+            'fields': ('historial_clinico', 'episodio', 'descripcion', 'tipo_documento')
         }),
         ('Archivo', {
             'fields': ('archivo',)
