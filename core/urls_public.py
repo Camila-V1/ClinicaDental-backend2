@@ -184,21 +184,14 @@ class PublicAdminSite(AdminSite):
 # Instantiate the public admin site
 public_admin = PublicAdminSite(name='public_admin')
 
-# Register public models (tenants) with basic ModelAdmin (not custom admins)
-from tenants.models import Clinica, Domain
-from django.contrib.admin import ModelAdmin
+# Register public models with enhanced admin classes
+from tenants.models import Clinica, Domain, PlanSuscripcion, SolicitudRegistro
+from tenants.admin import ClinicaAdmin, DomainAdmin, PlanSuscripcionAdmin, SolicitudRegistroAdmin
 
-# Use basic ModelAdmin to avoid any permission checks
-class SimpleClinicaAdmin(ModelAdmin):
-    list_display = ['nombre', 'schema_name', 'activo']
-    search_fields = ['nombre', 'schema_name']
-
-class SimpleDomainAdmin(ModelAdmin):
-    list_display = ['domain', 'tenant', 'is_primary']
-    search_fields = ['domain']
-
-public_admin.register(Clinica, SimpleClinicaAdmin)
-public_admin.register(Domain, SimpleDomainAdmin)
+public_admin.register(Clinica, ClinicaAdmin)
+public_admin.register(Domain, DomainAdmin)
+public_admin.register(PlanSuscripcion, PlanSuscripcionAdmin)
+public_admin.register(SolicitudRegistro, SolicitudRegistroAdmin)
 
 
 urlpatterns = [

@@ -1,6 +1,7 @@
 # reportes/serializers.py
 
 from rest_framework import serializers
+from .models import BitacoraAccion
 
 class ReporteSimpleSerializer(serializers.Serializer):
     """
@@ -95,3 +96,38 @@ class ReporteEstadisticasGeneralesSerializer(serializers.Serializer):
     ingresos_mes_actual = serializers.DecimalField(max_digits=12, decimal_places=2)
     promedio_factura = serializers.DecimalField(max_digits=10, decimal_places=2)
     tasa_ocupacion = serializers.DecimalField(max_digits=5, decimal_places=2)  # Porcentaje
+
+
+class BitacoraSerializer(serializers.ModelSerializer):
+    """
+    Serializer para registros de bitácora/auditoría (CU39).
+    
+    Muestra quién hizo qué, cuándo y desde dónde.
+    """
+    usuario_nombre = serializers.CharField(source='usuario.full_name', read_only=True)
+    accion_display = serializers.CharField(source='get_accion_display', read_only=True)
+    modelo = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = BitacoraAccion
+        fields = [
+            'id',
+            'usuario',
+            'usuario_nombre',
+            'accion',
+            'accion_display',
+            'modelo',
+            'object_id',
+            'descripcion',
+            'detalles',
+            'fecha_hora',
+            'ip_address',
+            'user_agent'
+        ]
+        read_only_fields = ['id', 'fecha_hora']
+    
+    def get_modelo(self, obj):
+        """Devuelve el nombre del modelo afectado"""
+        if obj.content_type:
+            return obj.content_type.model
+        return None

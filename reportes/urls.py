@@ -2,11 +2,12 @@
 
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import ReportesViewSet
+from .views import ReportesViewSet, BitacoraViewSet
 
 # Configurar router para API REST de reportes
 router = DefaultRouter()
-router.register(r'', ReportesViewSet, basename='reportes')
+router.register(r'reportes', ReportesViewSet, basename='reportes')
+router.register(r'bitacora', BitacoraViewSet, basename='bitacora')
 
 urlpatterns = [
     # API REST endpoints
@@ -14,65 +15,42 @@ urlpatterns = [
 ]
 
 """
-Endpoints de Reportes Disponibles (CU38):
+Endpoints de Reportes Disponibles (CU37, CU38, CU39):
 
-DASHBOARD Y KPIs:
-- GET /api/reportes/dashboard-kpis/           - KPIs principales del dashboard
-- GET /api/reportes/estadisticas-generales/  - Estadísticas completas del sistema
+REPORTES BÁSICOS CON EXPORTACIÓN PDF/EXCEL:
+- GET /api/reportes/reportes/dashboard-kpis/           - KPIs principales del dashboard
+- GET /api/reportes/reportes/estadisticas-generales/  - Estadísticas completas del sistema
+- GET /api/reportes/reportes/tendencia-citas/?dias=15        - Gráfico de citas por día
+- GET /api/reportes/reportes/top-procedimientos/?limite=5    - Procedimientos más realizados
+- GET /api/reportes/reportes/ocupacion-odontologos/?mes=2025-11  - Tasa ocupación por doctor
+- GET /api/reportes/reportes/reporte-financiero/?periodo=2025-11  - Resumen financiero detallado
 
-TENDENCIAS Y GRÁFICOS:
-- GET /api/reportes/tendencia-citas/?dias=15        - Gráfico de citas por día
-- GET /api/reportes/top-procedimientos/?limite=5    - Procedimientos más realizados
-- GET /api/reportes/ocupacion-odontologos/?mes=2025-11  - Tasa ocupación por doctor
+NUEVOS REPORTES DINÁMICOS (CU37 - Personalización Total):
+- GET /api/reportes/reportes/reporte-pacientes/?activo=true&desde=2025-01-01&formato=excel
+- GET /api/reportes/reportes/reporte-tratamientos/?estado=EN_PROGRESO&formato=pdf
+- GET /api/reportes/reportes/reporte-inventario/?stock_bajo=true&categoria=FARMACO&formato=excel
+- GET /api/reportes/reportes/reporte-citas-odontologo/?mes=2025-11&estado=COMPLETADA&formato=pdf
+- GET /api/reportes/reportes/reporte-ingresos-diarios/?desde=2025-11-01&hasta=2025-11-30&formato=excel
+- GET /api/reportes/reportes/reporte-servicios-populares/?limite=20&formato=pdf
 
-REPORTES FINANCIEROS:
-- GET /api/reportes/reporte-financiero/?periodo=2025-11  - Resumen financiero detallado
+BITÁCORA/AUDITORÍA (CU39 - Implementado):
+- GET /api/reportes/bitacora/ - Lista todas las acciones registradas
+- GET /api/reportes/bitacora/?usuario=1&accion=CREAR&desde=2025-01-01&hasta=2025-12-31
+  Filtros: usuario, accion, desde, hasta, modelo, ip, descripcion
+- GET /api/reportes/bitacora/estadisticas/?dias=7 - Estadísticas de actividad
+- GET /api/reportes/bitacora/exportar/?formato=excel&desde=2025-01-01 - Exportar bitácora
 
-EJEMPLOS DE USO:
+FORMATOS DE EXPORTACIÓN (CU38 - 100% Implementado):
+TODOS los reportes soportan exportación añadiendo el parámetro ?formato=
+- formato=json (por defecto)
+- formato=pdf (archivo PDF con formato profesional)
+- formato=excel (archivo XLSX con formato profesional)
 
-1. Dashboard Principal:
-   GET /api/reportes/dashboard-kpis/
-   Respuesta: [
-     {"etiqueta": "Pacientes Activos", "valor": 150},
-     {"etiqueta": "Citas Hoy", "valor": 8},
-     {"etiqueta": "Ingresos Este Mes", "valor": 25000.00},
-     {"etiqueta": "Saldo Pendiente", "valor": 5000.00}
-   ]
-
-2. Gráfico de Tendencias:
-   GET /api/reportes/tendencia-citas/?dias=7
-   Respuesta: [
-     {"fecha": "2025-11-01", "cantidad": 5},
-     {"fecha": "2025-11-02", "cantidad": 8},
-     {"fecha": "2025-11-03", "cantidad": 3}
-   ]
-
-3. Top Procedimientos:
-   GET /api/reportes/top-procedimientos/?limite=3
-   Respuesta: [
-     {"etiqueta": "Limpieza Dental", "valor": 25},
-     {"etiqueta": "Endodoncia", "valor": 15},
-     {"etiqueta": "Restauración", "valor": 12}
-   ]
-
-4. Reporte Financiero:
-   GET /api/reportes/reporte-financiero/?periodo=2025-11
-   Respuesta: {
-     "periodo": "2025-11",
-     "total_facturado": 30000.00,
-     "total_pagado": 25000.00,
-     "saldo_pendiente": 5000.00,
-     "numero_facturas": 45
-   }
+Ejemplos:
+  GET /api/reportes/reportes/dashboard-kpis/?formato=pdf
+  GET /api/reportes/reportes/reporte-pacientes/?activo=true&formato=excel
 
 AUTENTICACIÓN:
 Todos los endpoints requieren autenticación JWT.
 Incluir header: Authorization: Bearer <token>
-
-PERMISOS:
-- Todos los usuarios autenticados pueden ver reportes
-- Los datos se filtran automáticamente según el tipo de usuario:
-  - Admin: Ve todos los datos del tenant
-  - Odontólogo: Ve datos relacionados con sus pacientes
-  - Paciente: Ve solo sus datos personales (limitado)
 """
