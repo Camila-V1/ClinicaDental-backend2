@@ -80,18 +80,19 @@ for domain_name in public_domains:
 # ============================================================================
 # 2. CREAR/VERIFICAR TENANT DE DEMO
 # ============================================================================
-if not Clinica.objects.filter(dominio='clinica-demo').exists():
+if not Clinica.objects.filter(schema_name='clinica_demo').exists():
     print("\n      ✓ Creando tenant clinica-demo...")
     tenant = Clinica.objects.create(
         schema_name='clinica_demo',
         nombre='Clínica Demo',
-        dominio='clinica-demo',
+        dominio='clinicademo1',
         activo=True
     )
     
     # Crear dominios para el tenant de demo
     demo_domains = [
         'clinica-demo.localhost',
+        'clinicademo1.dentaabcxy.store',
         f'clinica-demo.{render_hostname}' if render_hostname != 'localhost' else None,
     ]
     
@@ -100,13 +101,23 @@ if not Clinica.objects.filter(dominio='clinica-demo').exists():
             Domain.objects.create(
                 domain=domain_name,
                 tenant=tenant,
-                is_primary=(domain_name == 'clinica-demo.localhost')
+                is_primary=(domain_name == 'clinicademo1.dentaabcxy.store')
             )
             print(f"      ✓ Dominio demo creado: {domain_name}")
     
     print(f"      ✓ Tenant creado: {tenant.nombre}")
 else:
-    print("\n      ✓ Tenant clinica-demo ya existe")
+    tenant = Clinica.objects.get(schema_name='clinica_demo')
+    print(f"\n      ✓ Tenant clinica_demo ya existe (dominio: {tenant.dominio})")
+    
+    # Verificar/agregar dominio del subdominio si no existe
+    if not Domain.objects.filter(domain='clinicademo1.dentaabcxy.store').exists():
+        Domain.objects.create(
+            domain='clinicademo1.dentaabcxy.store',
+            tenant=tenant,
+            is_primary=True
+        )
+        print(f"      ✓ Dominio agregado: clinicademo1.dentaabcxy.store")
 
 print("\n      ✅ Tenants configurados correctamente")
 PYTHON_SCRIPT
