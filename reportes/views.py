@@ -141,7 +141,7 @@ class ReportesViewSet(viewsets.ViewSet):
             estado__in=['CONFIRMADA', 'COMPLETADA']
         ).count()
         
-        # 3. Ingresos del Mes (Facturas Pagadas este mes)
+        # 3. Ingresos del Mes (Pagos completados este mes)
         mes_actual = hoy.month
         anio_actual = hoy.year
         ingresos_mes = Pago.objects.filter(
@@ -150,9 +150,11 @@ class ReportesViewSet(viewsets.ViewSet):
             estado_pago='COMPLETADO'
         ).aggregate(total=Sum('monto_pagado'))['total'] or Decimal('0.00')
         
-        # 4. Saldo Pendiente (Facturas pendientes menos lo ya pagado)
+        # 4. Saldo Pendiente (Total de facturas pendientes)
         facturas_pendientes = Factura.objects.filter(estado='PENDIENTE')
-        saldo_pendiente = sum(f.saldo_pendiente for f in facturas_pendientes)
+        saldo_pendiente = Decimal('0.00')
+        for factura in facturas_pendientes:
+            saldo_pendiente += factura.saldo_pendiente
 
         data = [
             {"etiqueta": "Pacientes Activos", "valor": total_pacientes},
@@ -433,15 +435,15 @@ class ReportesViewSet(viewsets.ViewSet):
                 estado__in=['CONFIRMADA', 'COMPLETADA']
             ).count()
             
-            # Calcular tasa de ocupación
-            tasa_ocupacion = (
-                (citas_efectivas / total_citas * 100) 
-                if total_citas > 0 else 0
-            )
+            # Calcular tasa de ocupación (asegurar que siempre sea número)
+            if total_citas > 0:
+                tasa_ocupacion = round((citas_efectivas / total_citas * 100), 2)
+            else:
+                tasa_ocupacion = 0.0
             
             data.append({
                 'etiqueta': odontologo.usuario.full_name,
-                'valor': round(tasa_ocupacion, 2)
+                'valor': float(tasa_ocupacion)  # Asegurar que sea float
             })
         
         # Ordenar por tasa de ocupación descendente
