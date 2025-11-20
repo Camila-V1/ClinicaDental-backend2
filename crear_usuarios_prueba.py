@@ -11,6 +11,7 @@ django.setup()
 
 from django_tenants.utils import schema_context, get_tenant_model
 from django.contrib.auth import get_user_model
+from usuarios.models import PerfilPaciente, PerfilOdontologo
 
 User = get_user_model()
 Tenant = get_tenant_model()
@@ -76,7 +77,7 @@ def crear_usuarios():
         
         # 2. ODONTÓLOGO
         print("\n" + "-"*60)
-        print("🦷 VERIFICANDO ODONTÓLOGO")
+        print("🦷 CREANDO ODONTÓLOGO")
         print("-"*60)
         
         odontologo_email = "odontologo@clinica-demo.com"
@@ -101,6 +102,19 @@ def crear_usuarios():
             )
             print(f"✅ Odontólogo creado: {odontologo_email}")
         
+        # Crear perfil de odontólogo si no existe
+        perfil_odontologo, created = PerfilOdontologo.objects.get_or_create(
+            usuario=odontologo,
+            defaults={
+                'especialidad': 'Odontología General',
+                'numero_registro': 'REG-001'
+            }
+        )
+        if created:
+            print(f"   ➕ Perfil de odontólogo creado")
+        else:
+            print(f"   ✓ Perfil de odontólogo ya existía")
+        
         usuarios_creados.append({
             'tipo': 'ODONTÓLOGO',
             'email': odontologo.email,
@@ -110,7 +124,7 @@ def crear_usuarios():
         
         # 3. PACIENTE
         print("\n" + "-"*60)
-        print("🧑‍⚕️ VERIFICANDO PACIENTE")
+        print("🧑‍⚕️ CREANDO PACIENTE")
         print("-"*60)
         
         paciente_email = "paciente@clinica-demo.com"
@@ -134,6 +148,21 @@ def crear_usuarios():
                 is_active=True
             )
             print(f"✅ Paciente creado: {paciente_email}")
+        
+        # Crear perfil de paciente si no existe
+        perfil_paciente, created = PerfilPaciente.objects.get_or_create(
+            usuario=paciente,
+            defaults={
+                'fecha_nacimiento': '1990-01-15',
+                'telefono': '71234567',
+                'direccion': 'Calle Principal #123',
+                'grupo_sanguineo': 'O+'
+            }
+        )
+        if created:
+            print(f"   ➕ Perfil de paciente creado")
+        else:
+            print(f"   ✓ Perfil de paciente ya existía")
         
         usuarios_creados.append({
             'tipo': 'PACIENTE',
