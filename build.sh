@@ -132,6 +132,10 @@ python manage.py migrate_schemas --schema=clinica_demo
 echo ""
 echo "🌱 Poblando datos iniciales del sistema..."
 
+# Poblar planes de suscripción (NUEVO - Sistema Multi-Tenant)
+echo "   → Creando planes de suscripción..."
+python poblar_planes_suscripcion.py
+
 # Ejecutar el script de población completa
 python poblar_sistema_completo.py
 
