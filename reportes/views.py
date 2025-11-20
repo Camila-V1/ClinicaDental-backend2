@@ -127,6 +127,8 @@ class ReportesViewSet(viewsets.ViewSet):
         GET /api/reportes/dashboard-kpis/?formato=excel
         
         Respuesta: Lista de objetos con etiqueta y valor
+        
+        VERSIÓN: 2.0 - Con manejo robusto de errores
         """
         try:
             hoy = timezone.now().date()
