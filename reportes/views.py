@@ -128,40 +128,58 @@ class ReportesViewSet(viewsets.ViewSet):
         
         Respuesta: Lista de objetos con etiqueta y valor
         """
-        hoy = timezone.now().date()
-        
-        # 1. Total Pacientes Activos
-        total_pacientes = PerfilPaciente.objects.filter(
-            usuario__is_active=True
-        ).count()
-        
-        # 2. Citas del día (confirmadas y completadas)
-        citas_hoy = Cita.objects.filter(
-            fecha_hora__date=hoy,
-            estado__in=['CONFIRMADA', 'COMPLETADA']
-        ).count()
-        
-        # 3. Ingresos del Mes (Pagos completados este mes)
-        mes_actual = hoy.month
-        anio_actual = hoy.year
-        ingresos_mes = Pago.objects.filter(
-            fecha_pago__year=anio_actual,
-            fecha_pago__month=mes_actual,
-            estado_pago='COMPLETADO'
-        ).aggregate(total=Sum('monto_pagado'))['total'] or Decimal('0.00')
-        
-        # 4. Saldo Pendiente (Total de facturas pendientes)
-        facturas_pendientes = Factura.objects.filter(estado='PENDIENTE')
-        saldo_pendiente = Decimal('0.00')
-        for factura in facturas_pendientes:
-            saldo_pendiente += factura.saldo_pendiente
+        try:
+            hoy = timezone.now().date()
+            
+            # 1. Total Pacientes Activos
+            total_pacientes = PerfilPaciente.objects.filter(
+                usuario__is_active=True
+            ).count()
+            
+            # 2. Citas del día (confirmadas y completadas)
+            citas_hoy = Cita.objects.filter(
+                fecha_hora__date=hoy,
+                estado__in=['CONFIRMADA', 'COMPLETADA']
+            ).count()
+            
+            # 3. Ingresos del Mes (Pagos completados este mes)
+            mes_actual = hoy.month
+            anio_actual = hoy.year
+            ingresos_mes = Pago.objects.filter(
+                fecha_pago__year=anio_actual,
+                fecha_pago__month=mes_actual,
+                estado_pago='COMPLETADO'
+            ).aggregate(total=Sum('monto_pagado'))['total'] or Decimal('0.00')
+            
+            # 4. Saldo Pendiente (Total de facturas pendientes)
+            facturas_pendientes = Factura.objects.filter(estado='PENDIENTE')
+            saldo_pendiente = Decimal('0.00')
+            for factura in facturas_pendientes:
+                try:
+                    saldo_pendiente += factura.saldo_pendiente
+                except Exception as e:
+                    # Si una factura tiene problemas, continuar con las demás
+                    continue
 
-        data = [
-            {"etiqueta": "Pacientes Activos", "valor": total_pacientes},
-            {"etiqueta": "Citas Hoy", "valor": citas_hoy},
-            {"etiqueta": "Ingresos Este Mes", "valor": format_currency(ingresos_mes)},
-            {"etiqueta": "Saldo Pendiente", "valor": format_currency(saldo_pendiente)},
-        ]
+            data = [
+                {"etiqueta": "Pacientes Activos", "valor": total_pacientes},
+                {"etiqueta": "Citas Hoy", "valor": citas_hoy},
+                {"etiqueta": "Ingresos Este Mes", "valor": format_currency(ingresos_mes)},
+                {"etiqueta": "Saldo Pendiente", "valor": format_currency(saldo_pendiente)},
+            ]
+        except Exception as e:
+            # En caso de cualquier error, retornar KPIs en cero con mensaje de error en logs
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error en dashboard_kpis: {str(e)}", exc_info=True)
+            
+            # Retornar datos por defecto
+            data = [
+                {"etiqueta": "Pacientes Activos", "valor": 0},
+                {"etiqueta": "Citas Hoy", "valor": 0},
+                {"etiqueta": "Ingresos Este Mes", "valor": "Bs. 0.00"},
+                {"etiqueta": "Saldo Pendiente", "valor": "Bs. 0.00"},
+            ]
         
         # Exportar si se solicita
         export_response = self._export_report(
