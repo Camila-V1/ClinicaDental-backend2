@@ -166,8 +166,8 @@ class ReportesViewSet(viewsets.ViewSet):
             data = [
                 {"etiqueta": "Pacientes Activos", "valor": total_pacientes},
                 {"etiqueta": "Citas Hoy", "valor": citas_hoy},
-                {"etiqueta": "Ingresos Este Mes", "valor": format_currency(ingresos_mes)},
-                {"etiqueta": "Saldo Pendiente", "valor": format_currency(saldo_pendiente)},
+                {"etiqueta": "Ingresos Este Mes", "valor": ingresos_mes},
+                {"etiqueta": "Saldo Pendiente", "valor": saldo_pendiente},
             ]
         except Exception as e:
             # En caso de cualquier error, retornar KPIs en cero con mensaje de error en logs
@@ -179,8 +179,8 @@ class ReportesViewSet(viewsets.ViewSet):
             data = [
                 {"etiqueta": "Pacientes Activos", "valor": 0},
                 {"etiqueta": "Citas Hoy", "valor": 0},
-                {"etiqueta": "Ingresos Este Mes", "valor": "Bs. 0.00"},
-                {"etiqueta": "Saldo Pendiente", "valor": "Bs. 0.00"},
+                {"etiqueta": "Ingresos Este Mes", "valor": Decimal('0.00')},
+                {"etiqueta": "Saldo Pendiente", "valor": Decimal('0.00')},
             ]
         
         # Exportar si se solicita
