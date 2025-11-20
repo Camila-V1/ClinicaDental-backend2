@@ -143,6 +143,10 @@ python poblar_sistema_completo.py
 echo "   → Creando/actualizando usuarios de prueba..."
 python crear_usuarios_prueba.py
 
+# REPARACIÓN DE EMERGENCIA: Asegurar que todos los usuarios tengan perfiles
+echo "   → Verificando y reparando perfiles de usuarios..."
+python manage.py fix_perfiles
+
 echo ""
 echo "✅ Datos iniciales creados correctamente:"
 echo "   - Tenant: clinica-demo"
