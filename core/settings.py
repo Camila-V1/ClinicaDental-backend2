@@ -241,7 +241,7 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
 # Permitir envío de cookies y credenciales (necesario para JWT)
 CORS_ALLOW_CREDENTIALS = True
 
-# Permitir headers específicos (necesarios para JWT)
+# Permitir headers específicos (necesarios para JWT y multi-tenant)
 CORS_ALLOW_HEADERS = [
     'accept',
     'accept-encoding',
@@ -252,6 +252,7 @@ CORS_ALLOW_HEADERS = [
     'user-agent',
     'x-csrftoken',
     'x-requested-with',
+    'x-tenant-id',  # Para multi-tenant con subdominios
 ]
 
 # --- Configuración de CSRF ---
