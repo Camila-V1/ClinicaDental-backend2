@@ -192,27 +192,154 @@ El sistema ha sido **completamente verificado** y cumple con todos los Casos de 
 
 ---
 
-### ✅ **7. MÓDULO REPORTES (CU37-CU39)**
-**Estado:** COMPLETO | **Casos de Uso:** 3/3
+### ✅ **7. MÓDULO REPORTES Y BITÁCORA (CU37-CU39)**
+**Estado:** COMPLETO ✨ | **Casos de Uso:** 3/3 | **Actualizado: 20/11/2025**
 
 | CU | Funcionalidad | Endpoint | Estado |
 |----|--------------|----------|--------|
-| CU37 | Reporte citas | `GET /tenant/api/reportes/citas/` | ✅ |
-| CU38 | Reporte ingresos | `GET /tenant/api/reportes/ingresos/` | ✅ |
-| CU39 | Reporte pacientes | `GET /tenant/api/reportes/pacientes/` | ✅ |
+| CU37 | Generar reportes dinámicos | `GET /tenant/api/reportes/reportes/*` | ✅ MEJORADO |
+| CU38 | Exportar PDF/Excel | `GET /tenant/api/reportes/reportes/*?formato=pdf\|excel` | ✅ NUEVO |
+| CU39 | Bitácora/Auditoría | `GET /tenant/api/reportes/bitacora/` | ✅ NUEVO |
 
 **Características Implementadas:**
-- Reportes con filtrado por fecha_inicio y fecha_fin
-- Reporte de citas: total, por estado, por odontólogo
-- Reporte de ingresos: total facturado, pagado, pendiente, facturas por estado
-- Reporte de pacientes: total, nuevos en período, con citas, sin citas
-- Uso de agregaciones de Django (Count, Sum)
-- Permisos de administrador para reportes
+
+#### 📊 **CU37 - Reportes Dinámicos Completos (13 Endpoints)**
+1. **KPIs Dashboard:** `GET /api/reportes/reportes/dashboard-kpis/`
+   - Pacientes activos, citas hoy, ingresos mes, saldo pendiente
+
+2. **Estadísticas Generales:** `GET /api/reportes/reportes/estadisticas-generales/`
+   - Métricas completas del sistema
+
+3. **Tendencia de Citas:** `GET /api/reportes/reportes/tendencia-citas/?dias=15`
+   - Gráfico de evolución de citas
+
+4. **Top Procedimientos:** `GET /api/reportes/reportes/top-procedimientos/?limite=5`
+   - Servicios más realizados
+
+5. **Ocupación Odontólogos:** `GET /api/reportes/reportes/ocupacion-odontologos/?mes=2025-11`
+   - Tasa de ocupación por doctor
+
+6. **Reporte Financiero:** `GET /api/reportes/reportes/reporte-financiero/?periodo=2025-11`
+   - Facturado, pagado, pendiente por período
+
+7. **Reporte Pacientes:** `GET /api/reportes/reportes/reporte-pacientes/?activo=true&desde=2025-01-01`
+   - Lista detallada con estadísticas
+
+8. **Reporte Tratamientos:** `GET /api/reportes/reportes/reporte-tratamientos/?estado=EN_PROGRESO`
+   - Estado de todos los planes de tratamiento
+
+9. **Reporte Inventario:** `GET /api/reportes/reportes/reporte-inventario/?stock_bajo=true`
+   - Estado de insumos y materiales
+
+10. **Citas por Odontólogo:** `GET /api/reportes/reportes/reporte-citas-odontologo/?mes=2025-11`
+    - Análisis por profesional
+
+11. **Ingresos Diarios:** `GET /api/reportes/reportes/reporte-ingresos-diarios/?desde=2025-11-01&hasta=2025-11-30`
+    - Flujo de caja día a día
+
+12. **Servicios Populares:** `GET /api/reportes/reportes/reporte-servicios-populares/?limite=20`
+    - Ranking de servicios más demandados
+
+13. **Reporte Personalizable:** Todos los endpoints aceptan múltiples filtros combinados
+
+**Filtros Dinámicos Disponibles:**
+- `?desde=YYYY-MM-DD` - Fecha inicio
+- `?hasta=YYYY-MM-DD` - Fecha fin
+- `?mes=YYYY-MM` - Mes específico
+- `?periodo=YYYY-MM` o `YYYY` - Período mensual/anual
+- `?dias=N` - Últimos N días
+- `?limite=N` - Límite de resultados
+- `?activo=true/false` - Filtrar por estado
+- `?estado=VALOR` - Filtrar por estado específico
+- `?stock_bajo=true` - Solo items con stock bajo
+- `?categoria=ID` - Filtrar por categoría
+
+#### 📄 **CU38 - Exportación PDF y Excel (100% Implementado)**
+- **Formato PDF:** `?formato=pdf` - Documentos profesionales con logo y tablas
+- **Formato Excel:** `?formato=excel` - Hojas de cálculo con formato y estilos
+- **Generadores Profesionales:**
+  - `PDFReportGenerator` - ReportLab con diseño corporativo
+  - `ExcelReportGenerator` - OpenPyXL con colores y bordes
+- **Todos los 13 reportes soportan exportación**
+- **Nombres de archivo automáticos** con fecha y hora
+
+Ejemplo:
+```bash
+GET /api/reportes/reportes/reporte-pacientes/?activo=true&formato=excel
+# Descarga: Reporte_de_Pacientes_20251120_143000.xlsx
+
+GET /api/reportes/reportes/dashboard-kpis/?formato=pdf
+# Descarga: KPIs_del_Dashboard_20251120_143000.pdf
+```
+
+#### 🔍 **CU39 - Bitácora de Auditoría (Sistema Completo)**
+**Modelo:** `BitacoraAccion` con 9 tipos de acciones
+
+**Endpoints:**
+1. **Listar Bitácora:** `GET /api/reportes/bitacora/`
+   - Paginación automática
+   - Búsqueda full-text en descripción
+
+2. **Filtros Avanzados:** `GET /api/reportes/bitacora/?usuario=1&accion=CREAR&desde=2025-01-01&hasta=2025-12-31`
+   - `usuario` - ID del usuario
+   - `accion` - CREAR/EDITAR/ELIMINAR/VER/LOGIN/LOGOUT/EXPORTAR/IMPRIMIR/OTRO
+   - `desde/hasta` - Rango de fechas
+   - `modelo` - Tipo de modelo afectado
+   - `ip` - Dirección IP
+   - `descripcion` - Búsqueda en texto
+
+3. **Estadísticas:** `GET /api/reportes/bitacora/estadisticas/?dias=7`
+   - Acciones por tipo
+   - Usuarios más activos
+   - Actividad diaria
+
+4. **Exportar Bitácora:** `GET /api/reportes/bitacora/exportar/?formato=excel&desde=2025-01-01`
+   - Exportación de registros de auditoría a PDF/Excel
+
+**Datos Registrados:**
+- Usuario que realizó la acción
+- Tipo de acción (CREAR, EDITAR, ELIMINAR, etc.)
+- Modelo afectado (usando ContentType)
+- ID del objeto modificado
+- Descripción detallada
+- Detalles adicionales (JSON)
+- Fecha y hora exacta
+- Dirección IP
+- User agent (navegador/dispositivo)
+
+**Método de Registro Simplificado:**
+```python
+from reportes.models import BitacoraAccion
+
+# Registrar cualquier acción
+BitacoraAccion.registrar(
+    usuario=request.user,
+    accion='CREAR',
+    descripcion='Creó nuevo paciente Juan Pérez',
+    content_object=paciente,
+    detalles={'email': 'juan@example.com'},
+    ip_address='192.168.1.1'
+)
+```
+
+**Panel de Administración:**
+- Vista de solo lectura (no se puede modificar/eliminar auditoría)
+- Filtros por fecha, usuario, acción, modelo
+- Búsqueda por descripción e IP
+- Exportación desde admin
 
 **Archivos Clave:**
-- `reportes/views.py` - Views con lógica de agregación
-- `reportes/urls.py` - Rutas de reportes
-- `reportes/serializers.py` - Serializers de datos agregados
+- `reportes/models.py` - BitacoraAccion con GenericForeignKey
+- `reportes/views.py` - ReportesViewSet (13 endpoints) + BitacoraViewSet
+- `reportes/serializers.py` - BitacoraSerializer
+- `reportes/utils.py` - PDFReportGenerator, ExcelReportGenerator
+- `reportes/admin.py` - BitacoraAccionAdmin (read-only)
+- `reportes/urls.py` - Rutas documentadas
+
+**Dependencias Instaladas:**
+- `reportlab==4.2.5` - Generación de PDFs
+- `openpyxl==3.1.5` - Generación de Excel
+- `python-dateutil==2.9.0` - Manejo de fechas
 
 ---
 
