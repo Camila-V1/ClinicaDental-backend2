@@ -139,12 +139,17 @@ python poblar_planes_suscripcion.py
 # Ejecutar el script de población completa
 python poblar_sistema_completo.py
 
+# Crear usuarios con credenciales actualizadas
+echo "   → Creando/actualizando usuarios de prueba..."
+python crear_usuarios_prueba.py
+
 echo ""
 echo "✅ Datos iniciales creados correctamente:"
 echo "   - Tenant: clinica-demo"
 echo "   - Admin: admin@clinica-demo.com / admin123"
-echo "   - Odontólogo: odontologo@clinica-demo.com / password123"
-echo "   - 5 Pacientes con datos completos"
+echo "   - Odontólogo: odontologo@clinica-demo.com / odontologo123"
+echo "   - Paciente: paciente@clinica-demo.com / paciente123"
+echo "   - 5 Pacientes adicionales con datos completos"
 echo "   - Servicios y tratamientos"
 echo "   - Inventario de insumos"
 echo "   - Citas, episodios, odontogramas"
@@ -172,7 +177,8 @@ echo "   📡 API Base: https://$RENDER_EXTERNAL_HOSTNAME/api/"
 echo ""
 echo "👥 CREDENCIALES DE ACCESO:"
 echo "   Admin: admin@clinica-demo.com / admin123"
-echo "   Odontólogo: odontologo@clinica-demo.com / password123"
+echo "   Odontólogo: odontologo@clinica-demo.com / odontologo123"
+echo "   Paciente: paciente@clinica-demo.com / paciente123"
 echo "   Paciente 1: paciente1@test.com / password123"
 echo ""
 echo "🎉 ¡El sistema está listo para usarse!"
