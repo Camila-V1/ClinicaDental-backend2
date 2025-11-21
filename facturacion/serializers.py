@@ -11,10 +11,7 @@ class PagoSerializer(serializers.ModelSerializer):
     paciente_nombre = serializers.CharField(source='paciente.usuario.full_name', read_only=True)
     paciente_email = serializers.EmailField(source='paciente.usuario.email', read_only=True)
     factura_numero = serializers.IntegerField(source='factura.id', read_only=True)
-    
-    # Convertir decimales a float para compatibilidad con frontend
-    factura_total = serializers.FloatField(source='factura.monto_total', read_only=True)
-    monto_pagado = serializers.FloatField()
+    factura_total = serializers.DecimalField(source='factura.monto_total', max_digits=10, decimal_places=2, read_only=True)
     
     class Meta:
         model = Pago
@@ -175,20 +172,15 @@ class FacturaListSerializer(serializers.ModelSerializer):
     """Serializer simplificado para listas de facturas."""
     
     paciente_nombre = serializers.CharField(source='paciente.usuario.full_name', read_only=True)
-    
-    # Convertir decimales a float para compatibilidad con frontend
-    saldo_pendiente = serializers.FloatField(read_only=True)
-    monto_total = serializers.FloatField(read_only=True)
-    monto_pagado = serializers.FloatField(read_only=True)
-    
+    saldo_pendiente = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     total_pagos = serializers.SerializerMethodField()
     
     # Campos adicionales para compatibilidad con frontend
     numero = serializers.IntegerField(source='id', read_only=True)
     fecha = serializers.DateTimeField(source='fecha_emision', read_only=True)
-    monto = serializers.FloatField(source='monto_total', read_only=True)
-    total = serializers.FloatField(source='monto_total', read_only=True)
-    saldo = serializers.FloatField(source='saldo_pendiente', read_only=True)
+    monto = serializers.DecimalField(source='monto_total', max_digits=10, decimal_places=2, read_only=True)
+    total = serializers.DecimalField(source='monto_total', max_digits=10, decimal_places=2, read_only=True)
+    saldo = serializers.DecimalField(source='saldo_pendiente', max_digits=10, decimal_places=2, read_only=True)
     descripcion = serializers.SerializerMethodField()
     estado_display = serializers.CharField(source='get_estado_display', read_only=True)
     
