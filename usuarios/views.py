@@ -142,17 +142,10 @@ def fix_odontologo(request):
 	Cambia tipo_usuario a ODONTOLOGO y lo activa.
 	PÚBLICO - No requiere autenticación (solo para corrección inicial)
 	"""
-	from django.views.decorators.csrf import csrf_exempt
-	from tratamientos.models import Especialidad
-	
 	try:
 		usuario = Usuario.objects.get(email='odontologo@clinica-demo.com')
 		
 		cambios = []
-		estado_anterior = {
-			'tipo_usuario': usuario.tipo_usuario,
-			'is_active': usuario.is_active
-		}
 		
 		if usuario.tipo_usuario != 'ODONTOLOGO':
 			usuario.tipo_usuario = 'ODONTOLOGO'
@@ -166,47 +159,29 @@ def fix_odontologo(request):
 			usuario.save()
 		
 		# Actualizar o crear perfil de odontólogo
-		perfil_actualizado = False
 		if hasattr(usuario, 'perfil_odontologo'):
 			perfil = usuario.perfil_odontologo
-			
-			# Buscar o crear especialidad "Odontología General"
-			especialidad, _ = Especialidad.objects.get_or_create(
-				nombre="Odontología General",
-				defaults={'descripcion': 'Especialidad general en odontología'}
-			)
-			
-			if not perfil.especialidad:
-				perfil.especialidad = especialidad
-				cambios.append("especialidad → Odontología General")
-				perfil_actualizado = True
 			
 			if not perfil.cedulaProfesional:
 				perfil.cedulaProfesional = "12345678"
 				cambios.append("cedulaProfesional → 12345678")
-				perfil_actualizado = True
+				perfil.save()
 			
 			if not perfil.experienciaProfesional:
 				perfil.experienciaProfesional = "5 años de experiencia en odontología general"
 				cambios.append("experienciaProfesional → Agregada")
-				perfil_actualizado = True
-			
-			if perfil_actualizado:
 				perfil.save()
 		else:
 			# Crear perfil si no existe
-			especialidad, _ = Especialidad.objects.get_or_create(
-				nombre="Odontología General",
-				defaults={'descripcion': 'Especialidad general en odontología'}
-			)
-			
 			PerfilOdontologo.objects.create(
 				usuario=usuario,
-				especialidad=especialidad,
 				cedulaProfesional="12345678",
 				experienciaProfesional="5 años de experiencia en odontología general"
 			)
 			cambios.append("Perfil de odontólogo creado")
+		
+		# Refrescar el objeto para obtener los datos actualizados
+		usuario.refresh_from_db()
 		
 		return JsonResponse({
 			"status": "success",
@@ -218,8 +193,8 @@ def fix_odontologo(request):
 				"tipo_usuario": usuario.tipo_usuario,
 				"is_active": usuario.is_active,
 				"tiene_perfil": hasattr(usuario, 'perfil_odontologo'),
-				"especialidad": usuario.perfil_odontologo.especialidad.nombre if hasattr(usuario, 'perfil_odontologo') and usuario.perfil_odontologo.especialidad else None,
-				"cedula": usuario.perfil_odontologo.cedulaProfesional if hasattr(usuario, 'perfil_odontologo') else None
+				"cedula": usuario.perfil_odontologo.cedulaProfesional if hasattr(usuario, 'perfil_odontologo') else None,
+				"experiencia": usuario.perfil_odontologo.experienciaProfesional if hasattr(usuario, 'perfil_odontologo') else None
 			}
 		})
 	
@@ -228,3 +203,8 @@ def fix_odontologo(request):
 			"status": "error",
 			"message": "Usuario no encontrado"
 		}, status=404)
+	except Exception as e:
+		return JsonResponse({
+			"status": "error",
+			"message": f"Error al actualizar: {str(e)}"
+		}, status=500)
