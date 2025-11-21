@@ -34,11 +34,12 @@ class InsumoSerializer(serializers.ModelSerializer):
     Serializer para el modelo Insumo.
     """
     categoria_nombre = serializers.CharField(source='categoria.nombre', read_only=True)
-    margen_ganancia = serializers.DecimalField(
-        max_digits=5,
-        decimal_places=2,
-        read_only=True
-    )
+    
+    # Convertir decimales a float para compatibilidad con frontend
+    margen_ganancia = serializers.FloatField(read_only=True)
+    precio_costo = serializers.FloatField()
+    precio_venta = serializers.FloatField()
+    
     requiere_reposicion = serializers.BooleanField(read_only=True)
     
     class Meta:
@@ -93,6 +94,12 @@ class InsumoListSerializer(serializers.ModelSerializer):
     categoria_nombre = serializers.CharField(source='categoria.nombre', read_only=True)
     requiere_reposicion = serializers.BooleanField(read_only=True)
     
+    # Convertir decimales a float para compatibilidad con frontend
+    precio_costo = serializers.FloatField(read_only=True)
+    precio_venta = serializers.FloatField(read_only=True)
+    stock_actual = serializers.IntegerField(read_only=True)
+    stock_minimo = serializers.IntegerField(read_only=True)
+    
     class Meta:
         model = Insumo
         fields = [
@@ -100,8 +107,10 @@ class InsumoListSerializer(serializers.ModelSerializer):
             'codigo',
             'nombre',
             'categoria_nombre',
+            'precio_costo',
             'precio_venta',
             'stock_actual',
+            'stock_minimo',
             'unidad_medida',
             'requiere_reposicion',
             'activo'
