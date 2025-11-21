@@ -66,6 +66,10 @@ class PacienteListView(generics.ListAPIView):
     Usado para selects y dropdowns en formularios.
     
     GET /api/usuarios/pacientes/
+    Query params opcionales:
+    - is_active: 'true' | 'false' | '' (vacío = todos)
+    - search: búsqueda por nombre, apellido o email
+    
     Responde con un array directo: [{"id": 1, "nombre": "Juan", ...}, ...]
     """
     serializer_class = PacienteListSerializer
@@ -73,8 +77,27 @@ class PacienteListView(generics.ListAPIView):
     pagination_class = None  # Desactivar paginación
     
     def get_queryset(self):
-        # Solo devolver usuarios de tipo PACIENTE activos
-        return Usuario.objects.filter(tipo_usuario='PACIENTE', is_active=True).order_by('nombre', 'apellido')
+        queryset = Usuario.objects.filter(tipo_usuario='PACIENTE')
+        
+        # Filtro por is_active (query param)
+        is_active_param = self.request.query_params.get('is_active', None)
+        if is_active_param == 'true':
+            queryset = queryset.filter(is_active=True)
+        elif is_active_param == 'false':
+            queryset = queryset.filter(is_active=False)
+        # Si is_active_param es '' o None, no filtrar (devolver todos)
+        
+        # Filtro de búsqueda (opcional)
+        search = self.request.query_params.get('search', None)
+        if search:
+            from django.db.models import Q
+            queryset = queryset.filter(
+                Q(nombre__icontains=search) |
+                Q(apellido__icontains=search) |
+                Q(email__icontains=search)
+            )
+        
+        return queryset.order_by('nombre', 'apellido')
 
 
 class OdontologoListView(generics.ListAPIView):
@@ -83,17 +106,38 @@ class OdontologoListView(generics.ListAPIView):
     Usado para selects al agendar citas.
     
     GET /api/usuarios/odontologos/
+    Query params opcionales:
+    - is_active: 'true' | 'false' | '' (vacío = todos)
+    - search: búsqueda por nombre, apellido o email
+    
     Responde con un array: [{"id": 103, "nombre": "Juan", "apellido": "Pérez", ...}, ...]
     """
     permission_classes = [permissions.IsAuthenticated]
     pagination_class = None  # Sin paginación
     
     def get(self, request, *args, **kwargs):
-        # Obtener solo usuarios ODONTOLOGO activos
-        odontologos = Usuario.objects.filter(
-            tipo_usuario='ODONTOLOGO',
-            is_active=True
-        ).select_related('perfil_odontologo').order_by('nombre', 'apellido')
+        # Filtrar por tipo ODONTOLOGO
+        odontologos = Usuario.objects.filter(tipo_usuario='ODONTOLOGO')
+        
+        # Filtro por is_active (query param)
+        is_active_param = request.query_params.get('is_active', None)
+        if is_active_param == 'true':
+            odontologos = odontologos.filter(is_active=True)
+        elif is_active_param == 'false':
+            odontologos = odontologos.filter(is_active=False)
+        # Si is_active_param es '' o None, no filtrar (devolver todos)
+        
+        # Filtro de búsqueda (opcional)
+        search = request.query_params.get('search', None)
+        if search:
+            from django.db.models import Q
+            odontologos = odontologos.filter(
+                Q(nombre__icontains=search) |
+                Q(apellido__icontains=search) |
+                Q(email__icontains=search)
+            )
+        
+        odontologos = odontologos.select_related('perfil_odontologo').order_by('nombre', 'apellido')
         
         # Serializar manualmente para incluir datos del perfil
         data = []
