@@ -208,3 +208,72 @@ def fix_odontologo(request):
 			"status": "error",
 			"message": f"Error al actualizar: {str(e)}"
 		}, status=500)
+
+
+def poblar_especialidades(request):
+	"""
+	Endpoint temporal para poblar especialidades y asignar al odontólogo.
+	PÚBLICO - No requiere autenticación (solo para setup inicial)
+	"""
+	from tratamientos.models import Especialidad
+	
+	try:
+		# Crear especialidades
+		especialidades_data = [
+			{'nombre': 'Odontología General', 'descripcion': 'Atención dental integral y preventiva'},
+			{'nombre': 'Ortodoncia', 'descripcion': 'Corrección de malposiciones dentales y maxilares'},
+			{'nombre': 'Endodoncia', 'descripcion': 'Tratamiento de conductos radiculares'},
+			{'nombre': 'Periodoncia', 'descripcion': 'Tratamiento de enfermedades de las encías'},
+			{'nombre': 'Cirugía Oral', 'descripcion': 'Procedimientos quirúrgicos en boca y maxilares'},
+			{'nombre': 'Odontopediatría', 'descripcion': 'Odontología especializada en niños'},
+			{'nombre': 'Implantología', 'descripcion': 'Colocación de implantes dentales'},
+			{'nombre': 'Estética Dental', 'descripcion': 'Tratamientos de embellecimiento dental'}
+		]
+		
+		especialidades_creadas = []
+		especialidades_existentes = []
+		
+		for esp_data in especialidades_data:
+			especialidad, created = Especialidad.objects.get_or_create(
+				nombre=esp_data['nombre'],
+				defaults={'descripcion': esp_data['descripcion']}
+			)
+			
+			if created:
+				especialidades_creadas.append(especialidad.nombre)
+			else:
+				especialidades_existentes.append(especialidad.nombre)
+		
+		# Asignar especialidad al odontólogo
+		usuario = Usuario.objects.get(email='odontologo@clinica-demo.com')
+		especialidad_asignada = None
+		
+		if hasattr(usuario, 'perfil_odontologo'):
+			perfil = usuario.perfil_odontologo
+			especialidad_general = Especialidad.objects.get(nombre='Odontología General')
+			perfil.especialidad = especialidad_general
+			perfil.save()
+			especialidad_asignada = especialidad_general.nombre
+		
+		return JsonResponse({
+			"status": "success",
+			"message": "Especialidades pobladas exitosamente",
+			"especialidades_creadas": especialidades_creadas,
+			"especialidades_existentes": especialidades_existentes,
+			"total_especialidades": Especialidad.objects.count(),
+			"odontologo": {
+				"email": usuario.email,
+				"especialidad_asignada": especialidad_asignada
+			}
+		})
+	
+	except Usuario.DoesNotExist:
+		return JsonResponse({
+			"status": "error",
+			"message": "Usuario odontólogo no encontrado"
+		}, status=404)
+	except Exception as e:
+		return JsonResponse({
+			"status": "error",
+			"message": f"Error al poblar especialidades: {str(e)}"
+		}, status=500)
