@@ -138,7 +138,10 @@ def fix_odontologo(request):
 	"""
 	Endpoint temporal para corregir el odontólogo en Render.
 	Cambia tipo_usuario a ODONTOLOGO y lo activa.
+	PÚBLICO - No requiere autenticación (solo para corrección inicial)
 	"""
+	from django.views.decorators.csrf import csrf_exempt
+	
 	try:
 		usuario = Usuario.objects.get(email='odontologo@clinica-demo.com')
 		
