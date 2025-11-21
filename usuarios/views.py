@@ -104,6 +104,8 @@ class OdontologoListView(generics.ListAPIView):
                 'nombre': odontologo.nombre,
                 'apellido': odontologo.apellido,
                 'nombre_completo': f"{odontologo.nombre} {odontologo.apellido}",
+                'tipo_usuario': odontologo.tipo_usuario,
+                'is_active': odontologo.is_active,
                 'telefono': odontologo.telefono,
             }
             
