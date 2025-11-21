@@ -215,11 +215,11 @@ def poblar_especialidades(request):
 	Endpoint temporal para poblar especialidades y asignar al odontólogo.
 	PÚBLICO - No requiere autenticación (solo para setup inicial)
 	"""
-	from tratamientos.models import Especialidad
+	from tratamientos.models import CategoriaServicio
 	
 	try:
-		# Crear especialidades
-		especialidades_data = [
+		# Crear categorías de servicio (que funcionan como especialidades)
+		categorias_data = [
 			{'nombre': 'Odontología General', 'descripcion': 'Atención dental integral y preventiva'},
 			{'nombre': 'Ortodoncia', 'descripcion': 'Corrección de malposiciones dentales y maxilares'},
 			{'nombre': 'Endodoncia', 'descripcion': 'Tratamiento de conductos radiculares'},
@@ -230,40 +230,44 @@ def poblar_especialidades(request):
 			{'nombre': 'Estética Dental', 'descripcion': 'Tratamientos de embellecimiento dental'}
 		]
 		
-		especialidades_creadas = []
-		especialidades_existentes = []
+		categorias_creadas = []
+		categorias_existentes = []
 		
-		for esp_data in especialidades_data:
-			especialidad, created = Especialidad.objects.get_or_create(
-				nombre=esp_data['nombre'],
-				defaults={'descripcion': esp_data['descripcion']}
+		for idx, cat_data in enumerate(categorias_data, start=1):
+			categoria, created = CategoriaServicio.objects.get_or_create(
+				nombre=cat_data['nombre'],
+				defaults={
+					'descripcion': cat_data['descripcion'],
+					'activo': True,
+					'orden': idx
+				}
 			)
 			
 			if created:
-				especialidades_creadas.append(especialidad.nombre)
+				categorias_creadas.append(categoria.nombre)
 			else:
-				especialidades_existentes.append(especialidad.nombre)
+				categorias_existentes.append(categoria.nombre)
 		
-		# Asignar especialidad al odontólogo
+		# Actualizar perfil del odontólogo con especialidad en descripción
 		usuario = Usuario.objects.get(email='odontologo@clinica-demo.com')
-		especialidad_asignada = None
+		especialidad_texto = "Odontología General"
 		
 		if hasattr(usuario, 'perfil_odontologo'):
 			perfil = usuario.perfil_odontologo
-			especialidad_general = Especialidad.objects.get(nombre='Odontología General')
-			perfil.especialidad = especialidad_general
-			perfil.save()
-			especialidad_asignada = especialidad_general.nombre
+			# Guardar la especialidad como texto en experienciaProfesional
+			if not perfil.experienciaProfesional or 'Especialidad' not in perfil.experienciaProfesional:
+				perfil.experienciaProfesional = f"Especialidad: {especialidad_texto}. 5 años de experiencia en odontología general"
+				perfil.save()
 		
 		return JsonResponse({
 			"status": "success",
-			"message": "Especialidades pobladas exitosamente",
-			"especialidades_creadas": especialidades_creadas,
-			"especialidades_existentes": especialidades_existentes,
-			"total_especialidades": Especialidad.objects.count(),
+			"message": "Categorías de servicio pobladas exitosamente",
+			"categorias_creadas": categorias_creadas,
+			"categorias_existentes": categorias_existentes,
+			"total_categorias": CategoriaServicio.objects.count(),
 			"odontologo": {
 				"email": usuario.email,
-				"especialidad_asignada": especialidad_asignada
+				"especialidad": especialidad_texto
 			}
 		})
 	
