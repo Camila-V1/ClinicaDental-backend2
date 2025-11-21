@@ -103,7 +103,7 @@ class OdontologoListView(generics.ListAPIView):
                 'email': odontologo.email,
                 'nombre': odontologo.nombre,
                 'apellido': odontologo.apellido,
-                'nombre_completo': f"Dr. {odontologo.nombre} {odontologo.apellido}",
+                'nombre_completo': f"{odontologo.nombre} {odontologo.apellido}",
                 'telefono': odontologo.telefono,
             }
             
