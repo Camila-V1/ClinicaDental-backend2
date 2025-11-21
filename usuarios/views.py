@@ -112,8 +112,20 @@ class OdontologoListView(generics.ListAPIView):
             # Agregar datos del perfil si existe
             if hasattr(odontologo, 'perfil_odontologo'):
                 perfil = odontologo.perfil_odontologo
+                
+                # Extraer especialidad del texto de experiencia si existe
+                especialidad_extraida = None
+                if perfil.especialidad:
+                    especialidad_extraida = perfil.especialidad.nombre
+                elif perfil.experienciaProfesional and 'Especialidad:' in perfil.experienciaProfesional:
+                    # Extraer "Odontología General" de "Especialidad: Odontología General. 5 años..."
+                    inicio = perfil.experienciaProfesional.find('Especialidad:') + len('Especialidad:')
+                    fin = perfil.experienciaProfesional.find('.', inicio)
+                    if fin > inicio:
+                        especialidad_extraida = perfil.experienciaProfesional[inicio:fin].strip()
+                
                 odontologo_data.update({
-                    'especialidad': perfil.especialidad.nombre if perfil.especialidad else None,
+                    'especialidad': especialidad_extraida,
                     'cedula_profesional': perfil.cedulaProfesional,
                     'experiencia': perfil.experienciaProfesional,
                 })
