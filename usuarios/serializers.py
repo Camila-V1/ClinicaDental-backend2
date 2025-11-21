@@ -46,7 +46,7 @@ class PacienteListSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Usuario
-        fields = ['id', 'nombre', 'apellido', 'nombre_completo', 'email', 'telefono', 'ci']
+        fields = ['id', 'nombre', 'apellido', 'nombre_completo', 'email', 'telefono', 'ci', 'is_active', 'tipo_usuario']
     
     def get_nombre_completo(self, obj):
         return f"{obj.nombre} {obj.apellido}"
