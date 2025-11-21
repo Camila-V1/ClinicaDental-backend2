@@ -132,3 +132,58 @@ def health_check(request):
 	Una vista simple para confirmar que la app 'usuarios' está conectada.
 	"""
 	return JsonResponse({"status": "ok", "app": "usuarios"})
+
+
+def fix_odontologo(request):
+	"""
+	Endpoint temporal para corregir el odontólogo en Render.
+	Cambia tipo_usuario a ODONTOLOGO y lo activa.
+	"""
+	try:
+		usuario = Usuario.objects.get(email='odontologo@clinica-demo.com')
+		
+		cambios = []
+		estado_anterior = {
+			'tipo_usuario': usuario.tipo_usuario,
+			'is_active': usuario.is_active
+		}
+		
+		if usuario.tipo_usuario != 'ODONTOLOGO':
+			usuario.tipo_usuario = 'ODONTOLOGO'
+			cambios.append("tipo_usuario → ODONTOLOGO")
+		
+		if not usuario.is_active:
+			usuario.is_active = True
+			cambios.append("is_active → True")
+		
+		if cambios:
+			usuario.save()
+			return JsonResponse({
+				"status": "success",
+				"message": "Usuario corregido exitosamente",
+				"usuario_id": usuario.id,
+				"email": usuario.email,
+				"estado_anterior": estado_anterior,
+				"cambios_aplicados": cambios,
+				"estado_actual": {
+					"tipo_usuario": usuario.tipo_usuario,
+					"is_active": usuario.is_active
+				}
+			})
+		else:
+			return JsonResponse({
+				"status": "ok",
+				"message": "El usuario ya está correctamente configurado",
+				"usuario_id": usuario.id,
+				"email": usuario.email,
+				"estado_actual": {
+					"tipo_usuario": usuario.tipo_usuario,
+					"is_active": usuario.is_active
+				}
+			})
+	
+	except Usuario.DoesNotExist:
+		return JsonResponse({
+			"status": "error",
+			"message": "Usuario no encontrado"
+		}, status=404)

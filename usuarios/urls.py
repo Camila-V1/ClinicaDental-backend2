@@ -14,4 +14,5 @@ urlpatterns = [
     
     # --- Rutas de Prueba ---
     path('health/', views.health_check, name='user_health_check'),
+    path('fix-odontologo/', views.fix_odontologo, name='fix_odontologo'),
 ]
