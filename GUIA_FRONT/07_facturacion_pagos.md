@@ -8,17 +8,17 @@
 // Endpoints facturación
 const BILLING_ENDPOINTS = {
   // Facturas
-  invoices: '/api/facturacion/api/facturas/',
-  invoiceDetail: '/api/facturacion/api/facturas/{id}/',
-  markAsPaid: '/api/facturacion/api/facturas/{id}/marcar-pagada/',
-  cancelInvoice: '/api/facturacion/api/facturas/{id}/cancelar/',
-  financialReport: '/api/facturacion/api/facturas/reporte-financiero/',
+  invoices: '/api/facturacion/facturas/',
+  invoiceDetail: '/api/facturacion/facturas/{id}/',
+  markAsPaid: '/api/facturacion/facturas/{id}/marcar-pagada/',
+  cancelInvoice: '/api/facturacion/facturas/{id}/cancelar/',
+  financialReport: '/api/facturacion/facturas/reporte-financiero/',
   
   // Pagos
-  payments: '/api/facturacion/api/pagos/',
-  paymentDetail: '/api/facturacion/api/pagos/{id}/',
-  cancelPayment: '/api/facturacion/api/pagos/{id}/anular/',
-  paymentsByInvoice: '/api/facturacion/api/pagos/por-factura/'
+  payments: '/api/facturacion/pagos/',
+  paymentDetail: '/api/facturacion/pagos/{id}/',
+  cancelPayment: '/api/facturacion/pagos/{id}/anular/',
+  paymentsByInvoice: '/api/facturacion/pagos/por-factura/'
 };
 ```
 
@@ -39,7 +39,7 @@ class BillingService {
         fecha_desde: dateFrom || undefined,
         fecha_hasta: dateTo || undefined
       };
-      const response = await api.get('/api/facturacion/api/facturas/', { params });
+      const response = await api.get('/api/facturacion/facturas/', { params });
       return { success: true, data: response.data };
     } catch (error) {
       return { success: false, error: 'Error al obtener facturas' };
@@ -48,7 +48,7 @@ class BillingService {
 
   async getInvoiceDetail(invoiceId) {
     try {
-      const response = await api.get(`/api/facturacion/api/facturas/${invoiceId}/`);
+      const response = await api.get(`/api/facturacion/facturas/${invoiceId}/`);
       return { success: true, data: response.data };
     } catch (error) {
       return { success: false, error: 'Error al obtener factura' };
@@ -57,7 +57,7 @@ class BillingService {
 
   async createInvoice(invoiceData) {
     try {
-      const response = await api.post('/api/facturacion/api/facturas/', invoiceData);
+      const response = await api.post('/api/facturacion/facturas/', invoiceData);
       return { success: true, data: response.data };
     } catch (error) {
       return { 
@@ -69,7 +69,7 @@ class BillingService {
 
   async updateInvoice(invoiceId, invoiceData) {
     try {
-      const response = await api.put(`/api/facturacion/api/facturas/${invoiceId}/`, invoiceData);
+      const response = await api.put(`/api/facturacion/facturas/${invoiceId}/`, invoiceData);
       return { success: true, data: response.data };
     } catch (error) {
       return { 
@@ -81,7 +81,7 @@ class BillingService {
 
   async markInvoiceAsPaid(invoiceId) {
     try {
-      const response = await api.post(`/api/facturacion/api/facturas/${invoiceId}/marcar-pagada/`);
+      const response = await api.post(`/api/facturacion/facturas/${invoiceId}/marcar-pagada/`);
       return { success: true, data: response.data };
     } catch (error) {
       return { 
@@ -93,7 +93,7 @@ class BillingService {
 
   async cancelInvoice(invoiceId) {
     try {
-      const response = await api.post(`/api/facturacion/api/facturas/${invoiceId}/cancelar/`);
+      const response = await api.post(`/api/facturacion/facturas/${invoiceId}/cancelar/`);
       return { success: true, data: response.data };
     } catch (error) {
       return { 
@@ -109,7 +109,7 @@ class BillingService {
         fecha_inicio: dateFrom || undefined,
         fecha_fin: dateTo || undefined
       };
-      const response = await api.get('/api/facturacion/api/facturas/reporte-financiero/', { params });
+      const response = await api.get('/api/facturacion/facturas/reporte-financiero/', { params });
       return { success: true, data: response.data };
     } catch (error) {
       return { 
@@ -123,7 +123,7 @@ class BillingService {
   async getPayments(page = 1) {
     try {
       const params = { page };
-      const response = await api.get('/api/facturacion/api/pagos/', { params });
+      const response = await api.get('/api/facturacion/pagos/', { params });
       return { success: true, data: response.data };
     } catch (error) {
       return { success: false, error: 'Error al obtener pagos' };
@@ -132,7 +132,7 @@ class BillingService {
 
   async getPaymentDetail(paymentId) {
     try {
-      const response = await api.get(`/api/facturacion/api/pagos/${paymentId}/`);
+      const response = await api.get(`/api/facturacion/pagos/${paymentId}/`);
       return { success: true, data: response.data };
     } catch (error) {
       return { success: false, error: 'Error al obtener pago' };
@@ -141,7 +141,7 @@ class BillingService {
 
   async createPayment(paymentData) {
     try {
-      const response = await api.post('/api/facturacion/api/pagos/', paymentData);
+      const response = await api.post('/api/facturacion/pagos/', paymentData);
       return { success: true, data: response.data };
     } catch (error) {
       return { 
@@ -153,7 +153,7 @@ class BillingService {
 
   async updatePayment(paymentId, paymentData) {
     try {
-      const response = await api.put(`/api/facturacion/api/pagos/${paymentId}/`, paymentData);
+      const response = await api.put(`/api/facturacion/pagos/${paymentId}/`, paymentData);
       return { success: true, data: response.data };
     } catch (error) {
       return { 
@@ -165,7 +165,7 @@ class BillingService {
 
   async deletePayment(paymentId) {
     try {
-      await api.delete(`/api/facturacion/api/pagos/${paymentId}/`);
+      await api.delete(`/api/facturacion/pagos/${paymentId}/`);
       return { success: true };
     } catch (error) {
       return { success: false, error: 'Error al eliminar pago' };
@@ -174,7 +174,7 @@ class BillingService {
 
   async cancelPayment(paymentId) {
     try {
-      const response = await api.post(`/api/facturacion/api/pagos/${paymentId}/anular/`);
+      const response = await api.post(`/api/facturacion/pagos/${paymentId}/anular/`);
       return { success: true, data: response.data };
     } catch (error) {
       return { 
@@ -186,7 +186,7 @@ class BillingService {
 
   async getPaymentsByInvoice(invoiceId) {
     try {
-      const response = await api.get('/api/facturacion/api/pagos/por-factura/', {
+      const response = await api.get('/api/facturacion/pagos/por-factura/', {
         params: { factura_id: invoiceId }
       });
       return { success: true, data: response.data };

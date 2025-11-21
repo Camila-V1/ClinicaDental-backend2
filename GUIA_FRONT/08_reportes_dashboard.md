@@ -8,22 +8,22 @@
 // Endpoints reportes (solo los implementados en backend)
 const REPORTS_ENDPOINTS = {
   // Dashboard KPIs principales
-  dashboardKpis: '/api/reportes/dashboard-kpis/',
+  dashboardKpis: '/api/reportes/reportes/dashboard-kpis/',
   
   // Estadísticas generales del sistema
-  generalStats: '/api/reportes/estadisticas-generales/',
+  generalStats: '/api/reportes/reportes/estadisticas-generales/',
   
   // Tendencia de citas (gráfico)
-  trendCitas: '/api/reportes/tendencia-citas/',
+  trendCitas: '/api/reportes/reportes/tendencia-citas/',
   
   // Top procedimientos más realizados
-  topProcedures: '/api/reportes/top-procedimientos/',
+  topProcedures: '/api/reportes/reportes/top-procedimientos/',
   
   // Reporte financiero por período
-  financialReport: '/api/reportes/reporte-financiero/',
+  financialReport: '/api/reportes/reportes/reporte-financiero/',
   
   // Ocupación por odontólogo
-  doctorOccupancy: '/api/reportes/ocupacion-odontologos/'
+  doctorOccupancy: '/api/reportes/reportes/ocupacion-odontologos/'
 };
 ```
 
@@ -37,7 +37,7 @@ class ReportsService {
   // Dashboard KPIs principales
   async getDashboardKpis() {
     try {
-      const response = await api.get('/api/reportes/dashboard-kpis/');
+      const response = await api.get('/api/reportes/reportes/dashboard-kpis/');
       return { success: true, data: response.data };
     } catch (error) {
       return { success: false, error: 'Error al obtener KPIs del dashboard' };
@@ -47,7 +47,7 @@ class ReportsService {
   // Estadísticas generales del sistema
   async getGeneralStats() {
     try {
-      const response = await api.get('/api/reportes/estadisticas-generales/');
+      const response = await api.get('/api/reportes/reportes/estadisticas-generales/');
       return { success: true, data: response.data };
     } catch (error) {
       return { success: false, error: 'Error al obtener estadísticas generales' };
@@ -58,7 +58,7 @@ class ReportsService {
   async getTrendCitas(dias = 15) {
     try {
       const params = { dias };
-      const response = await api.get('/api/reportes/tendencia-citas/', { params });
+      const response = await api.get('/api/reportes/reportes/tendencia-citas/', { params });
       return { success: true, data: response.data };
     } catch (error) {
       return { success: false, error: 'Error al obtener tendencia de citas' };
@@ -69,7 +69,7 @@ class ReportsService {
   async getTopProcedures(limite = 5) {
     try {
       const params = { limite };
-      const response = await api.get('/api/reportes/top-procedimientos/', { params });
+      const response = await api.get('/api/reportes/reportes/top-procedimientos/', { params });
       return { success: true, data: response.data };
     } catch (error) {
       return { success: false, error: 'Error al obtener procedimientos más realizados' };
@@ -80,7 +80,7 @@ class ReportsService {
   async getFinancialReport(periodo = null) {
     try {
       const params = periodo ? { periodo } : {};
-      const response = await api.get('/api/reportes/reporte-financiero/', { params });
+      const response = await api.get('/api/reportes/reportes/reporte-financiero/', { params });
       return { success: true, data: response.data };
     } catch (error) {
       return { success: false, error: 'Error al obtener reporte financiero' };
@@ -91,7 +91,7 @@ class ReportsService {
   async getDoctorOccupancy(mes = null) {
     try {
       const params = mes ? { mes } : {};
-      const response = await api.get('/api/reportes/ocupacion-odontologos/', { params });
+      const response = await api.get('/api/reportes/reportes/ocupacion-odontologos/', { params });
       return { success: true, data: response.data };
     } catch (error) {
       return { success: false, error: 'Error al obtener ocupación de odontólogos' };
