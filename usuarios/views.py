@@ -143,6 +143,7 @@ def fix_odontologo(request):
 	PÚBLICO - No requiere autenticación (solo para corrección inicial)
 	"""
 	from django.views.decorators.csrf import csrf_exempt
+	from tratamientos.models import Especialidad
 	
 	try:
 		usuario = Usuario.objects.get(email='odontologo@clinica-demo.com')
@@ -163,29 +164,64 @@ def fix_odontologo(request):
 		
 		if cambios:
 			usuario.save()
-			return JsonResponse({
-				"status": "success",
-				"message": "Usuario corregido exitosamente",
-				"usuario_id": usuario.id,
-				"email": usuario.email,
-				"estado_anterior": estado_anterior,
-				"cambios_aplicados": cambios,
-				"estado_actual": {
-					"tipo_usuario": usuario.tipo_usuario,
-					"is_active": usuario.is_active
-				}
-			})
+		
+		# Actualizar o crear perfil de odontólogo
+		perfil_actualizado = False
+		if hasattr(usuario, 'perfil_odontologo'):
+			perfil = usuario.perfil_odontologo
+			
+			# Buscar o crear especialidad "Odontología General"
+			especialidad, _ = Especialidad.objects.get_or_create(
+				nombre="Odontología General",
+				defaults={'descripcion': 'Especialidad general en odontología'}
+			)
+			
+			if not perfil.especialidad:
+				perfil.especialidad = especialidad
+				cambios.append("especialidad → Odontología General")
+				perfil_actualizado = True
+			
+			if not perfil.cedulaProfesional:
+				perfil.cedulaProfesional = "12345678"
+				cambios.append("cedulaProfesional → 12345678")
+				perfil_actualizado = True
+			
+			if not perfil.experienciaProfesional:
+				perfil.experienciaProfesional = "5 años de experiencia en odontología general"
+				cambios.append("experienciaProfesional → Agregada")
+				perfil_actualizado = True
+			
+			if perfil_actualizado:
+				perfil.save()
 		else:
-			return JsonResponse({
-				"status": "ok",
-				"message": "El usuario ya está correctamente configurado",
-				"usuario_id": usuario.id,
-				"email": usuario.email,
-				"estado_actual": {
-					"tipo_usuario": usuario.tipo_usuario,
-					"is_active": usuario.is_active
-				}
-			})
+			# Crear perfil si no existe
+			especialidad, _ = Especialidad.objects.get_or_create(
+				nombre="Odontología General",
+				defaults={'descripcion': 'Especialidad general en odontología'}
+			)
+			
+			PerfilOdontologo.objects.create(
+				usuario=usuario,
+				especialidad=especialidad,
+				cedulaProfesional="12345678",
+				experienciaProfesional="5 años de experiencia en odontología general"
+			)
+			cambios.append("Perfil de odontólogo creado")
+		
+		return JsonResponse({
+			"status": "success",
+			"message": "Usuario y perfil actualizados exitosamente",
+			"usuario_id": usuario.id,
+			"email": usuario.email,
+			"cambios_aplicados": cambios if cambios else ["Sin cambios necesarios"],
+			"estado_actual": {
+				"tipo_usuario": usuario.tipo_usuario,
+				"is_active": usuario.is_active,
+				"tiene_perfil": hasattr(usuario, 'perfil_odontologo'),
+				"especialidad": usuario.perfil_odontologo.especialidad.nombre if hasattr(usuario, 'perfil_odontologo') and usuario.perfil_odontologo.especialidad else None,
+				"cedula": usuario.perfil_odontologo.cedulaProfesional if hasattr(usuario, 'perfil_odontologo') else None
+			}
+		})
 	
 	except Usuario.DoesNotExist:
 		return JsonResponse({
