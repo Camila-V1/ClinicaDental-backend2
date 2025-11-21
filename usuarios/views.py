@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from rest_framework import generics, permissions, status, viewsets
 from rest_framework.response import Response
 from .serializers import RegisterSerializer, UsuarioSerializer, PacienteListSerializer
-from .models import Usuario
+from .models import Usuario, PerfilOdontologo
 
 
 # --- VISTAS DE API (CU01, CU02) ---
