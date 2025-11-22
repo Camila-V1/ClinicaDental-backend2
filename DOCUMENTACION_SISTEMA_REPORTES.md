@@ -351,11 +351,168 @@ interface ReporteFinanciero {
 
 **URL:** `GET /api/reportes/bitacora/?page=1&page_size=10`
 
-**Descripción:** Últimas acciones registradas en el sistema.
+**Descripción:** Últimas acciones registradas en el sistema (auditoría).
 
 **Respuesta Real del Backend:**
 ```json
-[]  // Sin actividad registrada actualmente
+[
+  {
+    "id": 13,
+    "usuario": {
+      "id": 436,
+      "nombre_completo": "Administrador Principal",
+      "email": "admin@clinica-demo.com",
+      "tipo_usuario": "ADMIN"
+    },
+    "accion": "LOGIN",
+    "accion_display": "Inicio de sesión",
+    "descripcion": "Inicio de sesión exitoso - Administrador Principal",
+    "detalles": {
+      "email": "admin@clinica-demo.com",
+      "tipo_usuario": "ADMIN"
+    },
+    "fecha_hora": "2025-11-22T23:27:35.259677Z",
+    "ip_address": "189.28.77.175",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0",
+    "modelo": null,
+    "object_id": null
+  }
+]
+```
+
+**Estructura Frontend CORRECTA:**
+```typescript
+interface BitacoraLog {
+  id: number;
+  usuario: {                    // ✅ OBJECT, no string
+    id: number;
+    nombre_completo: string;
+    email: string;
+    tipo_usuario: string;
+  };
+  accion: string;               // LOGIN, CREAR, EDITAR, ELIMINAR
+  accion_display: string;       // "Inicio de sesión", "Crear", etc.
+  descripcion: string;          // Descripción detallada
+  detalles: object;             // JSON con información adicional
+  fecha_hora: string;           // ✅ "fecha_hora", NO "timestamp"
+  ip_address: string | null;    // IP del usuario
+  user_agent: string | null;    // Navegador del usuario
+  modelo: string | null;        // Modelo afectado (Cita, Factura, etc.)
+  object_id: string | null;     // ID del objeto afectado
+}
+```
+
+**⚠️ PROBLEMA COMÚN - Bitácora no se muestra:**
+
+**Síntoma:**
+- Backend envía 13 registros correctamente
+- Console.log muestra: `Array(13)` con datos completos
+- Frontend muestra: "📋 No hay registros"
+
+**Causas posibles:**
+
+1. **Mapeo incorrecto en el servicio:**
+   ```typescript
+   // ❌ INCORRECTO - Backend NO envía estos campos
+   const logs = response.data.map(item => ({
+     usuario: item.usuario.nombre_completo,  // ❌ Convierte object → string
+     timestamp: item.fecha_hora               // ❌ Renombra campo
+   }));
+   
+   // ✅ CORRECTO - Usar datos tal como los envía backend
+   const logs = response.data.map(item => ({
+     ...item,  // Mantener estructura original
+     // Solo transformar si el componente lo requiere específicamente
+   }));
+   ```
+
+2. **Filtro incorrecto en componente:**
+   ```typescript
+   // ❌ INCORRECTO - Filtra registros válidos
+   const registrosValidos = bitacoras.filter(b => b.usuario?.id);
+   
+   // ✅ CORRECTO - No filtrar
+   const registrosValidos = bitacoras;
+   ```
+
+3. **Componente espera campos diferentes:**
+   ```typescript
+   // Si el componente renderiza:
+   <div>{log.timestamp}</div>  // ❌ Campo no existe
+   
+   // Debe usar:
+   <div>{log.fecha_hora}</div>  // ✅ Campo correcto
+   
+   // O si el componente espera:
+   <div>{log.usuario}</div>     // ❌ Renderizaría [object Object]
+   
+   // Debe usar:
+   <div>{log.usuario.nombre_completo}</div>  // ✅ Acceso correcto
+   ```
+
+**Componentes Frontend:**
+- `ActivityTimeline.tsx` - Timeline visual en Dashboard
+- `BitacoraLogsList.tsx` - Lista completa con paginación
+
+**Verificación en Consola:**
+```javascript
+// Buscar estos logs:
+console.log('📊 Bitácora recibida:', bitacoras);
+console.log('📊 Cantidad:', bitacoras.length);
+console.log('📊 Primer registro:', bitacoras[0]);
+
+// Si ves:
+// ✅ "Cantidad: 13" pero UI muestra "No hay registros"
+// → Problema: Componente filtra/valida incorrectamente
+
+// Si ves que bitacoras[0].usuario es un OBJECT:
+// → ✅ Backend correcto, componente debe acceder a .nombre_completo
+
+// Si ves que bitacoras[0].usuario es un STRING:
+// → ❌ Servicio transformó incorrectamente, eliminar mapeo
+```
+
+**✅ CORRECTO (adminDashboardService.ts):**
+```typescript
+async getActividadReciente() {
+  try {
+    const { data } = await api.get('/api/reportes/bitacora/', { 
+      params: { page: 1, page_size: 10 } 
+    });
+    
+    // NO transformar - backend envía formato correcto
+    if (data && Array.isArray(data.results)) return data.results;
+    if (Array.isArray(data)) return data;
+    return [];
+  } catch (error: any) {
+    console.error('🔴 Error Bitácora:', error);
+    return [];
+  }
+}
+```
+
+**✅ CORRECTO (Componente de renderizado):**
+```tsx
+{bitacoras.map((log) => (
+  <div key={log.id}>
+    {/* ✅ Acceso correcto al objeto usuario */}
+    <p>{log.usuario.nombre_completo}</p>
+    <p>{log.usuario.email}</p>
+    
+    {/* ✅ Campo correcto de fecha */}
+    <p>{new Date(log.fecha_hora).toLocaleString()}</p>
+    
+    {/* ✅ Acción con display legible */}
+    <p>{log.accion_display}</p>
+    
+    {/* ✅ Descripción */}
+    <p>{log.descripcion}</p>
+    
+    {/* ✅ Información técnica (opcional) */}
+    {log.ip_address && <p>IP: {log.ip_address}</p>}
+    {log.user_agent && <p className="text-xs">{log.user_agent}</p>}
+  </div>
+))}
 ```
 
 ---
