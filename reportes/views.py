@@ -296,10 +296,11 @@ class ReportesViewSet(viewsets.ViewSet):
             usuario__is_active=True
         ).count()
         
-        # Pacientes nuevos del mes (creados en el mes actual)
-        pacientes_nuevos_mes = PerfilPaciente.objects.filter(
-            usuario__date_joined__year=anio_actual,
-            usuario__date_joined__month=mes_actual
+        # Pacientes nuevos del mes (usuarios creados en mes actual que tienen perfil paciente)
+        pacientes_nuevos_mes = Usuario.objects.filter(
+            date_joined__year=anio_actual,
+            date_joined__month=mes_actual,
+            perfil_paciente__isnull=False
         ).count()
         
         # ====== ESTADÍSTICAS DE ODONTÓLOGOS ======
