@@ -434,8 +434,7 @@ class ReportesViewSet(viewsets.ViewSet):
             'tasa_ocupacion': round(tasa_ocupacion, 2)
         }
         
-        serializer = ReporteEstadisticasGeneralesSerializer(data)
-        return Response(serializer.data)
+        return Response(data)
 
     @action(detail=False, methods=['get'], url_path='reporte-financiero')
     def reporte_financiero(self, request):
