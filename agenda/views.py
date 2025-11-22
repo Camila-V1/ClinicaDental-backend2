@@ -9,6 +9,7 @@ from .serializers import CitaSerializer, CitaListSerializer
 from tratamientos.models import ItemPlanTratamiento
 from historial_clinico.models import EpisodioAtencion, HistorialClinico
 from usuarios.models import PerfilOdontologo
+from reportes.models import BitacoraAccion
 
 
 class CitaViewSet(viewsets.ModelViewSet):
@@ -129,6 +130,15 @@ class CitaViewSet(viewsets.ModelViewSet):
         cita.estado = 'CONFIRMADA'
         cita.save()
         
+        # Registrar en bitácora
+        BitacoraAccion.registrar(
+            usuario=request.user,
+            accion='EDITAR',
+            descripcion=f'Confirmó cita #{cita.id} - {cita.paciente.usuario.full_name} con {cita.odontologo.usuario.full_name}',
+            content_object=cita,
+            detalles={'estado_nuevo': 'CONFIRMADA', 'fecha': str(cita.fecha_hora)}
+        )
+        
         serializer = self.get_serializer(cita)
         return Response({
             'message': 'Cita confirmada exitosamente.',
@@ -158,6 +168,15 @@ class CitaViewSet(viewsets.ModelViewSet):
         
         cita.estado = 'CANCELADA'
         cita.save()
+        
+        # Registrar en bitácora
+        BitacoraAccion.registrar(
+            usuario=request.user,
+            accion='EDITAR',
+            descripcion=f'Canceló cita #{cita.id} - {cita.paciente.usuario.full_name}',
+            content_object=cita,
+            detalles={'estado_nuevo': 'CANCELADA', 'fecha': str(cita.fecha_hora)}
+        )
         
         serializer = self.get_serializer(cita)
         return Response({

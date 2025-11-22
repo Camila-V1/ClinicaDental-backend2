@@ -11,6 +11,7 @@ from .serializers import (
     PagoSerializer, PagoCreateSerializer
 )
 from usuarios.models import PerfilPaciente
+from reportes.models import BitacoraAccion
 
 
 class FacturaViewSet(viewsets.ModelViewSet):
@@ -71,9 +72,18 @@ class FacturaViewSet(viewsets.ModelViewSet):
                 "Ya existe una factura para este presupuesto"
             )
         
-        serializer.save(
+        factura = serializer.save(
             paciente=presupuesto.plan_tratamiento.paciente,
             monto_total=presupuesto.total_presupuestado
+        )
+        
+        # Registrar en bitácora
+        BitacoraAccion.registrar(
+            usuario=self.request.user,
+            accion='CREAR',
+            descripcion=f'Generó factura #{factura.id} para {factura.paciente.usuario.full_name} - ${factura.monto_total}',
+            content_object=factura,
+            detalles={'monto': str(factura.monto_total), 'paciente_id': factura.paciente.id}
         )
     
     @action(detail=True, methods=['post'])
@@ -92,6 +102,15 @@ class FacturaViewSet(viewsets.ModelViewSet):
             factura.estado = 'pagada'
             factura.fecha_pagada = timezone.now()
             factura.save()
+            
+            # Registrar en bitácora
+            BitacoraAccion.registrar(
+                usuario=request.user,
+                accion='EDITAR',
+                descripcion=f'Marcó factura #{factura.id} como PAGADA - {factura.paciente.usuario.full_name}',
+                content_object=factura,
+                detalles={'estado': 'pagada', 'monto': str(factura.monto_total)}
+            )
             
             return Response({
                 'message': 'Factura marcada como pagada',
@@ -352,7 +371,16 @@ class PagoViewSet(viewsets.ModelViewSet):
                 f"Máximo permitido: ${factura.saldo_pendiente:.2f}"
             )
         
-        serializer.save()
+        pago = serializer.save()
+        
+        # Registrar en bitácora
+        BitacoraAccion.registrar(
+            usuario=self.request.user,
+            accion='CREAR',
+            descripcion=f'Registró pago de ${monto} para factura #{factura.id} - {factura.paciente.usuario.full_name}',
+            content_object=pago,
+            detalles={'monto': str(monto), 'factura_id': factura.id, 'metodo': pago.metodo_pago}
+        )
     
     @action(detail=True, methods=['post'])
     def anular(self, request, pk=None):
@@ -374,6 +402,15 @@ class PagoViewSet(viewsets.ModelViewSet):
         # Anular pago
         pago.estado_pago = 'CANCELADO'
         pago.save()
+        
+        # Registrar en bitácora
+        BitacoraAccion.registrar(
+            usuario=request.user,
+            accion='ELIMINAR',
+            descripcion=f'Anuló pago #{pago.id} - ${pago.monto_pagado} de factura #{pago.factura.id}',
+            content_object=pago,
+            detalles={'monto': str(pago.monto_pagado), 'factura_id': pago.factura.id}
+        )
         
         return Response({
             'message': 'Pago anulado exitosamente',

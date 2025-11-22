@@ -12,6 +12,7 @@ from .serializers import (
     InsumoSerializer,
     InsumoListSerializer
 )
+from reportes.models import BitacoraAccion
 
 
 class CategoriaInsumoViewSet(viewsets.ModelViewSet):
@@ -98,12 +99,29 @@ class InsumoViewSet(viewsets.ModelViewSet):
         
         try:
             cantidad = float(cantidad)
+            stock_anterior = float(insumo.stock_actual)
             nuevo_stock = insumo.ajustar_stock(cantidad, motivo)
+            
+            # Registrar en bitácora
+            accion = 'EDITAR' if cantidad != 0 else 'VER'
+            tipo_movimiento = 'entrada' if cantidad > 0 else 'salida'
+            BitacoraAccion.registrar(
+                usuario=request.user,
+                accion=accion,
+                descripcion=f'Ajustó stock de {insumo.codigo} ({insumo.nombre}): {tipo_movimiento} de {abs(cantidad)} unidades',
+                content_object=insumo,
+                detalles={
+                    'stock_anterior': stock_anterior,
+                    'ajuste': cantidad,
+                    'stock_nuevo': float(nuevo_stock),
+                    'motivo': motivo
+                }
+            )
             
             return Response({
                 'mensaje': 'Stock ajustado exitosamente',
                 'insumo': insumo.nombre,
-                'stock_anterior': float(insumo.stock_actual) - cantidad,
+                'stock_anterior': stock_anterior,
                 'ajuste': cantidad,
                 'stock_actual': float(nuevo_stock),
                 'motivo': motivo

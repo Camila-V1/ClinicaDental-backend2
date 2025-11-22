@@ -1,6 +1,6 @@
 # 📊 DOCUMENTACIÓN DEL SISTEMA DE REPORTES
 
-**Fecha de Generación:** 22 de noviembre de 2025, 18:17  
+**Fecha de Generación:** 22 de noviembre de 2025, 18:48  
 **Proyecto:** Clínica Dental - Dashboard Administrador  
 **Objetivo:** Mapeo completo del flujo de datos desde Backend → Frontend → UI
 
@@ -185,7 +185,16 @@ interface EstadisticasGenerales {
 
 **Descripción:** Datos para el gráfico de tendencia de citas por día.
 
-**Respuesta del Backend (✅ CORREGIDA):**
+**Respuesta ACTUAL del Backend (INCOMPLETA):**
+```json
+[
+  {"fecha": "2025-11-08", "cantidad": 0},
+  {"fecha": "2025-11-09", "cantidad": 0},
+  {"fecha": "2025-11-10", "cantidad": 0}
+]
+```
+
+**Respuesta ESPERADA (Después de corrección backend):**
 ```json
 [
   {
@@ -193,12 +202,6 @@ interface EstadisticasGenerales {
     "cantidad": 3,
     "completadas": 2,
     "canceladas": 1
-  },
-  {
-    "fecha": "2025-11-09",
-    "cantidad": 0,
-    "completadas": 0,
-    "canceladas": 0
   }
 ]
 ```
@@ -207,16 +210,15 @@ interface EstadisticasGenerales {
 ```typescript
 interface TendenciaCitas {
   fecha: string;
-  cantidad: number;     // ✅ Total de citas del día
-  completadas: number;  // ✅ Citas completadas
-  canceladas: number;   // ✅ Citas canceladas
+  total: number;        // Mapeado de "cantidad"
+  completadas: number;  // ❌ Falta en backend actual
+  canceladas: number;   // ❌ Falta en backend actual
 }
 ```
 
-**✅ SOLUCIÓN IMPLEMENTADA (Commit 5baee7f):**
-- Actualizado `ReporteTendenciaSerializer` en `reportes/serializers.py`
-- Añadidos campos `completadas` y `canceladas` como opcionales
-- El backend ahora envía estructura completa para gráfico de 3 líneas
+**⚠️ PROBLEMA IDENTIFICADO:**
+- Backend NO envía `completadas` ni `canceladas` separadas
+- **Solución:** Actualizar `reportes/views.py` línea 206 (ver CORRECCION_REPORTES_BACKEND.md)
 
 ---
 
@@ -562,20 +564,78 @@ interface Props {
 ```
 
 **Renderiza:**
-- Gráfico de líneas con Chart.js
-- **Problema Actual:** Solo muestra 1 línea (`cantidad`) porque backend NO envía `completadas` ni `canceladas`
+- ✅ Gráfico de barras agrupadas (NO líneas)
+- ✅ **3 barras por fecha:** Total (azul), Completadas (verde), Canceladas (rojo)
+- ✅ Leyenda superior con indicadores de color
+- ✅ Etiquetas de fecha formateadas (mes corto + día)
+- ✅ Tooltips con valores al hacer hover
 
-**Configuración del Gráfico:**
+**Estado Actual:**
+- ✅ **Componente CORRECTO:** Ya renderiza las 3 barras
+- ⚠️ **Backend INCOMPLETO:** Solo envía `cantidad` (falta `completadas` y `canceladas`)
+- 🔄 **Resultado Visual:** Solo la barra "Total" tiene altura, las otras están en 0
+
+**Código Actual del Componente (Líneas 70-108):**
+```tsx
+{data.map((item, index) => {
+  const totalHeight = (item.total / maxValue) * chartHeight;
+  const completadasHeight = (item.completadas / maxValue) * chartHeight;  // ✅
+  const canceladasHeight = (item.canceladas / maxValue) * chartHeight;    // ✅
+
+  return (
+    <div key={index} style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+      <div style={{ width: '100%', display: 'flex', gap: '2px' }}>
+        {/* Total Bar (Azul) */}
+        <div style={{ width: '30%', height: totalHeight, background: '#3b82f6' }}>
+          {item.total > 0 && <span>{item.total}</span>}
+        </div>
+        
+        {/* Completadas Bar (Verde) ✅ */}
+        <div style={{ width: '30%', height: completadasHeight, background: '#10b981' }} />
+        
+        {/* Canceladas Bar (Rojo) ✅ */}
+        <div style={{ width: '30%', height: canceladasHeight, background: '#ef4444' }} />
+      </div>
+      
+      <div style={{ fontSize: '10px' }}>
+        {formatFecha(item.fecha)}
+      </div>
+    </div>
+  );
+})}
+```
+
+**Conclusión:**
+- ✅ Frontend **NO necesita cambios**
+- ❌ Backend debe actualizar endpoint `tendencia-citas` para incluir campos faltantes
+- 📋 Ver sección "Corrección Backend Requerida" más abajo
+
+**Datos que el componente espera recibir:**
 ```typescript
-datasets: [
-  {
-    label: 'Total Citas',
-    data: data.map(d => d.cantidad),
-    borderColor: 'rgb(59, 130, 246)',
-  },
-  // ❌ Falta: completadas
-  // ❌ Falta: canceladas
-]
+interface TendenciaCitas {
+  fecha: string;        // "2025-11-22"
+  total: number;        // Todas las citas del día
+  completadas: number;  // ❌ Backend NO envía (siempre 0)
+  canceladas: number;   // ❌ Backend NO envía (siempre 0)
+}
+```
+
+**Datos que el backend actualmente envía:**
+```json
+{
+  "fecha": "2025-11-22",
+  "cantidad": 1  // Solo este campo
+}
+```
+
+**Mapeo en reportesService.ts (Línea 175-179):**
+```typescript
+const resultado = data.map((item: any) => ({
+  fecha: item.fecha,
+  total: Number(item.cantidad || item.total || 0),  // ✅ Mapea cantidad → total
+  completadas: Number(item.completadas || 0),        // ⚠️ Siempre 0 (backend no envía)
+  canceladas: Number(item.canceladas || 0)           // ⚠️ Siempre 0 (backend no envía)
+}));
 ```
 
 ---
@@ -681,7 +741,7 @@ ingresos_mes: "0"
 
 ---
 
-### 2. Tendencia sin completadas/canceladas (✅ SOLUCIONADO)
+### 2. Tendencia sin completadas/canceladas
 
 **Síntoma:**
 ```json
@@ -690,15 +750,12 @@ ingresos_mes: "0"
 ```
 
 **Causa:**
-- `ReporteTendenciaSerializer` solo tenía campos `fecha` y `cantidad`
-- El serializer **filtraba** los campos `completadas` y `canceladas` que enviaba la vista
-- Vista enviaba los datos correctos, pero el serializer los descartaba
+- Backend solo cuenta citas totales
+- `reportes/views.py` línea 206 excluye canceladas sin contarlas
 
 **Solución:**
-- **Commit:** 5baee7f
-- Actualizado `reportes/serializers.py` línea 24
-- Añadidos campos opcionales `completadas` y `canceladas` al serializer
-- Ahora el backend envía estructura completa: `{fecha, cantidad, completadas, canceladas}`
+- Ver `CORRECCION_REPORTES_BACKEND.md`
+- Actualizar función `tendencia_citas` en Django
 
 ---
 
@@ -727,15 +784,10 @@ ingresos_mes: "0"
 
 ### Commits Recientes:
 
-1. **5baee7f** - "Fix: Añadir campos completadas y canceladas al ReporteTendenciaSerializer"
-   - Corrige visualización del gráfico de tendencia de citas
-   - Serializer ahora incluye campos opcionales para completadas/canceladas
-   - Permite mostrar 3 líneas en el gráfico (total, completadas, canceladas)
-
-2. **101b2e8** - "fix: corregir mapeo en adminDashboardService para usar usuario_id y nombre_completo del backend"
+1. **101b2e8** - "fix: corregir mapeo en adminDashboardService para usar usuario_id y nombre_completo del backend"
    - Corrige mapeo de ocupación de odontólogos
 
-3. **30f298c** - "fix: corregir mapeo de KPIs para usar etiqueta/valor del backend en lugar de key/value"
+2. **30f298c** - "fix: corregir mapeo de KPIs para usar etiqueta/valor del backend en lugar de key/value"
    - Corrige adaptador de KPIs en adminDashboardService
 
 ---
@@ -774,7 +826,7 @@ ingresos_mes: "0"
 |------------|--------|---------------|
 | Dashboard KPIs | ✅ CORRECTO | Mapeo corregido en commit 30f298c |
 | Estadísticas Generales | ✅ CORRECTO | Backend envía formato exacto |
-| Tendencia de Citas | ✅ CORRECTO | Serializer corregido en commit 5baee7f |
+| Tendencia de Citas | ⚠️ INCOMPLETO | Falta completadas/canceladas en backend |
 | Top Procedimientos | ✅ CORRECTO | Porcentajes calculados en frontend |
 | Ocupación Odontólogos | ✅ CORRECTO | Datos en 0% porque no hay citas completadas |
 | Reporte Financiero | ✅ CORRECTO | No requiere mapeo especial |
@@ -786,8 +838,7 @@ ingresos_mes: "0"
 ## 📂 ARCHIVOS CLAVE
 
 ### Backend (Django):
-- `reportes/views.py` (línea 206: tendencia_citas - envía cantidad, completadas, canceladas)
-- `reportes/serializers.py` (línea 24: ReporteTendenciaSerializer - ✅ corregido commit 5baee7f)
+- `reportes/views.py` (línea 206: tendencia_citas)
 - `reportes/views.py` (línea 504: ocupacion_odontologos)
 - `reportes/serializers.py`
 
@@ -804,11 +855,10 @@ ingresos_mes: "0"
 ## 🎯 PRÓXIMOS PASOS
 
 1. ✅ **Frontend:** Mapeo de KPIs corregido
-2. ✅ **Backend:** Serializer de tendencia_citas actualizado (commit 5baee7f)
-3. ⏳ **Despliegue:** Esperar auto-deploy de Render (~2-3 minutos)
-4. ✅ **Testing:** Verificar que el gráfico de tendencia muestre 3 líneas
+2. ⏳ **Backend:** Actualizar `tendencia_citas` para incluir completadas/canceladas
+3. ⏳ **Backend:** Esperar despliegue de Render (2-3 minutos después del push)
+4. ✅ **Testing:** Verificar que los KPIs muestren valores correctos
 5. 📊 **Datos:** Cambiar estado de algunas citas a "COMPLETADA" para ver ocupación real
-6. 🎨 **Frontend:** Verificar que TendenciaCitasChart.tsx utilice los 3 campos correctamente
 
 ---
 

@@ -4,6 +4,7 @@ from rest_framework import generics, permissions, status, viewsets
 from rest_framework.response import Response
 from .serializers import RegisterSerializer, UsuarioSerializer, PacienteListSerializer
 from .models import Usuario, PerfilOdontologo
+from reportes.models import BitacoraAccion
 
 
 # --- VISTAS DE API (CU01, CU02) ---
@@ -31,6 +32,15 @@ class RegisterView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         usuario = serializer.save()
+        
+        # Registrar en bitácora
+        BitacoraAccion.registrar(
+            usuario=None,  # Registro público
+            accion='CREAR',
+            descripcion=f'Nuevo paciente registrado: {usuario.nombre} {usuario.apellido} ({usuario.email})',
+            content_object=usuario,
+            detalles={'email': usuario.email, 'tipo': 'PACIENTE'}
+        )
         
         return Response({
             'message': 'Usuario registrado exitosamente',
