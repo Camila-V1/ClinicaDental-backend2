@@ -104,11 +104,12 @@ class CitaSerializer(serializers.ModelSerializer):
     def validate_fecha_hora(self, value):
         """
         Validar que la fecha de la cita sea futura.
+        TEMPORALMENTE DESACTIVADO para permitir crear citas de prueba en el pasado.
         """
-        if value < timezone.now():
-            raise serializers.ValidationError(
-                "La fecha de la cita debe ser en el futuro."
-            )
+        # if value < timezone.now():
+        #     raise serializers.ValidationError(
+        #         "La fecha de la cita debe ser en el futuro."
+        #     )
         return value
     
     def validate(self, data):
