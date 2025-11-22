@@ -1,5 +1,8 @@
 """
 Signals para registrar automáticamente acciones en la bitácora.
+
+NOTA: Los signals de user_logged_in y user_logged_out no funcionan con JWT.
+El registro de login se hace directamente en CustomTokenObtainPairView.
 """
 
 from django.contrib.auth.signals import user_logged_in, user_logged_out
@@ -8,38 +11,18 @@ from django.dispatch import receiver
 from reportes.models import BitacoraAccion
 
 
-@receiver(user_logged_in)
-def registrar_login(sender, request, user, **kwargs):
-    """Registra cuando un usuario inicia sesión."""
-    ip_address = get_client_ip(request)
-    user_agent = request.META.get('HTTP_USER_AGENT', '')[:255]
-    
-    BitacoraAccion.registrar(
-        usuario=user,
-        accion='LOGIN',
-        descripcion=f'Inicio de sesión exitoso - {user.full_name}',
-        detalles={
-            'email': user.email,
-            'tipo_usuario': user.tipo_usuario
-        },
-        ip_address=ip_address,
-        user_agent=user_agent
-    )
+# Los signals de login/logout están desactivados porque se usa JWT
+# El registro de login se hace en usuarios.jwt_views.CustomTokenObtainPairView
 
+# @receiver(user_logged_in)
+# def registrar_login(sender, request, user, **kwargs):
+#     """Registra cuando un usuario inicia sesión."""
+#     pass
 
-@receiver(user_logged_out)
-def registrar_logout(sender, request, user, **kwargs):
-    """Registra cuando un usuario cierra sesión."""
-    if user:
-        ip_address = get_client_ip(request)
-        
-        BitacoraAccion.registrar(
-            usuario=user,
-            accion='LOGOUT',
-            descripcion=f'Cierre de sesión - {user.full_name}',
-            detalles={'email': user.email},
-            ip_address=ip_address
-        )
+# @receiver(user_logged_out)
+# def registrar_logout(sender, request, user, **kwargs):
+#     """Registra cuando un usuario cierra sesión."""
+#     pass
 
 
 def get_client_ip(request):
