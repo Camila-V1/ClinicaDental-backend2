@@ -175,7 +175,7 @@ class BitacoraSerializer(serializers.ModelSerializer):
     
     Muestra quién hizo qué, cuándo y desde dónde.
     """
-    usuario_nombre = serializers.CharField(source='usuario.full_name', read_only=True)
+    usuario = serializers.SerializerMethodField()
     accion_display = serializers.CharField(source='get_accion_display', read_only=True)
     modelo = serializers.SerializerMethodField()
     
@@ -184,7 +184,6 @@ class BitacoraSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'usuario',
-            'usuario_nombre',
             'accion',
             'accion_display',
             'modelo',
@@ -196,6 +195,22 @@ class BitacoraSerializer(serializers.ModelSerializer):
             'user_agent'
         ]
         read_only_fields = ['id', 'fecha_hora']
+    
+    def get_usuario(self, obj):
+        """Devuelve información completa del usuario"""
+        if obj.usuario:
+            return {
+                'id': obj.usuario.id,
+                'nombre_completo': obj.usuario.full_name,
+                'email': obj.usuario.email,
+                'tipo_usuario': obj.usuario.tipo_usuario
+            }
+        return {
+            'id': None,
+            'nombre_completo': 'Sistema',
+            'email': 'sistema@clinica-demo.com',
+            'tipo_usuario': 'SISTEMA'
+        }
     
     def get_modelo(self, obj):
         """Devuelve el nombre del modelo afectado"""
