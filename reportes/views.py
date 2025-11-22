@@ -3,6 +3,7 @@
 from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
+from rest_framework.pagination import PageNumberPagination
 from django.db.models import Count, Sum, Avg, Q, F, Max, Min
 from django.utils import timezone
 from datetime import timedelta, date
@@ -910,6 +911,7 @@ class BitacoraViewSet(viewsets.ModelViewSet):
     queryset = BitacoraAccion.objects.select_related('usuario', 'content_type').all()
     serializer_class = BitacoraSerializer
     permission_classes = [permissions.IsAuthenticated]
+    pagination_class = PageNumberPagination  # Paginación solo para bitácora
     filterset_fields = ['usuario', 'accion']
     search_fields = ['descripcion', 'ip_address']
     ordering_fields = ['fecha_hora', 'accion']
