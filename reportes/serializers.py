@@ -30,20 +30,28 @@ class ReporteTendenciaSerializer(serializers.Serializer):
     """
     Serializer para reportes de tendencias temporales (gráficos de líneas).
     
-    Usado para mostrar evolución de datos a lo largo del tiempo.
+    Usado para mostrar evolución de datos a lo largo del tiempo con desglose por estado.
     
     Ejemplo de salida:
     [
-        {"fecha": "2025-11-01", "cantidad": 5}, 
-        {"fecha": "2025-11-02", "cantidad": 8},
-        {"fecha": "2025-11-03", "cantidad": 3}
+        {"fecha": "2025-11-01", "cantidad": 5, "completadas": 3, "canceladas": 1}, 
+        {"fecha": "2025-11-02", "cantidad": 8, "completadas": 6, "canceladas": 0},
+        {"fecha": "2025-11-03", "cantidad": 3, "completadas": 2, "canceladas": 1}
     ]
     """
     fecha = serializers.DateField(
         help_text="Fecha del punto de datos"
     )
     cantidad = serializers.IntegerField(
-        help_text="Cantidad registrada en esa fecha"
+        help_text="Cantidad total registrada en esa fecha"
+    )
+    completadas = serializers.IntegerField(
+        required=False,
+        help_text="Cantidad de citas completadas en esa fecha"
+    )
+    canceladas = serializers.IntegerField(
+        required=False,
+        help_text="Cantidad de citas canceladas en esa fecha"
     )
 
 

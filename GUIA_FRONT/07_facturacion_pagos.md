@@ -8,17 +8,17 @@
 // Endpoints facturación
 const BILLING_ENDPOINTS = {
   // Facturas
-  invoices: '/api/facturacion/facturas/',
-  invoiceDetail: '/api/facturacion/facturas/{id}/',
-  markAsPaid: '/api/facturacion/facturas/{id}/marcar-pagada/',
-  cancelInvoice: '/api/facturacion/facturas/{id}/cancelar/',
-  financialReport: '/api/facturacion/facturas/reporte-financiero/',
+  invoices: '/api/facturacion/api/facturas/',
+  invoiceDetail: '/api/facturacion/api/facturas/{id}/',
+  markAsPaid: '/api/facturacion/api/facturas/{id}/marcar-pagada/',
+  cancelInvoice: '/api/facturacion/api/facturas/{id}/cancelar/',
+  financialReport: '/api/facturacion/api/facturas/reporte-financiero/',
   
   // Pagos
-  payments: '/api/facturacion/pagos/',
-  paymentDetail: '/api/facturacion/pagos/{id}/',
-  cancelPayment: '/api/facturacion/pagos/{id}/anular/',
-  paymentsByInvoice: '/api/facturacion/pagos/por-factura/'
+  payments: '/api/facturacion/api/pagos/',
+  paymentDetail: '/api/facturacion/api/pagos/{id}/',
+  cancelPayment: '/api/facturacion/api/pagos/{id}/anular/',
+  paymentsByInvoice: '/api/facturacion/api/pagos/por-factura/'
 };
 ```
 
