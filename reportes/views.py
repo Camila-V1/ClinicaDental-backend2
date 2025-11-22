@@ -211,6 +211,16 @@ class ReportesViewSet(viewsets.ViewSet):
         
         Parámetros:
         - dias: Número de días a analizar (default: 15)
+        
+        Retorna:
+        [
+            {
+                'fecha': '2025-11-07',
+                'cantidad': 5,
+                'completadas': 3,
+                'canceladas': 1
+            }
+        ]
         """
         dias_a_revisar = int(request.query_params.get('dias', 15))
         fecha_fin = timezone.now().date()
@@ -220,22 +230,21 @@ class ReportesViewSet(viewsets.ViewSet):
         data = []
         fecha_actual = fecha_inicio
         
-        # Obtener citas agrupadas por fecha
-        citas_por_fecha = dict(
-            Cita.objects
-            .filter(fecha_hora__date__gte=fecha_inicio, fecha_hora__date__lte=fecha_fin)
-            .exclude(estado='CANCELADA')
-            .values('fecha_hora__date')
-            .annotate(cantidad=Count('id'))
-            .values_list('fecha_hora__date', 'cantidad')
-        )
-        
-        # Llenar todos los días del rango
+        # Llenar todos los días del rango con desglose por estado
         while fecha_actual <= fecha_fin:
-            cantidad = citas_por_fecha.get(fecha_actual, 0)
+            citas_del_dia = Cita.objects.filter(
+                fecha_hora__date=fecha_actual
+            )
+            
+            total = citas_del_dia.count()
+            completadas = citas_del_dia.filter(estado='COMPLETADA').count()
+            canceladas = citas_del_dia.filter(estado='CANCELADA').count()
+            
             data.append({
                 'fecha': fecha_actual,
-                'cantidad': cantidad
+                'cantidad': total,
+                'completadas': completadas,
+                'canceladas': canceladas
             })
             fecha_actual += timedelta(days=1)
         
@@ -503,12 +512,26 @@ class ReportesViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'], url_path='ocupacion-odontologos')
     def ocupacion_odontologos(self, request):
         """
-        Tasa de ocupación por odontólogo.
+        Tasa de ocupación por odontólogo con detalles completos.
         
         GET /api/reportes/ocupacion-odontologos/?mes=2025-11
         
         Parámetros:
         - mes: YYYY-MM (default: mes actual)
+        
+        Retorna:
+        [
+            {
+                'usuario_id': 353,
+                'nombre_completo': 'Dr. Juan Pérez',
+                'total_citas': 7,
+                'citas_completadas': 5,
+                'citas_canceladas': 1,
+                'horas_ocupadas': 10,
+                'tasa_ocupacion': '71.43',
+                'pacientes_atendidos': 5
+            }
+        ]
         """
         mes_param = request.query_params.get('mes')
         hoy = timezone.now().date()
@@ -532,37 +555,49 @@ class ReportesViewSet(viewsets.ViewSet):
         data = []
         
         for odontologo in odontologos:
-            # Citas totales del odontólogo en el mes
-            total_citas = Cita.objects.filter(
+            # Base de citas del mes
+            citas_mes = Cita.objects.filter(
                 odontologo=odontologo,
                 fecha_hora__year=anio,
                 fecha_hora__month=mes
-            ).count()
+            )
             
-            # Citas efectivas (confirmadas/completadas)
-            citas_efectivas = Cita.objects.filter(
-                odontologo=odontologo,
-                fecha_hora__year=anio,
-                fecha_hora__month=mes,
-                estado__in=['CONFIRMADA', 'COMPLETADA']
-            ).count()
+            # Contar por estado
+            total_citas = citas_mes.count()
+            citas_completadas = citas_mes.filter(estado='COMPLETADA').count()
+            citas_canceladas = citas_mes.filter(estado='CANCELADA').count()
             
-            # Calcular tasa de ocupación (asegurar que siempre sea número)
+            # Calcular horas ocupadas (asumiendo 2 horas por cita completada)
+            horas_ocupadas = citas_completadas * 2
+            
+            # Pacientes únicos atendidos
+            pacientes_atendidos = citas_mes.filter(
+                estado='COMPLETADA'
+            ).values('paciente').distinct().count()
+            
+            # Calcular tasa de ocupación
             if total_citas > 0:
-                tasa_ocupacion = round((citas_efectivas / total_citas * 100), 2)
+                tasa_ocupacion = round((citas_completadas / total_citas * 100), 2)
             else:
                 tasa_ocupacion = 0.0
             
+            # Enviar estructura completa
             data.append({
-                'etiqueta': odontologo.usuario.full_name,
-                'valor': float(tasa_ocupacion)  # Asegurar que sea float
+                'usuario_id': odontologo.usuario.id,
+                'nombre_completo': odontologo.usuario.full_name,
+                'total_citas': total_citas,
+                'citas_completadas': citas_completadas,
+                'citas_canceladas': citas_canceladas,
+                'horas_ocupadas': horas_ocupadas,
+                'tasa_ocupacion': str(tasa_ocupacion),
+                'pacientes_atendidos': pacientes_atendidos
             })
         
         # Ordenar por tasa de ocupación descendente
-        data.sort(key=lambda x: x['valor'], reverse=True)
+        data.sort(key=lambda x: float(x['tasa_ocupacion']), reverse=True)
         
-        serializer = ReporteSimpleSerializer(data, many=True)
-        return Response(serializer.data)
+        # Retornar directamente sin serializer genérico
+        return Response(data)
     
     @action(detail=False, methods=['get'], url_path='reporte-pacientes')
     def reporte_pacientes(self, request):
