@@ -142,7 +142,7 @@ class ReportesViewSet(viewsets.ViewSet):
             # 2. Citas del día (confirmadas y completadas)
             citas_hoy = Cita.objects.filter(
                 fecha_hora__date=hoy,
-                estado__in=['CONFIRMADA', 'COMPLETADA']
+                estado__in=['CONFIRMADA', 'ATENDIDA']
             ).count()
             
             # 3. Ingresos del Mes (Pagos completados este mes)
@@ -237,7 +237,7 @@ class ReportesViewSet(viewsets.ViewSet):
             )
             
             total = citas_del_dia.count()
-            completadas = citas_del_dia.filter(estado='COMPLETADA').count()
+            completadas = citas_del_dia.filter(estado='ATENDIDA').count()
             canceladas = citas_del_dia.filter(estado='CANCELADA').count()
             
             data.append({
@@ -329,7 +329,7 @@ class ReportesViewSet(viewsets.ViewSet):
         citas_completadas = Cita.objects.filter(
             fecha_hora__year=anio_actual,
             fecha_hora__month=mes_actual,
-            estado='COMPLETADA'
+            estado='ATENDIDA'
         ).count()
         
         # Citas pendientes del mes (PENDIENTE o CONFIRMADA)
@@ -406,7 +406,7 @@ class ReportesViewSet(viewsets.ViewSet):
         citas_efectivas = Cita.objects.filter(
             fecha_hora__year=anio_actual,
             fecha_hora__month=mes_actual,
-            estado__in=['CONFIRMADA', 'COMPLETADA']
+            estado__in=['CONFIRMADA', 'ATENDIDA']
         ).count()
         
         tasa_ocupacion = (
@@ -564,7 +564,7 @@ class ReportesViewSet(viewsets.ViewSet):
             
             # Contar por estado
             total_citas = citas_mes.count()
-            citas_completadas = citas_mes.filter(estado='COMPLETADA').count()
+            citas_completadas = citas_mes.filter(estado='ATENDIDA').count()
             citas_canceladas = citas_mes.filter(estado='CANCELADA').count()
             
             # Calcular horas ocupadas (asumiendo 2 horas por cita completada)
@@ -572,7 +572,7 @@ class ReportesViewSet(viewsets.ViewSet):
             
             # Pacientes únicos atendidos
             pacientes_atendidos = citas_mes.filter(
-                estado='COMPLETADA'
+                estado='ATENDIDA'
             ).values('paciente').distinct().count()
             
             # Calcular tasa de ocupación
@@ -769,7 +769,7 @@ class ReportesViewSet(viewsets.ViewSet):
         """
         Reporte de citas agrupadas por odontólogo.
         
-        GET /api/reportes/reporte-citas-odontologo/?mes=2025-11&estado=COMPLETADA&formato=pdf
+        GET /api/reportes/reporte-citas-odontologo/?mes=2025-11&estado=ATENDIDA&formato=pdf
         
         Parámetros:
         - mes: YYYY-MM (default: mes actual)
@@ -801,7 +801,7 @@ class ReportesViewSet(viewsets.ViewSet):
             
             total_citas = queryset.count()
             confirmadas = queryset.filter(estado='CONFIRMADA').count()
-            completadas = queryset.filter(estado='COMPLETADA').count()
+            completadas = queryset.filter(estado='ATENDIDA').count()
             canceladas = queryset.filter(estado='CANCELADA').count()
             
             data.append({
