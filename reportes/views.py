@@ -376,9 +376,9 @@ class ReportesViewSet(viewsets.ViewSet):
         
         monto_pendiente = total_facturado_mes - total_pagado_mes
         
-        # Facturas vencidas (fecha_vencimiento pasada y saldo > 0)
+        # Facturas pendientes (estado PENDIENTE con saldo > 0)
         facturas_vencidas = Factura.objects.filter(
-            fecha_vencimiento__lt=hoy,
+            estado='PENDIENTE',
             monto_pagado__lt=F('monto_total')
         ).count()
         
