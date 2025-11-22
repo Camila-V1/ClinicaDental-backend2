@@ -85,17 +85,80 @@ class ReporteFinancieroSerializer(serializers.Serializer):
 
 class ReporteEstadisticasGeneralesSerializer(serializers.Serializer):
     """
-    Serializer para estadísticas generales del sistema.
+    Serializer para estadísticas generales completas del sistema.
     
     Usado en dashboards y resúmenes ejecutivos.
+    
+    Incluye métricas agrupadas por categoría:
+    - Pacientes: activos, nuevos del mes
+    - Citas: total, completadas, pendientes, canceladas
+    - Tratamientos: completados, planes activos, procedimientos
+    - Financiero: ingresos, pendiente, facturas vencidas
     """
-    total_pacientes_activos = serializers.IntegerField()
-    total_odontologos = serializers.IntegerField()
-    citas_mes_actual = serializers.IntegerField()
-    tratamientos_completados = serializers.IntegerField()
-    ingresos_mes_actual = serializers.DecimalField(max_digits=12, decimal_places=2)
-    promedio_factura = serializers.DecimalField(max_digits=10, decimal_places=2)
-    tasa_ocupacion = serializers.DecimalField(max_digits=5, decimal_places=2)  # Porcentaje
+    # Pacientes
+    total_pacientes_activos = serializers.IntegerField(
+        help_text="Total de pacientes activos en el sistema"
+    )
+    pacientes_nuevos_mes = serializers.IntegerField(
+        help_text="Pacientes registrados en el mes actual"
+    )
+    
+    # Odontólogos
+    total_odontologos = serializers.IntegerField(
+        help_text="Total de odontólogos activos"
+    )
+    
+    # Citas
+    citas_mes_actual = serializers.IntegerField(
+        help_text="Total de citas del mes (sin canceladas)"
+    )
+    citas_completadas = serializers.IntegerField(
+        help_text="Citas completadas en el mes"
+    )
+    citas_pendientes = serializers.IntegerField(
+        help_text="Citas pendientes o confirmadas"
+    )
+    citas_canceladas = serializers.IntegerField(
+        help_text="Citas canceladas en el mes"
+    )
+    
+    # Tratamientos
+    tratamientos_completados = serializers.IntegerField(
+        help_text="Planes de tratamiento completados"
+    )
+    planes_activos = serializers.IntegerField(
+        help_text="Planes en progreso, propuestos o aprobados"
+    )
+    total_procedimientos = serializers.IntegerField(
+        help_text="Total de procedimientos realizados"
+    )
+    
+    # Financiero
+    ingresos_mes_actual = serializers.DecimalField(
+        max_digits=12, 
+        decimal_places=2,
+        help_text="Ingresos del mes actual (pagos completados)"
+    )
+    monto_pendiente = serializers.DecimalField(
+        max_digits=12, 
+        decimal_places=2,
+        help_text="Monto pendiente de cobro"
+    )
+    facturas_vencidas = serializers.IntegerField(
+        help_text="Cantidad de facturas vencidas sin pagar"
+    )
+    promedio_factura = serializers.DecimalField(
+        max_digits=10, 
+        decimal_places=2,
+        help_text="Promedio de monto por factura"
+    )
+    
+    # Ocupación
+    tasa_ocupacion = serializers.DecimalField(
+        max_digits=5, 
+        decimal_places=2,
+        help_text="Porcentaje de ocupación de agenda"
+    )
 
 
 class BitacoraSerializer(serializers.ModelSerializer):

@@ -279,43 +279,114 @@ class ReportesViewSet(viewsets.ViewSet):
         Estadísticas generales completas del sistema.
         
         GET /api/reportes/estadisticas-generales/
+        
+        Devuelve métricas completas del sistema incluyendo:
+        - Pacientes (total, activos, nuevos del mes)
+        - Citas (total mes, completadas, pendientes, canceladas)
+        - Financiero (ingresos, pendiente, facturas vencidas)
+        - Tratamientos (planes activos, completados, procedimientos totales)
         """
         hoy = timezone.now().date()
         mes_actual = hoy.month
         anio_actual = hoy.year
+        inicio_mes = date(anio_actual, mes_actual, 1)
         
-        # Calcular estadísticas
+        # ====== ESTADÍSTICAS DE PACIENTES ======
         total_pacientes_activos = PerfilPaciente.objects.filter(
             usuario__is_active=True
         ).count()
         
+        # Pacientes nuevos del mes (creados en el mes actual)
+        pacientes_nuevos_mes = PerfilPaciente.objects.filter(
+            usuario__date_joined__year=anio_actual,
+            usuario__date_joined__month=mes_actual
+        ).count()
+        
+        # ====== ESTADÍSTICAS DE ODONTÓLOGOS ======
         total_odontologos = PerfilOdontologo.objects.filter(
             usuario__is_active=True
         ).count()
         
+        # ====== ESTADÍSTICAS DE CITAS ======
+        # Total de citas del mes (excluyendo canceladas)
         citas_mes_actual = Cita.objects.filter(
             fecha_hora__year=anio_actual,
             fecha_hora__month=mes_actual
         ).exclude(estado='CANCELADA').count()
         
-        # Planes completados (asumimos estado 'COMPLETADO')
+        # Citas completadas del mes
+        citas_completadas = Cita.objects.filter(
+            fecha_hora__year=anio_actual,
+            fecha_hora__month=mes_actual,
+            estado='COMPLETADA'
+        ).count()
+        
+        # Citas pendientes del mes (PENDIENTE o CONFIRMADA)
+        citas_pendientes = Cita.objects.filter(
+            fecha_hora__year=anio_actual,
+            fecha_hora__month=mes_actual,
+            estado__in=['PENDIENTE', 'CONFIRMADA']
+        ).count()
+        
+        # Citas canceladas del mes
+        citas_canceladas = Cita.objects.filter(
+            fecha_hora__year=anio_actual,
+            fecha_hora__month=mes_actual,
+            estado='CANCELADA'
+        ).count()
+        
+        # ====== ESTADÍSTICAS DE TRATAMIENTOS ======
+        # Planes completados
         tratamientos_completados = PlanDeTratamiento.objects.filter(
             estado='COMPLETADO'
         ).count()
         
-        # Ingresos del mes
+        # Planes activos (EN_PROGRESO, PROPUESTO, APROBADO)
+        planes_activos = PlanDeTratamiento.objects.filter(
+            estado__in=['EN_PROGRESO', 'PROPUESTO', 'APROBADO']
+        ).count()
+        
+        # Total de procedimientos realizados
+        total_procedimientos = ItemPlanTratamiento.objects.filter(
+            estado='COMPLETADO'
+        ).count()
+        
+        # ====== ESTADÍSTICAS FINANCIERAS ======
+        # Ingresos del mes (pagos completados)
         ingresos_mes = Pago.objects.filter(
             fecha_pago__year=anio_actual,
             fecha_pago__month=mes_actual,
             estado_pago='COMPLETADO'
         ).aggregate(total=Sum('monto_pagado'))['total'] or Decimal('0.00')
         
+        # Monto pendiente de cobro (facturas emitidas - pagado)
+        facturas_mes = Factura.objects.filter(
+            fecha_emision__year=anio_actual,
+            fecha_emision__month=mes_actual
+        )
+        
+        total_facturado_mes = facturas_mes.aggregate(
+            total=Sum('monto_total')
+        )['total'] or Decimal('0.00')
+        
+        total_pagado_mes = facturas_mes.aggregate(
+            total=Sum('monto_pagado')
+        )['total'] or Decimal('0.00')
+        
+        monto_pendiente = total_facturado_mes - total_pagado_mes
+        
+        # Facturas vencidas (fecha_vencimiento pasada y saldo > 0)
+        facturas_vencidas = Factura.objects.filter(
+            fecha_vencimiento__lt=hoy,
+            monto_pagado__lt=F('monto_total')
+        ).count()
+        
         # Promedio de factura
         promedio_factura = Factura.objects.aggregate(
             promedio=Avg('monto_total')
         )['promedio'] or Decimal('0.00')
         
-        # Tasa de ocupación (citas confirmadas/completadas vs total de citas)
+        # ====== TASA DE OCUPACIÓN ======
         total_citas_mes = Cita.objects.filter(
             fecha_hora__year=anio_actual,
             fecha_hora__month=mes_actual
@@ -332,13 +403,33 @@ class ReportesViewSet(viewsets.ViewSet):
             if total_citas_mes > 0 else 0
         )
         
+        # ====== RESPUESTA COMPLETA ======
         data = {
+            # Pacientes
             'total_pacientes_activos': total_pacientes_activos,
+            'pacientes_nuevos_mes': pacientes_nuevos_mes,
+            
+            # Odontólogos
             'total_odontologos': total_odontologos,
+            
+            # Citas
             'citas_mes_actual': citas_mes_actual,
+            'citas_completadas': citas_completadas,
+            'citas_pendientes': citas_pendientes,
+            'citas_canceladas': citas_canceladas,
+            
+            # Tratamientos
             'tratamientos_completados': tratamientos_completados,
+            'planes_activos': planes_activos,
+            'total_procedimientos': total_procedimientos,
+            
+            # Financiero
             'ingresos_mes_actual': float(ingresos_mes),
+            'monto_pendiente': float(monto_pendiente),
+            'facturas_vencidas': facturas_vencidas,
             'promedio_factura': float(promedio_factura),
+            
+            # Ocupación
             'tasa_ocupacion': round(tasa_ocupacion, 2)
         }
         
