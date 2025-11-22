@@ -18,12 +18,12 @@ urlpatterns = [
 Endpoints de Reportes Disponibles (CU37, CU38, CU39):
 
 REPORTES BÁSICOS CON EXPORTACIÓN PDF/EXCEL:
-- GET /api/reportes/reportes/dashboard-kpis/           - KPIs principales del dashboard
-- GET /api/reportes/reportes/estadisticas-generales/  - Estadísticas completas del sistema
-- GET /api/reportes/reportes/tendencia-citas/?dias=15        - Gráfico de citas por día
-- GET /api/reportes/reportes/top-procedimientos/?limite=5    - Procedimientos más realizados
-- GET /api/reportes/reportes/ocupacion-odontologos/?mes=2025-11  - Tasa ocupación por doctor
-- GET /api/reportes/reportes/reporte-financiero/?periodo=2025-11  - Resumen financiero detallado
+- GET /api/reportes/reportes/dashboard-kpis/                          - KPIs principales del dashboard
+- GET /api/reportes/reportes/estadisticas-generales/                  - Estadísticas completas del sistema
+- GET /api/reportes/reportes/tendencia-citas/?dias=15                 - Gráfico de citas por día
+- GET /api/reportes/reportes/top-procedimientos/?limite=5             - Procedimientos más realizados
+- GET /api/reportes/reportes/ocupacion-odontologos/?mes=2025-11       - Tasa ocupación por doctor
+- GET /api/reportes/reportes/reporte-financiero/?periodo=2025-11      - Resumen financiero detallado
 
 NUEVOS REPORTES DINÁMICOS (CU37 - Personalización Total):
 - GET /api/reportes/reportes/reporte-pacientes/?activo=true&desde=2025-01-01&formato=excel
