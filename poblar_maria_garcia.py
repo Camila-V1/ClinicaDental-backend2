@@ -235,12 +235,13 @@ print(f'  ✅ Factura 1: ${factura1.monto_total} - PAGADA')
 # Pago de factura 1
 pago1 = Pago.objects.create(
     factura=factura1,
-    monto=Decimal('280.00'),
-    metodo='EFECTIVO',
-    fecha=timezone.now().date() - timedelta(days=7),
-    observaciones='Pago completo en efectivo'
+    paciente=maria,
+    monto_pagado=Decimal('280.00'),
+    metodo_pago='EFECTIVO',
+    estado_pago='COMPLETADO',
+    notas='Pago completo en efectivo'
 )
-print(f'    💵 Pago 1: ${pago1.monto} - {pago1.metodo}')
+print(f'    💵 Pago 1: ${pago1.monto_pagado} - {pago1.metodo_pago}')
 
 # Factura 2: Corona (PENDIENTE con pago parcial)
 factura2 = Factura.objects.create(
@@ -257,12 +258,13 @@ print(f'  ✅ Factura 2: ${factura2.monto_total} - PENDIENTE (Pagado: ${factura2
 # Pago parcial de factura 2
 pago2 = Pago.objects.create(
     factura=factura2,
-    monto=Decimal('150.00'),
-    metodo='TRANSFERENCIA',
-    fecha=timezone.now().date(),
-    observaciones='Anticipo del 50%'
+    paciente=maria,
+    monto_pagado=Decimal('150.00'),
+    metodo_pago='TRANSFERENCIA',
+    estado_pago='COMPLETADO',
+    notas='Anticipo del 50%'
 )
-print(f'    💳 Pago 2 (anticipo): ${pago2.monto} - {pago2.metodo}')
+print(f'    💳 Pago 2 (anticipo): ${pago2.monto_pagado} - {pago2.metodo_pago}')
 
 # ============================================================================
 # RESUMEN
