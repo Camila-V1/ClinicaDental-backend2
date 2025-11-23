@@ -144,7 +144,7 @@ class DashboardPacienteView(generics.GenericAPIView):
             proxima_cita = {
                 'id': proxima_cita_obj.id,
                 'fecha_hora': proxima_cita_obj.fecha_hora,
-                'tipo_cita': proxima_cita_obj.tipo_cita,
+                'motivo_tipo': proxima_cita_obj.motivo_tipo,
                 'estado': proxima_cita_obj.estado,
                 'odontologo': {
                     'id': proxima_cita_obj.odontologo.id,
