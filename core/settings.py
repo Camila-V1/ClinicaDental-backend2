@@ -98,6 +98,7 @@ MIDDLEWARE = [
     'django_tenants.middleware.TenantMainMiddleware',
     # Custom middleware para forzar tenant por defecto en dominio público
     'core.middleware.DefaultTenantMiddleware',
+    'core.middleware_mobile.MobileAppMiddleware',  # ✅ Permitir apps móviles
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -228,6 +229,11 @@ MEDIA_ROOT = BASE_DIR / 'media'
 cors_origins = config('CORS_ALLOWED_ORIGINS', default='http://localhost:5173,http://localhost:3000', cast=Csv())
 CORS_ALLOWED_ORIGINS = list(cors_origins)
 
+# ✅ Para apps móviles: Permitir CUALQUIER origen
+# Esto es necesario porque las apps móviles no tienen un "origin" fijo
+if not DEBUG:
+    CORS_ALLOW_ALL_ORIGINS = True  # Permitir apps móviles en producción
+
 # Permitir subdominios para multi-tenant
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^http://[\w-]+\.localhost:\d+$",   # Desarrollo: *.localhost:puerto
@@ -253,6 +259,8 @@ CORS_ALLOW_HEADERS = [
     'x-csrftoken',
     'x-requested-with',
     'x-tenant-id',  # Para multi-tenant con subdominios
+    'host',  # ✅ Para apps móviles (Header Host)
+    'x-mobile-app',  # ✅ Para identificar apps móviles
 ]
 
 # --- Configuración de CSRF ---
