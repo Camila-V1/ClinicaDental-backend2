@@ -40,20 +40,23 @@ class PlanTratamiento {
   factory PlanTratamiento.fromJson(Map<String, dynamic> json) {
     return PlanTratamiento(
       id: json['id'],
-      nombre: json['nombre'] ?? '',
+      nombre: json['titulo'] ?? json['nombre'] ?? '',  // ✅ Backend usa 'titulo'
       descripcion: json['descripcion'] ?? '',
-      costoTotal: double.parse(json['costo_total']?.toString() ?? '0'),
-      montoAbonado: double.parse(json['monto_abonado']?.toString() ?? '0'),
+      costoTotal: double.parse(json['precio_total_plan']?.toString() ?? '0'),  // ✅ Backend usa 'precio_total_plan'
+      montoAbonado: 0.0,  // ✅ Backend no tiene este campo en plan, está en facturas
       estado: json['estado'] ?? '',
-      fechaInicio: DateTime.parse(json['fecha_inicio']),
-      fechaFin: json['fecha_fin'] != null
-          ? DateTime.parse(json['fecha_fin'])
+      fechaInicio: json['fecha_inicio'] != null
+          ? DateTime.parse(json['fecha_inicio'])
+          : DateTime.now(),
+      fechaFin: json['fecha_finalizacion'] != null  // ✅ Backend usa 'fecha_finalizacion'
+          ? DateTime.parse(json['fecha_finalizacion'])
           : null,
-      odontologoNombre: json['odontologo']['usuario']['full_name'] ?? '',
-      items: (json['items'] as List?)
+      odontologoNombre: json['odontologo_info']?['nombre_completo'] ??  // ✅ Backend usa 'odontologo_info'
+                       json['odontologo_nombre'] ?? '',
+      items: (json['items_simples'] as List?)  // ✅ Backend usa 'items_simples' en list
           ?.map((e) => ItemTratamiento.fromJson(e))
           .toList() ?? [],
-      progresoPercentage: json['progreso_percentage'] ?? 0,
+      progresoPercentage: json['porcentaje_completado'] ?? 0,  // ✅ Backend usa 'porcentaje_completado'
     );
   }
 
@@ -91,17 +94,18 @@ class ItemTratamiento {
   factory ItemTratamiento.fromJson(Map<String, dynamic> json) {
     return ItemTratamiento(
       id: json['id'],
-      servicio: json['servicio']['nombre'] ?? '',
+      servicio: json['servicio_info']?['nombre'] ??  // ✅ Backend usa 'servicio_info' anidado
+               json['servicio_nombre'] ?? '',
       piezaDental: json['pieza_dental'],
-      costo: double.parse(json['costo']?.toString() ?? '0'),
+      costo: double.parse(json['precio_total']?.toString() ?? '0'),  // ✅ Backend usa 'precio_total'
       estado: json['estado'] ?? '',
-      sesionesRequeridas: json['sesiones_requeridas'] ?? 1,
-      sesionesCompletadas: json['sesiones_completadas'] ?? 0,
-      fechaInicio: json['fecha_inicio'] != null
-          ? DateTime.parse(json['fecha_inicio'])
+      sesionesRequeridas: 1,  // ✅ Backend no tiene este campo
+      sesionesCompletadas: json['estado'] == 'COMPLETADO' ? 1 : 0,  // ✅ Calculado desde estado
+      fechaInicio: json['fecha_realizada'] != null  // ✅ Backend usa 'fecha_realizada'
+          ? DateTime.parse(json['fecha_realizada'])
           : null,
-      fechaFin: json['fecha_fin'] != null
-          ? DateTime.parse(json['fecha_fin'])
+      fechaFin: json['fecha_realizada'] != null && json['estado'] == 'COMPLETADO'
+          ? DateTime.parse(json['fecha_realizada'])
           : null,
       notas: json['notas'],
     );
@@ -134,7 +138,8 @@ import 'package:clinica_dental_app/config/constants.dart';
 import 'package:clinica_dental_app/models/tratamiento.dart';
 
 class TratamientosService {
-  final String baseUrl = AppConstants.baseUrlDev;
+  // ✅ IMPORTANTE: Usar URL de producción (Render), NO localhost
+  final String baseUrl = 'https://clinica-dental-backend.onrender.com';
 
   /// ✅ Obtener mis planes de tratamiento (mismo endpoint que el web)
   Future<List<PlanTratamiento>> getMisTratamientos({
