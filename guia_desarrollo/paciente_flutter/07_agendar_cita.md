@@ -48,10 +48,10 @@ class OdontologoDisponible {
   factory OdontologoDisponible.fromJson(Map<String, dynamic> json) {
     return OdontologoDisponible(
       id: json['id'],
-      nombre: json['usuario']['full_name'],
+      nombre: json['nombre_completo'] ?? '${json['nombre']} ${json['apellido']}',  // ✅ FIX: nombre_completo directo
       especialidad: json['especialidad'],
-      foto: json['usuario']['foto'],
-      diasDisponibles: List<String>.from(json['dias_disponibles'] ?? []),
+      foto: null,  // ✅ Endpoint /api/usuarios/odontologos/ no retorna foto
+      diasDisponibles: [],  // ✅ Endpoint no retorna dias_disponibles
     );
   }
 }
