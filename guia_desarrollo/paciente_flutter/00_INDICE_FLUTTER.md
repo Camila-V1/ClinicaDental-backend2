@@ -18,6 +18,7 @@ Crear una aplicación móvil Flutter para que los pacientes puedan gestionar sus
 ### 🏗️ Configuración Inicial
 1. **[01_setup_proyecto.md](01_setup_proyecto.md)** - Crear proyecto Flutter y estructura
 2. **[02_configuracion_dependencias.md](02_configuracion_dependencias.md)** - Paquetes y configuración
+2a. **[02a_selector_clinica_conexion.md](02a_selector_clinica_conexion.md)** - ✅ **NUEVA** - Selector de clínicas y conexión a Render
 
 ### 🔐 Autenticación
 3. **[03_selector_clinica.md](03_selector_clinica.md)** - Pantalla inicial para seleccionar clínica
@@ -204,7 +205,17 @@ Ir a Home Screen
 
 ---
 
-## 📡 Comunicación con API
+## 🌐 Comunicación con API
+
+### Backend de Producción (Render)
+
+```dart
+// URL de producción
+const String prodUrl = 'https://clinica-dental-backend.onrender.com';
+
+// Clínica demo disponible
+const String clinicaDemo = 'clinica_demo';
+```
 
 ### Configuración de Clínica (Tenant)
 
@@ -221,20 +232,41 @@ headers: {
 
 ### Endpoints Base
 ```dart
-const String baseUrl = 'https://tu-servidor.com'; // Producción
+// ✅ Backend en Render (Producción)
+const String baseUrl = 'https://clinica-dental-backend.onrender.com';
+
+// Desarrollo (Local)
 const String baseUrlDev = 'http://10.0.2.2:8000'; // Android Emulator
 const String baseUrlDevIOS = 'http://localhost:8000'; // iOS Simulator
 ```
 
+### Clínicas Disponibles
+```dart
+// Clínica demo configurada
+const clinicaDemo = {
+  'id': '1',
+  'nombre': 'Clínica Demo',
+  'dominio': 'clinica_demo',
+  'descripcion': 'Clínica dental de demostración',
+};
+```
+
 ### Endpoints Principales (ACTUALIZADOS)
 
-**Autenticación:**
+**⚠️ IMPORTANTE:** Todas las peticiones excepto las de `/api/tenants/*` requieren el header `Host: clinica_demo.localhost`
+
+**Endpoints Públicos (sin tenant):**
+- ✅ `GET /api/tenants/planes/` - Planes de suscripción disponibles
+- ✅ `GET /api/tenants/info-registro/` - Información sobre registro
+- ✅ `POST /api/tenants/solicitudes/` - Crear solicitud de nueva clínica
+
+**Autenticación (con tenant):**
 - ✅ `POST /api/token/` - Login (retorna access + refresh tokens)
 - ✅ `POST /api/token/refresh/` - Renovar access token
 - ✅ `POST /api/usuarios/register/` - Registro de nuevo paciente
 - ✅ `GET /api/usuarios/me/` - Obtener datos del usuario autenticado
 
-**Citas:**
+**Citas (con tenant):**
 - ✅ `GET /api/agenda/citas/` - Lista de citas (filtra por usuario automáticamente)
 - ✅ `GET /api/agenda/citas/proximas/` - Solo citas futuras (PENDIENTE/CONFIRMADA)
 - ✅ `GET /api/agenda/citas/hoy/` - Citas de hoy
