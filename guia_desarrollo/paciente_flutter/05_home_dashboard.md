@@ -116,25 +116,33 @@ class DashboardService {
       // Parsear respuestas
       final citasData = citasResponse.statusCode == 200 
           ? json.decode(citasResponse.body) 
-          : {'results': []};
+          : [];
       
       final planesData = planesResponse.statusCode == 200
           ? json.decode(planesResponse.body)
-          : {'results': []};
+          : [];
       
       final estadoCuentaData = estadoCuentaResponse.statusCode == 200
           ? json.decode(estadoCuentaResponse.body)
           : {'saldo_pendiente': 0.0};
 
-      // Procesar citas
-      final citas = (citasData['results'] as List)
+      // ✅ FIX: El endpoint retorna array directo, no {results: [...]}
+      final List<dynamic> citasResults = citasData is List 
+          ? citasData 
+          : (citasData['results'] ?? []);
+      
+      // Procesar citas - filtrar activas
+      final citas = citasResults
           .where((c) => c['estado'] != 'CANCELADA' && c['estado'] != 'ATENDIDA')
           .toList();
 
       final proximaCita = citas.isNotEmpty ? Cita.fromJson(citas.first) : null;
 
       // Calcular tratamientos activos
-      final tratamientosActivos = (planesData['results'] as List).length;
+      final List<dynamic> planesResults = planesData is List 
+          ? planesData 
+          : (planesData['results'] ?? []);
+      final tratamientosActivos = planesResults.length;
 
       // Obtener saldo pendiente
       final saldoPendiente = double.parse(
