@@ -1,5 +1,13 @@
 # 🔐 Login y Registro
 
+> **✅ GUÍA ACTUALIZADA** - 22/11/2025  
+> Esta guía ha sido corregida para reflejar las rutas reales del backend.  
+> Cambios principales:
+> - Login: `/api/token/` (no `/api/auth/login/`)
+> - Registro: `/api/usuarios/register/` (no `/api/auth/registro/`)
+> - Refresh: `/api/token/refresh/` (no `/api/auth/token/refresh/`)
+> - Headers: Usar `Host: {tenant}.localhost` para multi-tenant
+
 ## 🎯 Objetivo
 Implementar autenticación segura con JWT para pacientes.
 
@@ -94,10 +102,10 @@ class AuthService {
   }) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/api/auth/login/'),
+        Uri.parse('$baseUrl/api/token/'),  // ✅ Ruta correcta
         headers: {
           'Content-Type': 'application/json',
-          'X-Tenant-ID': tenantId,
+          'Host': '$tenantId.localhost',  // ✅ Header correcto para multi-tenant
         },
         body: json.encode({
           'email': email,
@@ -107,10 +115,30 @@ class AuthService {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        return AuthResponse.fromJson(data);
+        // ✅ Backend retorna { access, refresh }
+        // Para obtener datos del usuario, hacer segunda petición:
+        final userResponse = await http.get(
+          Uri.parse('$baseUrl/api/usuarios/me/'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Host': '$tenantId.localhost',
+            'Authorization': 'Bearer ${data['access']}',
+          },
+        );
+        
+        if (userResponse.statusCode == 200) {
+          final userData = json.decode(userResponse.body);
+          return AuthResponse(
+            accessToken: data['access'],
+            refreshToken: data['refresh'],
+            usuario: Usuario.fromJson(userData),
+          );
+        } else {
+          throw Exception('Error al obtener datos del usuario');
+        }
       } else {
         final error = json.decode(response.body);
-        throw Exception(error['message'] ?? 'Error al iniciar sesión');
+        throw Exception(error['detail'] ?? 'Error al iniciar sesión');
       }
     } catch (e) {
       throw Exception('Error de conexión: $e');
@@ -128,10 +156,10 @@ class AuthService {
   }) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/api/auth/registro/'),
+        Uri.parse('$baseUrl/api/usuarios/register/'),  // ✅ Ruta correcta
         headers: {
           'Content-Type': 'application/json',
-          'X-Tenant-ID': tenantId,
+          'Host': '$tenantId.localhost',
         },
         body: json.encode({
           'email': email,
@@ -144,10 +172,15 @@ class AuthService {
 
       if (response.statusCode == 201) {
         final data = json.decode(response.body);
-        return AuthResponse.fromJson(data);
+        // ✅ Registro exitoso, ahora hacer login
+        return await login(
+          tenantId: tenantId,
+          email: email,
+          password: password,
+        );
       } else {
         final error = json.decode(response.body);
-        throw Exception(error['message'] ?? 'Error al registrarse');
+        throw Exception(error['email']?.first ?? error['detail'] ?? 'Error al registrarse');
       }
     } catch (e) {
       throw Exception('Error de conexión: $e');
@@ -158,10 +191,10 @@ class AuthService {
   Future<String> refreshToken(String refreshToken, String tenantId) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/api/auth/token/refresh/'),
+        Uri.parse('$baseUrl/api/token/refresh/'),  // ✅ Ruta correcta
         headers: {
           'Content-Type': 'application/json',
-          'X-Tenant-ID': tenantId,
+          'Host': '$tenantId.localhost',
         },
         body: json.encode({'refresh': refreshToken}),
       );
@@ -179,25 +212,16 @@ class AuthService {
 
   // Verificar email
   Future<void> verificarEmail(String email) async {
-    // Implementar según backend
+    // ⚠️ NO IMPLEMENTADO en backend actualmente
+    throw UnimplementedError('Verificación de email no disponible');
   }
 
   // Recuperar contraseña
   Future<void> recuperarPassword(String email, String tenantId) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/api/auth/recuperar-password/'),
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Tenant-ID': tenantId,
-        },
-        body: json.encode({'email': email}),
-      );
-
-      if (response.statusCode != 200) {
-        throw Exception('Error al enviar email de recuperación');
-      }
-    } catch (e) {
+    // ⚠️ NO IMPLEMENTADO en backend actualmente
+    throw UnimplementedError('Recuperación de contraseña no disponible');
+  }
+} {
       throw Exception('Error de conexión: $e');
     }
   }

@@ -1,5 +1,12 @@
 # 📅 Mis Citas
 
+> **✅ GUÍA ACTUALIZADA** - 22/11/2025  
+> Esta guía ha sido corregida para reflejar los endpoints reales del backend.  
+> Cambios principales:
+> - Endpoint: `/api/agenda/citas/` o `/api/agenda/citas/proximas/` (no `/api/agenda/mis-citas/`)
+> - Estado: `ATENDIDA` (no `COMPLETADA`)
+> - El backend filtra automáticamente por usuario autenticado
+
 ## 🎯 Objetivo
 Permitir al paciente ver sus citas programadas, pasadas y cancelar/reagendar.
 
@@ -46,7 +53,7 @@ class CitaDetallada {
 
   bool get isPendiente => estado == 'PENDIENTE';
   bool get isConfirmada => estado == 'CONFIRMADA';
-  bool get isCompletada => estado == 'COMPLETADA';
+  bool get isAtendida => estado == 'ATENDIDA';      // ✅ Cambio: Backend usa 'ATENDIDA', no 'COMPLETADA'
   bool get isCancelada => estado == 'CANCELADA';
   bool get isPasada => fechaHora.isBefore(DateTime.now());
 }
@@ -91,6 +98,7 @@ class CitasService {
   final String baseUrl = AppConstants.baseUrlDev;
 
   // Obtener mis citas
+  // ✅ Backend filtra automáticamente por usuario autenticado
   Future<List<CitaDetallada>> getMisCitas({
     required String token,
     required String tenantId,
@@ -98,28 +106,33 @@ class CitasService {
     bool soloProximas = false,
   }) async {
     try {
-      String url = '$baseUrl/api/agenda/mis-citas/';
-      
-      final params = <String, String>{};
-      if (estado != null) params['estado'] = estado;
-      if (soloProximas) params['proximas'] = 'true';
-      
-      if (params.isNotEmpty) {
-        url += '?${params.entries.map((e) => '${e.key}=${e.value}').join('&')}';
+      // ✅ Endpoints disponibles:
+      // - /api/agenda/citas/ (lista general, ya filtra por usuario)
+      // - /api/agenda/citas/proximas/ (solo futuras PENDIENTE/CONFIRMADA)
+      // - /api/agenda/citas/hoy/ (solo de hoy)
+      String url;
+      if (soloProximas) {
+        url = '$baseUrl/api/agenda/citas/proximas/';  // ✅ Custom action
+      } else {
+        url = '$baseUrl/api/agenda/citas/';  // ✅ Lista general
+        if (estado != null) {
+          url += '?estado=$estado';  // ✅ Filtro por estado
+        }
       }
 
       final response = await http.get(
         Uri.parse(url),
         headers: {
           'Content-Type': 'application/json',
-          'X-Tenant-ID': tenantId,
+          'Host': '$tenantId.localhost',
           'Authorization': 'Bearer $token',
         },
       );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        final List<dynamic> citas = data['results'] ?? data;
+        // ✅ Backend puede retornar array directo o paginado
+        final List<dynamic> citas = data is List ? data : (data['results'] ?? []);
         return citas.map((json) => CitaDetallada.fromJson(json)).toList();
       } else {
         throw Exception('Error al cargar citas');
@@ -140,7 +153,7 @@ class CitasService {
         Uri.parse('$baseUrl/api/agenda/citas/$citaId/'),
         headers: {
           'Content-Type': 'application/json',
-          'X-Tenant-ID': tenantId,
+          'Host': '$tenantId.localhost',
           'Authorization': 'Bearer $token',
         },
       );

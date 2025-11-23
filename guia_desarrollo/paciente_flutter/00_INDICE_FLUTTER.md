@@ -1,5 +1,13 @@
 # 📱 App Móvil Flutter - Portal del Paciente
 
+> **⚠️ GUÍAS ACTUALIZADAS** - 22/11/2025  
+> Las guías han sido corregidas para reflejar las rutas reales del backend.  
+> **Cambios críticos:**
+> - ✅ `04_login_registro.md` - Rutas de autenticación corregidas
+> - ✅ `06_mis_citas.md` - Endpoints y estados actualizados
+> 
+> Ver `REVISION_GUIAS_FLUTTER.md` en la raíz para detalles completos.
+
 ## 🎯 Objetivo
 Crear una aplicación móvil Flutter para que los pacientes puedan gestionar sus citas, ver su historial clínico, facturas y más, desde sus dispositivos móviles.
 
@@ -13,11 +21,11 @@ Crear una aplicación móvil Flutter para que los pacientes puedan gestionar sus
 
 ### 🔐 Autenticación
 3. **[03_selector_clinica.md](03_selector_clinica.md)** - Pantalla inicial para seleccionar clínica
-4. **[04_login_registro.md](04_login_registro.md)** - Login, registro y recuperación de contraseña
+4. **[04_login_registro.md](04_login_registro.md)** - ✅ **ACTUALIZADA** - Login, registro y tokens JWT
 
 ### 📱 Vistas Principales
 5. **[05_home_dashboard.md](05_home_dashboard.md)** - Dashboard con resumen de información
-6. **[06_mis_citas.md](06_mis_citas.md)** - Ver y gestionar citas
+6. **[06_mis_citas.md](06_mis_citas.md)** - ✅ **ACTUALIZADA** - Ver y gestionar citas
 7. **[07_agendar_cita.md](07_agendar_cita.md)** - Crear nueva cita
 8. **[08_historial_clinico.md](08_historial_clinico.md)** - Ver historial médico
 9. **[09_tratamientos.md](09_tratamientos.md)** - Planes de tratamiento activos
@@ -167,11 +175,13 @@ Splash Screen (verifica si hay sesión)
 ```
 Pantalla de Login
     ↓
-Usuario ingresa email/username y password
+Usuario ingresa email y password
     ↓
-POST /api/auth/login/ (con tenant de clínica seleccionada)
+POST /api/token/ (✅ CORRECTO - con Host: {tenant}.localhost)
     ↓
 Recibir tokens (access, refresh)
+    ↓
+GET /api/usuarios/me/ (obtener datos del usuario)
     ↓
 Guardar tokens en SecureStorage
 Guardar clínica en SharedPreferences
@@ -183,11 +193,11 @@ Ir a Home Screen
 ```
 Pantalla de Registro
     ↓
-Usuario ingresa datos
+Usuario ingresa datos (email, password, full_name, etc.)
     ↓
-POST /api/auth/registro/ (con tenant)
+POST /api/usuarios/register/ (✅ CORRECTO - con Host: {tenant}.localhost)
     ↓
-Auto-login
+Auto-login con POST /api/token/
     ↓
 Ir a Home Screen
 ```
@@ -198,12 +208,12 @@ Ir a Home Screen
 
 ### Configuración de Clínica (Tenant)
 
-Como no hay URLs diferentes, usaremos **headers personalizados**:
+El backend usa **subdominios** para identificar clínicas. En Flutter, usamos el **header Host**:
 
 ```dart
-// Todas las peticiones incluyen el header
+// ✅ CORRECTO - Todas las peticiones incluyen el header Host
 headers: {
-  'X-Tenant-ID': 'clinica_demo',  // ID de la clínica seleccionada
+  'Host': '$tenantId.localhost',  // ej: 'clinica_demo.localhost'
   'Authorization': 'Bearer $accessToken',
   'Content-Type': 'application/json',
 }
@@ -211,11 +221,32 @@ headers: {
 
 ### Endpoints Base
 ```dart
-// Backend debe estar configurado para aceptar tenant por header
-const String baseUrl = 'http://tu-servidor.com'; // Producción
+const String baseUrl = 'https://tu-servidor.com'; // Producción
 const String baseUrlDev = 'http://10.0.2.2:8000'; // Android Emulator
 const String baseUrlDevIOS = 'http://localhost:8000'; // iOS Simulator
 ```
+
+### Endpoints Principales (ACTUALIZADOS)
+
+**Autenticación:**
+- ✅ `POST /api/token/` - Login (retorna access + refresh tokens)
+- ✅ `POST /api/token/refresh/` - Renovar access token
+- ✅ `POST /api/usuarios/register/` - Registro de nuevo paciente
+- ✅ `GET /api/usuarios/me/` - Obtener datos del usuario autenticado
+
+**Citas:**
+- ✅ `GET /api/agenda/citas/` - Lista de citas (filtra por usuario automáticamente)
+- ✅ `GET /api/agenda/citas/proximas/` - Solo citas futuras (PENDIENTE/CONFIRMADA)
+- ✅ `GET /api/agenda/citas/hoy/` - Citas de hoy
+- ✅ `GET /api/agenda/citas/{id}/` - Detalle de una cita
+- ✅ `POST /api/agenda/citas/{id}/confirmar/` - Confirmar cita
+- ✅ `POST /api/agenda/citas/{id}/cancelar/` - Cancelar cita
+
+**Estados de Cita:**
+- `PENDIENTE` - Cita creada, no confirmada
+- `CONFIRMADA` - Cita confirmada por el paciente
+- `ATENDIDA` - ✅ Cita completada (NO usar `COMPLETADA`)
+- `CANCELADA` - Cita cancelada
 
 ---
 
