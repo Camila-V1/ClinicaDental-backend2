@@ -118,7 +118,59 @@ odontograma = Odontograma.objects.create(
 print(f'  ✅ Odontograma creado')
 
 # ============================================================================
-# 3. CREAR PLAN DE TRATAMIENTO (Simplificado)
+# 3. CREAR EPISODIOS DE ATENCIÓN (CONSULTAS)
+# ============================================================================
+print('\n📝 CREANDO EPISODIOS DE ATENCIÓN...')
+
+# Episodio 1: Primera consulta (hace 20 días)
+episodio1 = EpisodioAtencion.objects.create(
+    historial_clinico=historial,
+    odontologo=odontologo,
+    fecha_atencion=timezone.now() - timedelta(days=20),
+    motivo_consulta='Dolor intenso en molar superior derecho',
+    diagnostico='Caries profunda en pieza 16 con afectación pulpar',
+    descripcion_procedimiento='Apertura cameral y preparación para endodoncia',
+    tratamiento_realizado='Primera sesión de endodoncia - Conductos limpios',
+    piezas_dentales=['16'],
+    observaciones='Paciente presenta dolor moderado. Se prescribe analgésico.',
+    proxima_cita=timezone.now() - timedelta(days=13)
+)
+print(f'  ✅ Episodio 1: {episodio1.motivo_consulta}')
+
+# Episodio 2: Segunda sesión endodoncia (hace 10 días)
+episodio2 = EpisodioAtencion.objects.create(
+    historial_clinico=historial,
+    odontologo=odontologo,
+    fecha_atencion=timezone.now() - timedelta(days=10),
+    motivo_consulta='Control y finalización de endodoncia',
+    diagnostico='Endodoncia en proceso - pieza 16',
+    descripcion_procedimiento='Obturación de conductos radiculares con gutapercha',
+    tratamiento_realizado='Endodoncia completada. Sellado temporal.',
+    piezas_dentales=['16'],
+    observaciones='Tratamiento exitoso. Programar colocación de corona.',
+    proxima_cita=timezone.now() + timedelta(days=7)
+)
+print(f'  ✅ Episodio 2: {episodio2.motivo_consulta}')
+
+# Episodio 3: Limpieza dental (hace 5 días)
+episodio3 = EpisodioAtencion.objects.create(
+    historial_clinico=historial,
+    odontologo=odontologo,
+    fecha_atencion=timezone.now() - timedelta(days=5),
+    motivo_consulta='Limpieza dental y revisión general',
+    diagnostico='Leve acumulación de sarro. Encías sanas.',
+    descripcion_procedimiento='Profilaxis completa con ultrasonido y pulido',
+    tratamiento_realizado='Limpieza dental profesional completada',
+    piezas_dentales=[],
+    observaciones='Higiene bucal adecuada. Continuar con cuidado en casa.',
+    proxima_cita=timezone.now() + timedelta(days=180)
+)
+print(f'  ✅ Episodio 3: {episodio3.motivo_consulta}')
+
+print(f'  📊 Total episodios creados: {EpisodioAtencion.objects.filter(historial_clinico=historial).count()}')
+
+# ============================================================================
+# 4. CREAR PLAN DE TRATAMIENTO (Simplificado)
 # ============================================================================
 print('\n💊 CREANDO PLAN DE TRATAMIENTO...')
 
@@ -213,7 +265,7 @@ item3 = ItemPlanTratamiento.objects.create(
 print(f'  ✅ Item 3: {item3.servicio.nombre} - PENDIENTE')
 
 # ============================================================================
-# 6. CREAR FACTURAS Y PAGOS
+# 5. CREAR FACTURAS Y PAGOS
 # ============================================================================
 print('\n💰 CREANDO FACTURAS Y PAGOS...')
 
