@@ -89,7 +89,7 @@ class DashboardPacienteView(generics.GenericAPIView):
     def get(self, request):
         from django.utils import timezone
         from agenda.models import Cita
-        from tratamientos.models import PlanTratamiento
+        from tratamientos.models import PlanDeTratamiento
         from facturacion.models import Factura
         from datetime import timedelta
         
@@ -110,7 +110,7 @@ class DashboardPacienteView(generics.GenericAPIView):
         ).count()
         
         # Obtener tratamientos activos
-        tratamientos_activos = PlanTratamiento.objects.filter(
+        tratamientos_activos = PlanDeTratamiento.objects.filter(
             paciente=usuario,
             estado='EN_PROGRESO'
         ).count()
