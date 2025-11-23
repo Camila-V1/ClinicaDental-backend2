@@ -12,100 +12,66 @@ Gestionar visualización de facturas y realizar pagos en línea.
 ```dart
 class Factura {
   final int id;
-  final String numero;
+  final String numero;  // ✅ Backend: 'id' como string para mostrar
   final DateTime fecha;
-  final double subtotal;
-  final double impuestos;
-  final double total;
-  final String estado;
-  final DateTime? fechaVencimiento;
-  final List<ItemFactura> items;
-  final List<Pago> pagos;
-  final int? planTratamientoId;
+  final double total;  // ✅ Backend: 'monto_total'
+  final String estado;  // ✅ Backend: 'estado' (PENDIENTE, PAGADA, PARCIAL, ANULADA)
+  final String? pacienteNombre;  // ✅ Backend: 'paciente_nombre'
+  final List<Pago> pagos;  // ✅ Backend: 'pagos' (anidados)
+  final int? presupuestoId;  // ✅ Backend: 'presupuesto'
+  final double montoPagado;  // ✅ Backend: 'monto_pagado'
+  final double saldoPendiente;  // ✅ Backend: 'saldo_pendiente'
+  final int totalPagos;  // ✅ Backend: 'total_pagos'
 
   Factura({
     required this.id,
     required this.numero,
     required this.fecha,
-    required this.subtotal,
-    required this.impuestos,
     required this.total,
     required this.estado,
-    this.fechaVencimiento,
-    required this.items,
+    this.pacienteNombre,
     required this.pagos,
-    this.planTratamientoId,
+    this.presupuestoId,
+    required this.montoPagado,
+    required this.saldoPendiente,
+    required this.totalPagos,
   });
 
   factory Factura.fromJson(Map<String, dynamic> json) {
     return Factura(
       id: json['id'],
-      numero: json['numero'] ?? '',
-      fecha: DateTime.parse(json['fecha']),
-      subtotal: double.parse(json['subtotal']?.toString() ?? '0'),
-      impuestos: double.parse(json['impuestos']?.toString() ?? '0'),
-      total: double.parse(json['total']?.toString() ?? '0'),
+      numero: json['numero']?.toString() ?? json['id']?.toString() ?? '',  // ✅ Backend usa 'id' como número
+      fecha: DateTime.parse(json['fecha_emision'] ?? json['fecha'] ?? DateTime.now().toIso8601String()),  // ✅ Backend: 'fecha_emision'
+      total: double.parse(json['monto_total']?.toString() ?? '0'),  // ✅ Backend: 'monto_total'
       estado: json['estado'] ?? '',
-      fechaVencimiento: json['fecha_vencimiento'] != null
-          ? DateTime.parse(json['fecha_vencimiento'])
-          : null,
-      items: (json['items'] as List?)
-          ?.map((e) => ItemFactura.fromJson(e))
-          .toList() ?? [],
+      pacienteNombre: json['paciente_nombre'],
       pagos: (json['pagos'] as List?)
           ?.map((e) => Pago.fromJson(e))
           .toList() ?? [],
-      planTratamientoId: json['plan_tratamiento'],
+      presupuestoId: json['presupuesto'],
+      montoPagado: double.parse(json['monto_pagado']?.toString() ?? '0'),  // ✅ Backend: 'monto_pagado'
+      saldoPendiente: double.parse(json['saldo_pendiente']?.toString() ?? '0'),  // ✅ Backend: 'saldo_pendiente'
+      totalPagos: json['total_pagos'] ?? 0,
     );
   }
 
-  double get montoAbonado {
-    return pagos.fold(0.0, (sum, pago) => sum + pago.monto);
-  }
-
-  double get saldoPendiente => total - montoAbonado;
+  // ✅ Ya no calculamos, vienen del backend
   bool get isPagada => estado == 'PAGADA';
   bool get isPendiente => estado == 'PENDIENTE';
   bool get isParcial => estado == 'PARCIAL';
-  bool get isVencida {
-    if (fechaVencimiento == null) return false;
-    return DateTime.now().isAfter(fechaVencimiento!) && !isPagada;
-  }
+  bool get isAnulada => estado == 'ANULADA';
 }
 
-class ItemFactura {
-  final int id;
-  final String descripcion;
-  final int cantidad;
-  final double precioUnitario;
-  final double subtotal;
-
-  ItemFactura({
-    required this.id,
-    required this.descripcion,
-    required this.cantidad,
-    required this.precioUnitario,
-    required this.subtotal,
-  });
-
-  factory ItemFactura.fromJson(Map<String, dynamic> json) {
-    return ItemFactura(
-      id: json['id'],
-      descripcion: json['descripcion'] ?? '',
-      cantidad: json['cantidad'] ?? 1,
-      precioUnitario: double.parse(json['precio_unitario']?.toString() ?? '0'),
-      subtotal: double.parse(json['subtotal']?.toString() ?? '0'),
-    );
-  }
-}
+// ❌ ItemFactura NO existe en backend - facturas se relacionan con presupuestos
 
 class Pago {
   final int id;
   final DateTime fecha;
   final double monto;
-  final String metodoPago;
-  final String? referencia;
-  final String estado;
+  final String metodoPago;  // ✅ Backend: 'metodo_pago'
+  final String? referencia;  // ✅ Backend: 'referencia_transaccion'
+  final String estado;  // ✅ Backend: 'estado_pago'
+  final int facturaId;  // ✅ Backend: 'factura'
 
   Pago({
     required this.id,
@@ -114,16 +80,18 @@ class Pago {
     required this.metodoPago,
     this.referencia,
     required this.estado,
+    required this.facturaId,
   });
 
   factory Pago.fromJson(Map<String, dynamic> json) {
     return Pago(
       id: json['id'],
-      fecha: DateTime.parse(json['fecha']),
-      monto: double.parse(json['monto']?.toString() ?? '0'),
+      fecha: DateTime.parse(json['fecha_pago'] ?? json['fecha'] ?? DateTime.now().toIso8601String()),  // ✅ Backend: 'fecha_pago'
+      monto: double.parse(json['monto_pagado']?.toString() ?? json['monto']?.toString() ?? '0'),  // ✅ Backend: 'monto_pagado'
       metodoPago: json['metodo_pago'] ?? '',
-      referencia: json['referencia'],
-      estado: json['estado'] ?? '',
+      referencia: json['referencia_transaccion'] ?? json['referencia'],  // ✅ Backend: 'referencia_transaccion'
+      estado: json['estado_pago'] ?? json['estado'] ?? '',  // ✅ Backend: 'estado_pago'
+      facturaId: json['factura'] ?? 0,
     );
   }
 }
@@ -140,12 +108,14 @@ class Pago {
 
 ```dart
 import 'dart:convert';
+import 'dart:async';  // ✅ Para TimeoutException
 import 'package:http/http.dart' as http;
 import 'package:clinica_dental_app/config/constants.dart';
 import 'package:clinica_dental_app/models/factura.dart';
 
 class FacturasService {
-  final String baseUrl = AppConstants.baseUrlDev;
+  // ✅ IMPORTANTE: Usar URL de producción (Render), NO localhost
+  final String baseUrl = 'https://clinica-dental-backend.onrender.com';
 
   /// ✅ Obtener mis facturas (mismo endpoint que el web)
   Future<List<Factura>> getMisFacturas({
@@ -154,11 +124,16 @@ class FacturasService {
     String? estado,
   }) async {
     try {
-      String url = '$baseUrl/api/facturacion/facturas/mis_facturas/';
+      // ✅ Backend NO tiene endpoint mis_facturas, usa el queryset filtrado
+      String url = '$baseUrl/api/facturacion/facturas/';
       
       if (estado != null) {
         url += '?estado=$estado';
       }
+
+      print('=== GET FACTURAS ===');
+      print('URL: $url');
+      print('Tenant ID: $tenantId');
 
       final response = await http.get(
         Uri.parse(url),
@@ -167,20 +142,28 @@ class FacturasService {
           'Host': tenantId,  // ✅ Usar Host en lugar de X-Tenant-ID
           'Authorization': 'Bearer $token',
         },
-      );
+      ).timeout(const Duration(seconds: 10));
+
+      print('Response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        // El endpoint mis_facturas retorna una lista directa
-        final List<dynamic> facturas = data is List ? data : (data['results'] ?? []);
+        final List<dynamic> facturas = data['results'] ?? data;
+        print('✅ ${facturas.length} facturas encontradas');
         return facturas.map((json) => Factura.fromJson(json)).toList();
       } else if (response.statusCode == 401) {
-        throw TokenExpiredException('Token expirado');
+        print('❌ Token expirado (401)');
+        throw Exception('Token expirado');
       } else {
+        print('❌ Error ${response.statusCode}: ${response.body}');
         throw Exception('Error al cargar facturas: ${response.statusCode}');
       }
+    } on TimeoutException {
+      print('⏱️ Timeout al cargar facturas');
+      throw Exception('Tiempo de espera agotado. Verifica tu conexión.');
     } catch (e) {
-      if (e is TokenExpiredException) rethrow;
+      print('ERROR en getMisFacturas: $e');
+      if (e.toString().contains('Token expirado')) rethrow;
       throw Exception('Error de conexión: $e');
     }
   }
@@ -191,6 +174,7 @@ class FacturasService {
     required String tenantId,
   }) async {
     try {
+      // ✅ Backend usa guion bajo: estado_cuenta (no guion medio)
       final response = await http.get(
         Uri.parse('$baseUrl/api/facturacion/facturas/estado_cuenta/'),
         headers: {
@@ -198,13 +182,15 @@ class FacturasService {
           'Host': tenantId,
           'Authorization': 'Bearer $token',
         },
-      );
+      ).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         return json.decode(response.body);
       } else {
         throw Exception('Error al cargar estado de cuenta: ${response.statusCode}');
       }
+    } on TimeoutException {
+      throw Exception('Timeout al cargar estado de cuenta');
     } catch (e) {
       throw Exception('Error de conexión: $e');
     }
@@ -282,20 +268,24 @@ class FacturasService {
         Uri.parse('$baseUrl/api/facturacion/pagos/'),
         headers: {
           'Content-Type': 'application/json',
-          'X-Tenant-ID': tenantId,
+          'Host': tenantId,  // ✅ Usar Host en lugar de X-Tenant-ID
           'Authorization': 'Bearer $token',
         },
         body: json.encode({
           'factura': facturaId,
-          'monto': monto,
+          'monto_pagado': monto,  // ✅ Backend usa 'monto_pagado'
           'metodo_pago': metodoPago,
-          'referencia': referencia,
+          'referencia_transaccion': referencia,  // ✅ Backend usa 'referencia_transaccion'
+          'estado_pago': 'COMPLETADO',  // ✅ Backend usa 'estado_pago'
         }),
-      );
+      ).timeout(const Duration(seconds: 10));
 
       if (response.statusCode != 201) {
-        throw Exception('Error al registrar pago');
+        final error = json.decode(response.body);
+        throw Exception(error['error'] ?? 'Error al registrar pago');
       }
+    } on TimeoutException {
+      throw Exception('Timeout al procesar pago');
     } catch (e) {
       throw Exception('Error al procesar pago: $e');
     }
