@@ -296,6 +296,12 @@ final clinicasActivas = data['clinicas']
 - ✅ `POST /api/usuarios/register/` - Registro de nuevo paciente
 - ✅ `GET /api/usuarios/me/` - Obtener datos del usuario autenticado
 
+**⏱️ Duración de Tokens:**
+- **Access Token:** 1 hora (3600 segundos)
+- **Refresh Token:** 7 días (604800 segundos)
+- Los tokens se renuevan automáticamente antes de expirar
+- Si el refresh token expira, el usuario debe hacer login nuevamente
+
 **Citas (con tenant):**
 - ✅ `GET /api/agenda/citas/` - Lista de citas (filtra por usuario automáticamente)
 - ✅ `GET /api/agenda/citas/proximas/` - Solo citas futuras (PENDIENTE/CONFIRMADA)

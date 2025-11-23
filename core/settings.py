@@ -302,6 +302,17 @@ REST_FRAMEWORK = {
     ],
 }
 
+# --- Configuración de Simple JWT ---
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),  # Token de acceso dura 1 hora (en vez de 5 minutos)
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),  # Refresh token dura 7 días
+    'ROTATE_REFRESH_TOKENS': False,  # No rotar refresh tokens automáticamente
+    'BLACKLIST_AFTER_ROTATION': False,
+    'AUTH_HEADER_TYPES': ('Bearer',),
+}
+
 # django-tenants: indicar el modelo Tenant y Domain (app_name.ModelName)
 TENANT_MODEL = "tenants.Clinica"
 TENANT_DOMAIN_MODEL = "tenants.Domain"

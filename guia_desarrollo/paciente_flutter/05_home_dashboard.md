@@ -65,7 +65,7 @@ class Cita {
       fechaHora: json['fecha_hora'],
       motivo: json['motivo'] ?? '',
       motivoTipo: json['motivo_tipo'] ?? 'CONSULTA_GENERAL',
-      odontologoNombre: json['odontologo']?['usuario']?['nombre'] ?? 'Sin asignar',
+      odontologoNombre: json['odontologo_nombre'] ?? 'Sin asignar',
       estado: json['estado'] ?? 'PENDIENTE',
     );
   }

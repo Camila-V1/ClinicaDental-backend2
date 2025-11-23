@@ -141,15 +141,20 @@ class DashboardPacienteView(generics.GenericAPIView):
         
         proxima_cita = None
         if proxima_cita_obj:
+            odontologo_data = None
+            if proxima_cita_obj.odontologo:
+                odontologo_user = proxima_cita_obj.odontologo.usuario
+                odontologo_data = {
+                    'id': odontologo_user.id,
+                    'nombre_completo': f"{odontologo_user.nombre} {odontologo_user.apellido}"
+                }
+            
             proxima_cita = {
                 'id': proxima_cita_obj.id,
                 'fecha_hora': proxima_cita_obj.fecha_hora,
                 'motivo_tipo': proxima_cita_obj.motivo_tipo,
                 'estado': proxima_cita_obj.estado,
-                'odontologo': {
-                    'id': proxima_cita_obj.odontologo.id,
-                    'nombre_completo': f"{proxima_cita_obj.odontologo.nombre} {proxima_cita_obj.odontologo.apellido}"
-                } if proxima_cita_obj.odontologo else None,
+                'odontologo': odontologo_data,
                 'motivo': proxima_cita_obj.motivo
             }
         
