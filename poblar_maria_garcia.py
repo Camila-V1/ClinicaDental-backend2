@@ -223,16 +223,14 @@ Factura.objects.filter(paciente=maria).delete()
 # Factura 1: Endodoncia (PAGADA)
 factura1 = Factura.objects.create(
     paciente=maria,
-    plan_tratamiento=plan,
-    subtotal=Decimal('250.00'),
-    descuento=Decimal('0.00'),
-    impuesto=Decimal('30.00'),  # 12% IVA
-    total=Decimal('280.00'),
+    presupuesto=None,
+    monto_total=Decimal('280.00'),
+    monto_pagado=Decimal('280.00'),
     estado='PAGADA',
-    fecha_emision=timezone.now().date() - timedelta(days=7),
-    observaciones='Pago por endodoncia pieza 16'
+    nit_ci='12345678',
+    razon_social='María García López'
 )
-print(f'  ✅ Factura 1: ${factura1.total} - PAGADA')
+print(f'  ✅ Factura 1: ${factura1.monto_total} - PAGADA')
 
 # Pago de factura 1
 pago1 = Pago.objects.create(
@@ -244,20 +242,17 @@ pago1 = Pago.objects.create(
 )
 print(f'    💵 Pago 1: ${pago1.monto} - {pago1.metodo}')
 
-# Factura 2: Corona (PENDIENTE)
+# Factura 2: Corona (PENDIENTE con pago parcial)
 factura2 = Factura.objects.create(
     paciente=maria,
-    plan_tratamiento=plan,
-    subtotal=Decimal('350.00'),
-    descuento=Decimal('35.00'),  # 10% descuento
-    impuesto=Decimal('37.80'),   # 12% IVA sobre (350-35)
-    total=Decimal('352.80'),
+    presupuesto=None,
+    monto_total=Decimal('352.80'),
+    monto_pagado=Decimal('150.00'),
     estado='PENDIENTE',
-    fecha_emision=timezone.now().date(),
-    fecha_vencimiento=timezone.now().date() + timedelta(days=15),
-    observaciones='Factura por corona de porcelana (10% descuento por plan completo)'
+    nit_ci='12345678',
+    razon_social='María García López'
 )
-print(f'  ✅ Factura 2: ${factura2.total} - PENDIENTE')
+print(f'  ✅ Factura 2: ${factura2.monto_total} - PENDIENTE (Pagado: ${factura2.monto_pagado})')
 
 # Pago parcial de factura 2
 pago2 = Pago.objects.create(
