@@ -176,39 +176,39 @@ print(f'  ✅ Plan de tratamiento creado')
 item1 = ItemPlanTratamiento.objects.create(
     plan=plan,
     servicio=servicio_endodoncia,
-    descripcion='Endodoncia en pieza 16 (2 sesiones)',
-    dientes='16',
     orden=1,
     estado='COMPLETADO',
-    precio_unitario=servicio_endodoncia.precio_base,
-    cantidad=1,
-    observaciones='Tratamiento completado exitosamente'
+    precio_servicio_snapshot=servicio_endodoncia.precio_base,
+    precio_materiales_fijos_snapshot=Decimal('0.00'),
+    precio_insumo_seleccionado_snapshot=Decimal('0.00'),
+    notas='Endodoncia en pieza 16 (2 sesiones) - Tratamiento completado exitosamente',
+    fecha_realizada=timezone.now() - timedelta(days=10)
 )
 print(f'  ✅ Item 1: {item1.servicio.nombre} - COMPLETADO')
 
 item2 = ItemPlanTratamiento.objects.create(
     plan=plan,
     servicio=servicio_corona,
-    descripcion='Corona de porcelana sobre pieza 16',
-    dientes='16',
     orden=2,
     estado='PENDIENTE',
-    precio_unitario=servicio_corona.precio_base,
-    cantidad=1,
-    observaciones='Programar para próxima semana'
+    precio_servicio_snapshot=servicio_corona.precio_base,
+    precio_materiales_fijos_snapshot=Decimal('0.00'),
+    precio_insumo_seleccionado_snapshot=Decimal('0.00'),
+    notas='Corona de porcelana sobre pieza 16 - Programar para próxima semana',
+    fecha_estimada=(timezone.now() + timedelta(days=7)).date()
 )
 print(f'  ✅ Item 2: {item2.servicio.nombre} - PENDIENTE')
 
 item3 = ItemPlanTratamiento.objects.create(
     plan=plan,
     servicio=servicio_limpieza,
-    descripcion='Limpieza dental de mantenimiento',
-    dientes='Toda la boca',
     orden=3,
     estado='PENDIENTE',
-    precio_unitario=servicio_limpieza.precio_base,
-    cantidad=1,
-    observaciones='Programar después de colocar corona'
+    precio_servicio_snapshot=servicio_limpieza.precio_base,
+    precio_materiales_fijos_snapshot=Decimal('0.00'),
+    precio_insumo_seleccionado_snapshot=Decimal('0.00'),
+    notas='Limpieza dental de mantenimiento en toda la boca - Programar después de colocar corona',
+    fecha_estimada=(timezone.now() + timedelta(days=14)).date()
 )
 print(f'  ✅ Item 3: {item3.servicio.nombre} - PENDIENTE')
 
