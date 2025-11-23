@@ -25,15 +25,17 @@ class HistorialClinico {
 
   factory HistorialClinico.fromJson(Map<String, dynamic> json) {
     return HistorialClinico(
-      id: json['id'],
-      consultas: (json['consultas'] as List?)
+      id: json['paciente'] ?? 0,  // ✅ Backend retorna 'paciente' (ID), no 'id'
+      consultas: (json['episodios'] as List?)  // ✅ Backend usa 'episodios', no 'consultas'
           ?.map((e) => ConsultaMedica.fromJson(e))
           .toList() ?? [],
       documentos: (json['documentos'] as List?)
           ?.map((e) => DocumentoMedico.fromJson(e))
           .toList() ?? [],
-      informacionMedica: json['informacion_medica'] != null
-          ? InformacionMedica.fromJson(json['informacion_medica'])
+      informacionMedica: json['antecedentes_medicos'] != null ||  // ✅ Backend usa estos campos
+                         json['alergias'] != null ||
+                         json['medicamentos_actuales'] != null
+          ? InformacionMedica.fromJson(json)
           : null,
     );
   }
@@ -95,12 +97,12 @@ class DocumentoMedico {
   factory DocumentoMedico.fromJson(Map<String, dynamic> json) {
     return DocumentoMedico(
       id: json['id'],
-      titulo: json['titulo'] ?? '',
-      tipo: json['tipo'] ?? '',
+      titulo: json['nombre_archivo'] ?? json['descripcion'] ?? 'Documento',  // ✅ Backend usa 'nombre_archivo'
+      tipo: json['tipo_documento'] ?? '',  // ✅ Backend usa 'tipo_documento'
       descripcion: json['descripcion'],
       archivo: json['archivo'] ?? '',
-      fechaSubida: DateTime.parse(json['fecha_subida']),
-      subidoPor: json['subido_por'],
+      fechaSubida: DateTime.parse(json['creado']),  // ✅ Backend usa 'creado', no 'fecha_subida'
+      subidoPor: null,  // Backend no retorna este campo directamente
     );
   }
 
@@ -128,12 +130,23 @@ class InformacionMedica {
   });
 
   factory InformacionMedica.fromJson(Map<String, dynamic> json) {
+    // ✅ Backend retorna campos directos en HistorialClinico
+    // antecedentes_medicos: String (texto libre)
+    // alergias: String (separado por comas)
+    // medicamentos_actuales: String (separado por comas)
+    
     return InformacionMedica(
-      tipoSangre: json['tipo_sangre'],
-      alergias: List<String>.from(json['alergias'] ?? []),
-      enfermedades: List<String>.from(json['enfermedades'] ?? []),
-      medicamentos: List<String>.from(json['medicamentos'] ?? []),
-      notasAdicionales: json['notas_adicionales'],
+      tipoSangre: null,  // Backend no tiene este campo en HistorialClinico
+      alergias: json['alergias'] != null && json['alergias'].toString().isNotEmpty
+          ? json['alergias'].toString().split(',').map((e) => e.trim()).toList()
+          : [],
+      enfermedades: json['antecedentes_medicos'] != null && json['antecedentes_medicos'].toString().isNotEmpty
+          ? json['antecedentes_medicos'].toString().split(',').map((e) => e.trim()).toList()
+          : [],
+      medicamentos: json['medicamentos_actuales'] != null && json['medicamentos_actuales'].toString().isNotEmpty
+          ? json['medicamentos_actuales'].toString().split(',').map((e) => e.trim()).toList()
+          : [],
+      notasAdicionales: null,  // Backend no tiene este campo separado
     );
   }
 }
