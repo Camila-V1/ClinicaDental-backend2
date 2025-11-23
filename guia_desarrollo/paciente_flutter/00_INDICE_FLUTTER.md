@@ -222,11 +222,19 @@ const String clinicaDemo = 'clinica_demo';
 El backend usa **subdominios** para identificar clínicas. En Flutter, usamos el **header Host**:
 
 ```dart
-// ✅ CORRECTO - Todas las peticiones incluyen el header Host
+// ✅ CORRECTO - Usar el dominio exacto de la clínica
+// Obtener primero las clínicas desde GET /
+// Ejemplo: dominio = 'clinicademo1'
 headers: {
-  'Host': '$tenantId.localhost',  // ej: 'clinica_demo.localhost'
+  'Host': '$dominio.localhost',  // ej: 'clinicademo1.localhost'
   'Authorization': 'Bearer $accessToken',
   'Content-Type': 'application/json',
+}
+
+// ⚠️ En producción Render (sin subdominios):
+headers: {
+  'Host': 'clinica-dental-backend.onrender.com',
+  'X-Tenant': '$dominio',  // Opcional, el backend lo manejará
 }
 ```
 
@@ -242,18 +250,31 @@ const String baseUrlDevIOS = 'http://localhost:8000'; // iOS Simulator
 
 ### Clínicas Disponibles
 ```dart
-// Clínica demo configurada
-const clinicaDemo = {
-  'id': '1',
-  'nombre': 'Clínica Demo',
-  'dominio': 'clinica_demo',
-  'descripcion': 'Clínica dental de demostración',
-};
+// ⚠️ IMPORTANTE: Obtener desde el backend GET /
+// El backend retorna: {"clinicas": [...]}
+{
+  "clinicas": [
+    {
+      "id": 1,
+      "nombre": "Clínica Demo",
+      "dominio": "clinicademo1",  // Usar este dominio en headers
+      "activo": true
+    }
+  ]
+}
+
+// Filtrar clínicas activas y excluir "public"
+final clinicasActivas = data['clinicas']
+    .where((c) => c['activo'] == true && c['dominio'] != 'public')
+    .toList();
 ```
 
 ### Endpoints Principales (ACTUALIZADOS)
 
-**⚠️ IMPORTANTE:** Todas las peticiones excepto las de `/api/tenants/*` requieren el header `Host: clinica_demo.localhost`
+**⚠️ IMPORTANTE:** 
+- Todas las peticiones (excepto `/api/tenants/*`) requieren header `Host: {dominio}.localhost`
+- El dominio debe ser el obtenido desde `GET /` (ej: `clinicademo1`)
+- En producción Render, usar el host principal sin subdominios
 
 **Endpoints Públicos (sin tenant):**
 - ✅ `GET /api/tenants/planes/` - Planes de suscripción disponibles
@@ -395,17 +416,24 @@ Desde cualquier pantalla:
 
 ### Multi-Tenant en Flutter:
 ```dart
-// Al seleccionar clínica, guardamos su ID
+// ✅ CORRECTO: Obtener clínicas desde el backend
+final response = await http.get(Uri.parse('$baseUrl/'));
+final data = json.decode(response.body);
+final clinicas = data['clinicas'];  // Array de clínicas
+
+// Al seleccionar clínica, guardamos el dominio REAL
 await SharedPreferences.getInstance().then((prefs) {
-  prefs.setString('tenant_id', 'clinica_demo');
-  prefs.setString('tenant_name', 'Clínica Demo');
+  prefs.setString('tenant_dominio', clinica['dominio']);  // ej: 'clinicademo1'
+  prefs.setString('tenant_name', clinica['nombre']);
 });
 
-// En cada petición HTTP, incluimos el header
+// En cada petición HTTP, usar el dominio real
 headers: {
-  'X-Tenant-ID': tenantId,
+  'Host': '$dominio.localhost',  // ej: 'clinicademo1.localhost'
   'Authorization': 'Bearer $token',
 }
+
+// ❌ INCORRECTO: No usar X-Tenant-ID
 ```
 
 ### Seguridad:

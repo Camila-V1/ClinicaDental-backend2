@@ -120,18 +120,18 @@ class ClinicaDisponible {
   }
 }
 
-// Clínicas disponibles en el sistema
+// Clínicas hardcodeadas como fallback
 class ClinicasDisponibles {
   static const List<ClinicaDisponible> clinicas = [
     ClinicaDisponible(
       id: '1',
       nombre: 'Clínica Demo',
-      dominio: 'clinica_demo',  // ⚠️ IMPORTANTE: Sin guiones en el schema
+      dominio: 'clinicademo1',  // ⚠️ IMPORTANTE: Usar el dominio real del backend
       descripcion: 'Clínica dental de demostración',
       telefono: '+591 XXXX-XXXX',
       direccion: 'Dirección de ejemplo',
     ),
-    // Agregar más clínicas aquí cuando estén disponibles
+    // Estas clínicas se usan solo si falla la petición al backend
   ];
   
   static ClinicaDisponible? getByDominio(String dominio) {
@@ -163,35 +163,47 @@ import '../core/api/endpoints.dart';
 import '../core/api/clinicas_disponibles.dart';
 
 class ClinicaService {
-  /// Obtener clínicas disponibles
-  /// En esta versión, retorna las clínicas hardcodeadas.
-  /// En el futuro, podría consultar un endpoint público del backend.
+  /// Obtener clínicas disponibles desde el backend
   Future<List<ClinicaDisponible>> getClinicasDisponibles() async {
-    // Simular delay de red
-    await Future.delayed(const Duration(milliseconds: 500));
-    
-    // Retornar clínicas hardcodeadas
-    return ClinicasDisponibles.clinicas;
-    
-    /* ALTERNATIVA: Consultar endpoint público del backend
     try {
       final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}/api/tenants/clinicas-publicas/'),
+        Uri.parse('${ApiConfig.baseUrl}/'),  // Endpoint raíz que retorna clínicas
         headers: {'Content-Type': 'application/json'},
       );
       
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+      
       if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        return data.map((json) => ClinicaDisponible.fromJson(json)).toList();
+        final Map<String, dynamic> data = json.decode(response.body);
+        
+        // ⚠️ IMPORTANTE: El backend retorna {clinicas: [...]}
+        final List<dynamic> clinicasList = data['clinicas'] ?? [];
+        
+        // Filtrar solo clínicas activas y que no sean "public"
+        final clinicasActivas = clinicasList
+            .where((c) => c['activo'] == true && c['dominio'] != 'public')
+            .map((json) => ClinicaDisponible(
+                  id: json['id'].toString(),
+                  nombre: json['nombre'] ?? '',
+                  dominio: json['dominio'] ?? '',
+                  descripcion: 'Clínica disponible para gestión de citas',
+                  logoUrl: '',
+                  telefono: '',
+                  direccion: '',
+                ))
+            .toList();
+        
+        return clinicasActivas;
       }
       
-      throw Exception('Error al cargar clínicas');
+      throw Exception('Error al cargar clínicas: ${response.statusCode}');
     } catch (e) {
-      print('Error: $e');
-      // Fallback a clínicas hardcodeadas
+      print('Error en getClinicas: $e');
+      
+      // Fallback a clínicas hardcodeadas si falla la petición
       return ClinicasDisponibles.clinicas;
     }
-    */
   }
   
   /// Verificar si una clínica está activa y disponible
@@ -921,24 +933,51 @@ headers: {
 
 ```dart
 // En el backend:
-// - Schema: tenant_clinica_demo (con guiones bajos)
-// - Dominio: clinica_demo (identificador)
-// - Host header: clinica_demo.localhost
+// - Schema: tenant_clinicademo1 (con guiones bajos, nombre interno)
+// - Dominio: clinicademo1 (identificador público)
+// - Host header: clinicademo1.localhost
 
-// En Flutter, siempre usar el dominio:
+// En Flutter, siempre usar el dominio exacto de la clínica:
 String tenantHost = '${clinica.dominio}.localhost';
+
+// ⚠️ IMPORTANTE: Obtener el dominio desde la respuesta del backend
+// NO usar nombres hardcodeados como 'clinica_demo'
 ```
 
 ### Producción vs Desarrollo
 
 ```dart
 // Desarrollo (localhost/emulator)
-Host: clinica_demo.localhost
+Host: clinicademo1.localhost
 
 // Producción (Render)
-Host: clinica_demo.onrender.com
-// O con dominio personalizado:
-Host: clinica_demo.tudominio.com
+// ⚠️ En Render, NO usar subdominios en el header
+// El backend maneja el tenant internamente
+Host: clinica-dental-backend.onrender.com
+
+// Para producción con subdominios reales:
+Host: clinicademo1.tudominio.com
+```
+
+### 🔍 Cómo Obtener las Clínicas Reales
+
+```dart
+// 1. Hacer petición al endpoint raíz
+final response = await http.get(Uri.parse('$baseUrl/'));
+
+// 2. Parsear respuesta
+final data = json.decode(response.body);
+final List<dynamic> clinicas = data['clinicas'];  // ⚠️ Importante: usar 'clinicas'
+
+// 3. Filtrar clínicas activas
+final clinicasActivas = clinicas
+    .where((c) => c['activo'] == true && c['dominio'] != 'public')
+    .toList();
+
+// 4. Usar el dominio exacto en headers
+headers: {
+  'Host': '${clinica['dominio']}.localhost',  // Ej: 'clinicademo1.localhost'
+}
 ```
 
 ---
