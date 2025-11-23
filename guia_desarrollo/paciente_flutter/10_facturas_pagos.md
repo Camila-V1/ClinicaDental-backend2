@@ -14,7 +14,7 @@ class Factura {
   final int id;
   final DateTime fecha;
   final double montoTotal;  // ✅ Backend: 'monto_total'
-  final String estado;  // ✅ Backend: 'estado' (PENDIENTE, PAGADA, PARCIAL, ANULADA)
+  final String estado;  // ✅ Backend: 'estado' (PENDIENTE, PAGADA, ANULADA - NO hay PARCIAL)
   final String? pacienteNombre;  // ✅ Backend: 'paciente_nombre'
   final List<Pago> pagos;  // ✅ Backend: 'pagos' (anidados)
   final int? presupuestoId;  // ✅ Backend: 'presupuesto'
@@ -53,9 +53,10 @@ class Factura {
   }
 
   // ✅ Ya no calculamos, vienen del backend
+  // ⚠️ IMPORTANTE: Backend solo tiene 3 estados: PENDIENTE, PAGADA, ANULADA
+  // NO existe estado PARCIAL - si hay pagos parciales, sigue siendo PENDIENTE
   bool get isPagada => estado == 'PAGADA';
   bool get isPendiente => estado == 'PENDIENTE';
-  bool get isParcial => estado == 'PARCIAL';
   bool get isAnulada => estado == 'ANULADA';
 }
 
@@ -534,10 +535,29 @@ class _FacturasScreenState extends State<FacturasScreen>
   }
 
   void _mostrarDetalleFactura(Factura factura) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => DetalleFacturaScreen(factura: factura),
+    // TODO: Implementar DetalleFacturaScreen
+    // Por ahora solo mostramos un diálogo simple
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Factura #${factura.id}'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Estado: ${factura.estado}'),
+            Text('Monto Total: \$${factura.montoTotal.toStringAsFixed(2)}'),
+            Text('Monto Pagado: \$${factura.montoPagado.toStringAsFixed(2)}'),
+            Text('Saldo Pendiente: \$${factura.saldoPendiente.toStringAsFixed(2)}'),
+            Text('Total Pagos: ${factura.totalPagos}'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cerrar'),
+          ),
+        ],
       ),
     );
   }
@@ -946,8 +966,8 @@ class FacturaCard extends StatelessWidget {
   Color _getEstadoColor() {
     if (factura.isPagada) return Colors.green;
     if (factura.isAnulada) return Colors.red;  // ✅ isAnulada existe, isVencida NO
-    if (factura.isParcial) return Colors.blue;
-    return Colors.orange;  // PENDIENTE
+    // Solo quedan facturas PENDIENTES (con o sin pagos parciales)
+    return Colors.orange;  // PENDIENTE (puede tener monto_pagado > 0)
   }
 }
 ```
@@ -963,7 +983,7 @@ class FacturaCard extends StatelessWidget {
 - [ ] Formulario de pago
 - [ ] Validación de montos
 - [ ] Indicador de saldo total
-- [ ] Manejo de estados (PENDIENTE, PARCIAL, PAGADA, ANULADA)
+- [ ] Manejo de estados (PENDIENTE, PAGADA, ANULADA)
 
 ---
 
