@@ -1,5 +1,5 @@
 """
-Script para poblar datos completos de María García (paciente1@test.com)
+Script para poblar datos completos de María García (maria.garcia@email.com)
 Incluye: Citas, Historial Clínico, Odontograma, Episodios, Documentos, Planes de Tratamiento
 """
 import os
@@ -27,7 +27,7 @@ print('=' * 80)
 
 # Obtener usuarios y perfiles
 try:
-    maria_user = Usuario.objects.get(email='paciente1@test.com')
+    maria_user = Usuario.objects.get(email='maria.garcia@email.com')
     maria = maria_user.perfil_paciente
     odontologo_user = Usuario.objects.get(email='odontologo@clinica-demo.com')
     odontologo = odontologo_user.perfil_odontologo
@@ -286,7 +286,7 @@ print(f'  💰 Facturas: {Factura.objects.filter(paciente=maria).count()}')
 print(f'  💵 Pagos: {Pago.objects.filter(factura__paciente=maria).count()}')
 
 print('\n🎯 PRÓXIMOS PASOS:')
-print('  1. Login con: paciente1@test.com / password123')
+print('  1. Login con: maria.garcia@email.com / password123')
 print('  2. Ver cita programada para HOY')
 print('  3. Consultar historial clínico con 3 episodios')
 print('  4. Revisar plan de tratamiento en progreso')
