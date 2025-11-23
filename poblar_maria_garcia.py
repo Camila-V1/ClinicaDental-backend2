@@ -165,7 +165,57 @@ print(f'  ✅ Episodio 3: {episodio3.motivo_consulta}')
 print(f'  📊 Total episodios creados: {EpisodioAtencion.objects.filter(historial_clinico=historial).count()}')
 
 # ============================================================================
-# 4. CREAR PLAN DE TRATAMIENTO (Simplificado)
+# 4. CREAR DOCUMENTOS CLÍNICOS
+# ============================================================================
+print('\n📄 CREANDO DOCUMENTOS CLÍNICOS...')
+
+# Crear archivo dummy para evitar error de FileField
+from django.core.files.base import ContentFile
+
+# Documento 1: Radiografía del episodio 1
+doc1 = DocumentoClinico.objects.create(
+    historial_clinico=historial,
+    episodio=episodio1,
+    descripcion='Radiografía periapical de pieza 16 - Diagnóstico inicial',
+    tipo_documento='RADIOGRAFIA',
+    archivo=ContentFile(b'', name='radiografia_pieza16_inicial.jpg')
+)
+print(f'  ✅ Documento 1: {doc1.descripcion}')
+
+# Documento 2: Radiografía del episodio 2
+doc2 = DocumentoClinico.objects.create(
+    historial_clinico=historial,
+    episodio=episodio2,
+    descripcion='Radiografía post-endodoncia pieza 16',
+    tipo_documento='RADIOGRAFIA',
+    archivo=ContentFile(b'', name='radiografia_pieza16_post.jpg')
+)
+print(f'  ✅ Documento 2: {doc2.descripcion}')
+
+# Documento 3: Consentimiento informado
+doc3 = DocumentoClinico.objects.create(
+    historial_clinico=historial,
+    episodio=episodio1,
+    descripcion='Consentimiento informado para tratamiento de endodoncia',
+    tipo_documento='CONSENTIMIENTO',
+    archivo=ContentFile(b'', name='consentimiento_endodoncia.pdf')
+)
+print(f'  ✅ Documento 3: {doc3.descripcion}')
+
+# Documento 4: Receta médica
+doc4 = DocumentoClinico.objects.create(
+    historial_clinico=historial,
+    episodio=episodio1,
+    descripcion='Receta: Ibuprofeno 400mg y Amoxicilina 500mg',
+    tipo_documento='RECETA',
+    archivo=ContentFile(b'', name='receta_antibioticos.pdf')
+)
+print(f'  ✅ Documento 4: {doc4.descripcion}')
+
+print(f'  📊 Total documentos creados: {DocumentoClinico.objects.filter(historial_clinico=historial).count()}')
+
+# ============================================================================
+# 5. CREAR PLAN DE TRATAMIENTO (Simplificado)
 # ============================================================================
 print('\n💊 CREANDO PLAN DE TRATAMIENTO...')
 
@@ -260,7 +310,7 @@ item3 = ItemPlanTratamiento.objects.create(
 print(f'  ✅ Item 3: {item3.servicio.nombre} - PENDIENTE')
 
 # ============================================================================
-# 5. CREAR FACTURAS Y PAGOS
+# 6. CREAR FACTURAS Y PAGOS
 # ============================================================================
 print('\n💰 CREANDO FACTURAS Y PAGOS...')
 
@@ -326,7 +376,7 @@ print('\n📊 DATOS CREADOS:')
 print(f'  📅 Citas: {Cita.objects.filter(paciente=maria).count()}')
 print(f'  📋 Historiales: 1')
 print(f'  🩺 Episodios: {EpisodioAtencion.objects.filter(historial_clinico=historial).count()}')
-print(f'  📄 Documentos: {DocumentoClinico.objects.filter(episodio__historial_clinico=historial).count()}')
+print(f'  📄 Documentos: {DocumentoClinico.objects.filter(historial_clinico=historial).count()}')
 print(f'  💊 Planes de tratamiento: {PlanDeTratamiento.objects.filter(paciente=maria).count()}')
 print(f'  📝 Items del plan: {ItemPlanTratamiento.objects.filter(plan=plan).count()}')
 print(f'  💰 Facturas: {Factura.objects.filter(paciente=maria).count()}')
@@ -335,7 +385,7 @@ print(f'  💵 Pagos: {Pago.objects.filter(factura__paciente=maria).count()}')
 print('\n🎯 PRÓXIMOS PASOS:')
 print('  1. Login con: maria.garcia@email.com / password123')
 print('  2. Ver cita programada para HOY')
-print('  3. Consultar historial clínico con 3 episodios')
+print('  3. Consultar historial clínico con 3 episodios y 4 documentos')
 print('  4. Revisar plan de tratamiento en progreso')
 print('  5. Ver facturas (1 pagada, 1 pendiente)')
 
