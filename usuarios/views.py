@@ -101,24 +101,32 @@ class DashboardPacienteView(generics.GenericAPIView):
                 'error': 'Solo pacientes pueden acceder a este endpoint'
             }, status=status.HTTP_403_FORBIDDEN)
         
+        # Verificar que el usuario tenga perfil de paciente
+        try:
+            perfil_paciente = usuario.perfil_paciente
+        except:
+            return Response({
+                'error': 'Usuario no tiene perfil de paciente'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
         # Obtener próximas citas (futuras, pendientes o confirmadas)
         ahora = timezone.now()
         proximas_citas = Cita.objects.filter(
-            paciente=usuario,
+            paciente=perfil_paciente,
             fecha_hora__gte=ahora,
             estado__in=['PENDIENTE', 'CONFIRMADA']
         ).count()
         
         # Obtener tratamientos activos
         tratamientos_activos = PlanDeTratamiento.objects.filter(
-            paciente=usuario,
-            estado='EN_PROGRESO'
+            paciente=perfil_paciente,
+            estado='en_progreso'
         ).count()
         
         # Calcular saldo pendiente
         from django.db.models import Sum
         saldo_pendiente = Factura.objects.filter(
-            paciente=usuario,
+            paciente=perfil_paciente,
             estado='PENDIENTE'
         ).aggregate(
             total=Sum('monto_total')
@@ -126,7 +134,7 @@ class DashboardPacienteView(generics.GenericAPIView):
         
         # Obtener la próxima cita más cercana
         proxima_cita_obj = Cita.objects.filter(
-            paciente=usuario,
+            paciente=perfil_paciente,
             fecha_hora__gte=ahora,
             estado__in=['PENDIENTE', 'CONFIRMADA']
         ).order_by('fecha_hora').first()
