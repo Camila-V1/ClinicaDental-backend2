@@ -171,6 +171,150 @@ def crear_usuarios():
             'nombre': paciente.full_name
         })
         
+        # 4. PACIENTE 1 - PARA FLUTTER
+        print("\n" + "-"*60)
+        print("📱 CREANDO PACIENTE 1 (FLUTTER)")
+        print("-"*60)
+        
+        paciente1_email = "paciente1@test.com"
+        paciente1_password = "password123"
+        
+        if User.objects.filter(email=paciente1_email).exists():
+            paciente1 = User.objects.get(email=paciente1_email)
+            paciente1.set_password(paciente1_password)
+            paciente1.is_active = True
+            paciente1.tipo_usuario = 'PACIENTE'
+            paciente1.save()
+            print(f"✅ Paciente 1 actualizado: {paciente1_email}")
+        else:
+            paciente1 = User.objects.create_user(
+                email=paciente1_email,
+                password=paciente1_password,
+                nombre="Juan",
+                apellido="Pérez",
+                tipo_usuario='PACIENTE',
+                is_active=True
+            )
+            print(f"✅ Paciente 1 creado: {paciente1_email}")
+        
+        # Crear perfil de paciente
+        perfil_paciente1, created = PerfilPaciente.objects.get_or_create(
+            usuario=paciente1,
+            defaults={
+                'fecha_nacimiento': '1992-05-20',
+                'telefono': '79876543',
+                'direccion': 'Av. Siempre Viva 456',
+                'grupo_sanguineo': 'A+'
+            }
+        )
+        if created:
+            print(f"   ➕ Perfil creado")
+        else:
+            print(f"   ✓ Perfil ya existía")
+        
+        usuarios_creados.append({
+            'tipo': 'PACIENTE',
+            'email': paciente1_email,
+            'password': paciente1_password,
+            'nombre': paciente1.full_name
+        })
+        
+        # 5. MARÍA GARCÍA - PARA FLUTTER
+        print("\n" + "-"*60)
+        print("📱 CREANDO MARÍA GARCÍA (FLUTTER)")
+        print("-"*60)
+        
+        maria_email = "maria.garcia@email.com"
+        maria_password = "password123"
+        
+        if User.objects.filter(email=maria_email).exists():
+            maria = User.objects.get(email=maria_email)
+            maria.set_password(maria_password)
+            maria.is_active = True
+            maria.tipo_usuario = 'PACIENTE'
+            maria.save()
+            print(f"✅ María García actualizada: {maria_email}")
+        else:
+            maria = User.objects.create_user(
+                email=maria_email,
+                password=maria_password,
+                nombre="María",
+                apellido="García López",
+                tipo_usuario='PACIENTE',
+                is_active=True
+            )
+            print(f"✅ María García creada: {maria_email}")
+        
+        # Crear perfil de paciente
+        perfil_maria, created = PerfilPaciente.objects.get_or_create(
+            usuario=maria,
+            defaults={
+                'fecha_nacimiento': '1988-03-10',
+                'telefono': '72345678',
+                'direccion': 'Zona Central, Calle Las Flores 789',
+                'grupo_sanguineo': 'B+',
+                'alergias': 'Penicilina',
+                'enfermedades_cronicas': 'Hipertensión controlada'
+            }
+        )
+        if created:
+            print(f"   ➕ Perfil creado")
+        else:
+            print(f"   ✓ Perfil ya existía")
+        
+        usuarios_creados.append({
+            'tipo': 'PACIENTE',
+            'email': maria_email,
+            'password': maria_password,
+            'nombre': maria.full_name
+        })
+        
+        # 6. DR. MARTÍNEZ - ODONTÓLOGO PARA FLUTTER
+        print("\n" + "-"*60)
+        print("📱 CREANDO DR. MARTÍNEZ (FLUTTER)")
+        print("-"*60)
+        
+        martinez_email = "dr.martinez@clinica.com"
+        martinez_password = "password123"
+        
+        if User.objects.filter(email=martinez_email).exists():
+            martinez = User.objects.get(email=martinez_email)
+            martinez.set_password(martinez_password)
+            martinez.is_active = True
+            martinez.tipo_usuario = 'ODONTOLOGO'
+            martinez.save()
+            print(f"✅ Dr. Martínez actualizado: {martinez_email}")
+        else:
+            martinez = User.objects.create_user(
+                email=martinez_email,
+                password=martinez_password,
+                nombre="Carlos",
+                apellido="Martínez",
+                tipo_usuario='ODONTOLOGO',
+                is_active=True
+            )
+            print(f"✅ Dr. Martínez creado: {martinez_email}")
+        
+        # Crear perfil de odontólogo
+        perfil_martinez, created = PerfilOdontologo.objects.get_or_create(
+            usuario=martinez,
+            defaults={
+                'especialidad': 'Endodoncia',
+                'numero_registro': 'REG-002'
+            }
+        )
+        if created:
+            print(f"   ➕ Perfil creado")
+        else:
+            print(f"   ✓ Perfil ya existía")
+        
+        usuarios_creados.append({
+            'tipo': 'ODONTÓLOGO',
+            'email': martinez_email,
+            'password': martinez_password,
+            'nombre': martinez.full_name
+        })
+        
         # Mostrar resumen
         print("\n" + "="*60)
         print("🔑 CREDENCIALES CREADAS - GUARDAR PARA PRUEBAS")
@@ -200,6 +344,16 @@ Invoke-RestMethod -Uri "http://clinica-demo.localhost:8000/api/token/" -Method P
         
         print("# Paciente:")
         print(f"""$body = '{{"email": "{paciente.email}", "password": "{paciente_password}"}}'
+Invoke-RestMethod -Uri "http://clinica-demo.localhost:8000/api/token/" -Method POST -ContentType "application/json" -Body $body
+""")
+        
+        print("# Paciente 1 (Flutter):")
+        print(f"""$body = '{{"email": "paciente1@test.com", "password": "password123"}}'
+Invoke-RestMethod -Uri "http://clinica-demo.localhost:8000/api/token/" -Method POST -ContentType "application/json" -Body $body
+""")
+        
+        print("# María García (Flutter):")
+        print(f"""$body = '{{"email": "maria.garcia@email.com", "password": "password123"}}'
 Invoke-RestMethod -Uri "http://clinica-demo.localhost:8000/api/token/" -Method POST -ContentType "application/json" -Body $body
 """)
         
