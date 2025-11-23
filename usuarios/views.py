@@ -70,6 +70,89 @@ class CurrentUserView(generics.RetrieveAPIView):
         return self.request.user
 
 
+class DashboardPacienteView(generics.GenericAPIView):
+    """
+    Endpoint para obtener el dashboard del paciente con resumen de datos.
+    Requiere autenticación JWT.
+    
+    GET /api/usuarios/dashboard/
+    Headers: Authorization: Bearer <token>
+    
+    Retorna:
+    - proximas_citas: número de citas próximas
+    - tratamientos_activos: número de tratamientos en progreso
+    - saldo_pendiente: monto total pendiente de pago
+    - proxima_cita: datos de la próxima cita si existe
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request):
+        from django.utils import timezone
+        from agenda.models import Cita
+        from tratamientos.models import PlanTratamiento
+        from facturacion.models import Factura
+        from datetime import timedelta
+        
+        usuario = request.user
+        
+        # Solo pacientes pueden ver su dashboard
+        if usuario.tipo_usuario != 'PACIENTE':
+            return Response({
+                'error': 'Solo pacientes pueden acceder a este endpoint'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Obtener próximas citas (futuras, pendientes o confirmadas)
+        ahora = timezone.now()
+        proximas_citas = Cita.objects.filter(
+            paciente=usuario,
+            fecha_hora__gte=ahora,
+            estado__in=['PENDIENTE', 'CONFIRMADA']
+        ).count()
+        
+        # Obtener tratamientos activos
+        tratamientos_activos = PlanTratamiento.objects.filter(
+            paciente=usuario,
+            estado='EN_PROGRESO'
+        ).count()
+        
+        # Calcular saldo pendiente
+        from django.db.models import Sum
+        saldo_pendiente = Factura.objects.filter(
+            paciente=usuario,
+            estado='PENDIENTE'
+        ).aggregate(
+            total=Sum('monto_total')
+        )['total'] or 0
+        
+        # Obtener la próxima cita más cercana
+        proxima_cita_obj = Cita.objects.filter(
+            paciente=usuario,
+            fecha_hora__gte=ahora,
+            estado__in=['PENDIENTE', 'CONFIRMADA']
+        ).order_by('fecha_hora').first()
+        
+        proxima_cita = None
+        if proxima_cita_obj:
+            proxima_cita = {
+                'id': proxima_cita_obj.id,
+                'fecha_hora': proxima_cita_obj.fecha_hora,
+                'tipo_cita': proxima_cita_obj.tipo_cita,
+                'estado': proxima_cita_obj.estado,
+                'odontologo': {
+                    'id': proxima_cita_obj.odontologo.id,
+                    'nombre_completo': f"{proxima_cita_obj.odontologo.nombre} {proxima_cita_obj.odontologo.apellido}"
+                } if proxima_cita_obj.odontologo else None,
+                'motivo': proxima_cita_obj.motivo
+            }
+        
+        return Response({
+            'proximas_citas': proximas_citas,
+            'tratamientos_activos': tratamientos_activos,
+            'saldo_pendiente': float(saldo_pendiente),
+            'proxima_cita': proxima_cita
+        }, status=status.HTTP_200_OK)
+
+
 class PacienteListView(generics.ListAPIView):
     """
     Vista para listar pacientes (sin paginación).
