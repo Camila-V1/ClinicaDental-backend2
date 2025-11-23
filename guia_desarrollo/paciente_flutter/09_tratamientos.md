@@ -51,8 +51,9 @@ class PlanTratamiento {
       fechaFin: json['fecha_finalizacion'] != null  // ✅ Backend usa 'fecha_finalizacion'
           ? DateTime.parse(json['fecha_finalizacion'])
           : null,
-      odontologoNombre: json['odontologo_info']?['nombre_completo'] ??  // ✅ Backend usa 'odontologo_info'
-                       json['odontologo_nombre'] ?? '',
+      odontologoNombre: json['odontologo_nombre'] ??  // ✅ List usa 'odontologo_nombre' (string)
+                       json['odontologo_info']?['nombre_completo'] ??  // ✅ Detail usa 'odontologo_info'
+                       '',
       items: (json['items_simples'] as List?)  // ✅ List usa 'items_simples', detalle usa 'items'
           ?.map((e) => ItemTratamiento.fromJson(e))
           .toList() ??
@@ -97,10 +98,12 @@ class ItemTratamiento {
   factory ItemTratamiento.fromJson(Map<String, dynamic> json) {
     return ItemTratamiento(
       id: json['id'],
-      servicio: json['servicio_info']?['nombre'] ??  // ✅ Backend usa 'servicio_info' anidado
-               json['servicio_nombre'] ?? '',
+      servicio: json['servicio_nombre'] ??  // ✅ List usa 'servicio_nombre' (string)
+               json['servicio_info']?['nombre'] ??  // ✅ Detail usa 'servicio_info' anidado
+               '',
       piezaDental: json['pieza_dental'],
-      costo: double.parse(json['precio_total']?.toString() ?? '0'),  // ✅ Backend usa 'precio_total'
+      costo: double.parse(json['precio_total_formateado']?.toString().replaceAll(r'$', '').replaceAll(',', '') ?? 
+             json['precio_total']?.toString() ?? '0'),  // ✅ Manejar formato con $
       estado: json['estado'] ?? '',
       sesionesRequeridas: 1,  // ✅ Backend no tiene este campo
       sesionesCompletadas: json['estado'] == 'COMPLETADO' ? 1 : 0,  // ✅ Calculado desde estado
