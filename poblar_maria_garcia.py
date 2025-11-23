@@ -126,45 +126,40 @@ print('\n📝 CREANDO EPISODIOS DE ATENCIÓN...')
 episodio1 = EpisodioAtencion.objects.create(
     historial_clinico=historial,
     odontologo=odontologo,
-    fecha_atencion=timezone.now() - timedelta(days=20),
     motivo_consulta='Dolor intenso en molar superior derecho',
     diagnostico='Caries profunda en pieza 16 con afectación pulpar',
-    descripcion_procedimiento='Apertura cameral y preparación para endodoncia',
-    tratamiento_realizado='Primera sesión de endodoncia - Conductos limpios',
-    piezas_dentales=['16'],
-    observaciones='Paciente presenta dolor moderado. Se prescribe analgésico.',
-    proxima_cita=timezone.now() - timedelta(days=13)
+    descripcion_procedimiento='Apertura cameral y preparación para endodoncia. Primera sesión de endodoncia - Conductos limpios.',
+    notas_privadas='Paciente presenta dolor moderado. Se prescribe analgésico. Pieza dental: 16'
 )
+# Actualizar fecha manualmente (auto_now_add impide modificación)
+episodio1.fecha_atencion = timezone.now() - timedelta(days=20)
+episodio1.save()
 print(f'  ✅ Episodio 1: {episodio1.motivo_consulta}')
 
 # Episodio 2: Segunda sesión endodoncia (hace 10 días)
 episodio2 = EpisodioAtencion.objects.create(
     historial_clinico=historial,
     odontologo=odontologo,
-    fecha_atencion=timezone.now() - timedelta(days=10),
     motivo_consulta='Control y finalización de endodoncia',
     diagnostico='Endodoncia en proceso - pieza 16',
-    descripcion_procedimiento='Obturación de conductos radiculares con gutapercha',
-    tratamiento_realizado='Endodoncia completada. Sellado temporal.',
-    piezas_dentales=['16'],
-    observaciones='Tratamiento exitoso. Programar colocación de corona.',
-    proxima_cita=timezone.now() + timedelta(days=7)
+    descripcion_procedimiento='Obturación de conductos radiculares con gutapercha. Endodoncia completada. Sellado temporal.',
+    notas_privadas='Tratamiento exitoso. Programar colocación de corona. Pieza dental: 16'
 )
+episodio2.fecha_atencion = timezone.now() - timedelta(days=10)
+episodio2.save()
 print(f'  ✅ Episodio 2: {episodio2.motivo_consulta}')
 
 # Episodio 3: Limpieza dental (hace 5 días)
 episodio3 = EpisodioAtencion.objects.create(
     historial_clinico=historial,
     odontologo=odontologo,
-    fecha_atencion=timezone.now() - timedelta(days=5),
     motivo_consulta='Limpieza dental y revisión general',
     diagnostico='Leve acumulación de sarro. Encías sanas.',
-    descripcion_procedimiento='Profilaxis completa con ultrasonido y pulido',
-    tratamiento_realizado='Limpieza dental profesional completada',
-    piezas_dentales=[],
-    observaciones='Higiene bucal adecuada. Continuar con cuidado en casa.',
-    proxima_cita=timezone.now() + timedelta(days=180)
+    descripcion_procedimiento='Profilaxis completa con ultrasonido y pulido. Limpieza dental profesional completada.',
+    notas_privadas='Higiene bucal adecuada. Continuar con cuidado en casa.'
 )
+episodio3.fecha_atencion = timezone.now() - timedelta(days=5)
+episodio3.save()
 print(f'  ✅ Episodio 3: {episodio3.motivo_consulta}')
 
 print(f'  📊 Total episodios creados: {EpisodioAtencion.objects.filter(historial_clinico=historial).count()}')
