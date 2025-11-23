@@ -415,7 +415,7 @@ class CitaViewSet(viewsets.ModelViewSet):
         return Response({
             'fecha': fecha_str,
             'odontologo': {
-                'id': odontologo.id,
+                'id': odontologo.usuario.id,  # ✅ FIX: odontologo.usuario.id (no odontologo.id)
                 'nombre_completo': odontologo.usuario.get_full_name(),
                 'especialidad': odontologo.especialidad if hasattr(odontologo, 'especialidad') else None
             },

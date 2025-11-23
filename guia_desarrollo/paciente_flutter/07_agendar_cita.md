@@ -132,10 +132,12 @@ class AgendamientoService {
   Future<void> agendarCita({
     required String token,
     required String tenantId,
+    required int pacienteId,      // ✅ REQUERIDO: ID del paciente autenticado
     required int odontologoId,
     required DateTime fechaHora,
+    required String motivoTipo,  // ✅ VALORES VÁLIDOS: 'CONSULTA', 'URGENCIA', 'LIMPIEZA', 'REVISION', 'PLAN'
     required String motivo,
-    int duracionMinutos = 30,
+    String? observaciones,
   }) async {
     try {
       final response = await http.post(
@@ -146,10 +148,12 @@ class AgendamientoService {
           'Authorization': 'Bearer $token',
         },
         body: json.encode({
+          'paciente': pacienteId,       // ✅ Campo requerido por el backend
           'odontologo': odontologoId,
           'fecha_hora': fechaHora.toIso8601String(),
+          'motivo_tipo': motivoTipo,    // Solo acepta: CONSULTA, URGENCIA, LIMPIEZA, REVISION, PLAN
           'motivo': motivo,
-          'duracion_minutos': duracionMinutos,
+          'observaciones': observaciones ?? '',
         }),
       );
 
@@ -291,12 +295,23 @@ class _AgendarCitaScreenState extends State<AgendarCitaScreen> {
         int.parse(horaPartes[1]),
       );
 
+      // ✅ Obtener pacienteId del usuario autenticado
+      final perfilUsuario = authProvider.usuario;
+      final pacienteId = perfilUsuario?.id;
+      
+      if (pacienteId == null) {
+        throw Exception('No se pudo obtener el ID del paciente');
+      }
+
       await _service.agendarCita(
         token: authProvider.accessToken!,
         tenantId: clinicaProvider.clinicaSeleccionada!.id,
+        pacienteId: pacienteId,
         odontologoId: _odontologoSeleccionado!.id,
         fechaHora: fechaHora,
+        motivoTipo: 'CONSULTA',  // ✅ Valores válidos: CONSULTA, URGENCIA, LIMPIEZA, REVISION, PLAN
         motivo: _motivoController.text,
+        observaciones: '',
       );
 
       if (mounted) {
