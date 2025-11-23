@@ -12,9 +12,8 @@ Gestionar visualización de facturas y realizar pagos en línea.
 ```dart
 class Factura {
   final int id;
-  final String numero;  // ✅ Backend: 'id' como string para mostrar
   final DateTime fecha;
-  final double total;  // ✅ Backend: 'monto_total'
+  final double montoTotal;  // ✅ Backend: 'monto_total'
   final String estado;  // ✅ Backend: 'estado' (PENDIENTE, PAGADA, PARCIAL, ANULADA)
   final String? pacienteNombre;  // ✅ Backend: 'paciente_nombre'
   final List<Pago> pagos;  // ✅ Backend: 'pagos' (anidados)
@@ -25,9 +24,8 @@ class Factura {
 
   Factura({
     required this.id,
-    required this.numero,
     required this.fecha,
-    required this.total,
+    required this.montoTotal,  // ✅ Nombre correcto del campo
     required this.estado,
     this.pacienteNombre,
     required this.pagos,
@@ -40,9 +38,8 @@ class Factura {
   factory Factura.fromJson(Map<String, dynamic> json) {
     return Factura(
       id: json['id'],
-      numero: json['numero']?.toString() ?? json['id']?.toString() ?? '',  // ✅ Backend usa 'id' como número
       fecha: DateTime.parse(json['fecha_emision'] ?? json['fecha'] ?? DateTime.now().toIso8601String()),  // ✅ Backend: 'fecha_emision'
-      total: double.parse(json['monto_total']?.toString() ?? '0'),  // ✅ Backend: 'monto_total'
+      montoTotal: double.parse(json['monto_total']?.toString() ?? '0'),  // ✅ Backend: 'monto_total'
       estado: json['estado'] ?? '',
       pacienteNombre: json['paciente_nombre'],
       pagos: (json['pagos'] as List?)
@@ -690,7 +687,7 @@ class _FormularioPagoSheetState extends State<FormularioPagoSheet> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Factura: ${widget.factura.numero}',
+                'Factura: #${widget.factura.id}',  // ✅ Backend solo tiene 'id'
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
               const SizedBox(height: 24),
@@ -849,7 +846,7 @@ class FacturaCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    factura.numero,
+                    'Factura #${factura.id}',  // ✅ Backend solo tiene 'id'
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
