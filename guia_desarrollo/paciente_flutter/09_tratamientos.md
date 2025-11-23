@@ -53,7 +53,10 @@ class PlanTratamiento {
           : null,
       odontologoNombre: json['odontologo_info']?['nombre_completo'] ??  // ✅ Backend usa 'odontologo_info'
                        json['odontologo_nombre'] ?? '',
-      items: (json['items_simples'] as List?)  // ✅ Backend usa 'items_simples' en list
+      items: (json['items_simples'] as List?)  // ✅ List usa 'items_simples', detalle usa 'items'
+          ?.map((e) => ItemTratamiento.fromJson(e))
+          .toList() ??
+          (json['items'] as List?)  // ✅ Detalle usa 'items' completos
           ?.map((e) => ItemTratamiento.fromJson(e))
           .toList() ?? [],
       progresoPercentage: json['porcentaje_completado'] ?? 0,  // ✅ Backend usa 'porcentaje_completado'
@@ -133,6 +136,7 @@ class ItemTratamiento {
 
 ```dart
 import 'dart:convert';
+import 'dart:async';  // ✅ Importar para TimeoutException
 import 'package:http/http.dart' as http;
 import 'package:clinica_dental_app/config/constants.dart';
 import 'package:clinica_dental_app/models/tratamiento.dart';
@@ -154,6 +158,10 @@ class TratamientosService {
         url += '?estado=$estado';
       }
 
+      print('=== GET TRATAMIENTOS ===');
+      print('URL: $url');
+      print('Tenant ID: $tenantId');
+
       final response = await http.get(
         Uri.parse(url),
         headers: {
@@ -161,24 +169,33 @@ class TratamientosService {
           'Host': tenantId,  // ✅ Usar Host en lugar de X-Tenant-ID
           'Authorization': 'Bearer $token',
         },
-      );
+      ).timeout(const Duration(seconds: 10));
+
+      print('Response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final List<dynamic> planes = data['results'] ?? data;
+        print('✅ ${planes.length} planes encontrados');
         return planes.map((json) => PlanTratamiento.fromJson(json)).toList();
       } else if (response.statusCode == 401) {
-        throw TokenExpiredException('Token expirado');
+        print('❌ Token expirado (401)');
+        throw Exception('Token expirado');
       } else {
+        print('❌ Error ${response.statusCode}: ${response.body}');
         throw Exception('Error al cargar tratamientos: ${response.statusCode}');
       }
+    } on TimeoutException {
+      print('⏱️ Timeout al cargar tratamientos');
+      throw Exception('Tiempo de espera agotado. Verifica tu conexión.');
     } catch (e) {
-      if (e is TokenExpiredException) rethrow;
+      print('ERROR en getMisTratamientos: $e');
+      if (e.toString().contains('Token expirado')) rethrow;
       throw Exception('Error de conexión: $e');
     }
   }
 
-  /// ✅ Obtener detalle de plan con items
+  /// ✅ Obtener detalle de plan con items completos
   Future<PlanTratamiento> getPlanDetalle({
     required String token,
     required String tenantId,
@@ -192,18 +209,21 @@ class TratamientosService {
           'Host': tenantId,
           'Authorization': 'Bearer $token',
         },
-      );
+      ).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
+        // ✅ En detalle, backend usa 'items' completos (no items_simples)
         return PlanTratamiento.fromJson(data);
       } else if (response.statusCode == 401) {
-        throw TokenExpiredException('Token expirado');
+        throw Exception('Token expirado');
       } else {
         throw Exception('Error al cargar plan: ${response.statusCode}');
       }
+    } on TimeoutException {
+      throw Exception('Tiempo de espera agotado al cargar plan.');
     } catch (e) {
-      if (e is TokenExpiredException) rethrow;
+      if (e.toString().contains('Token expirado')) rethrow;
       throw Exception('Error de conexión: $e');
     }
   }
