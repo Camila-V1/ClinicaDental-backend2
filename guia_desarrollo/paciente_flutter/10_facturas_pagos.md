@@ -210,18 +210,20 @@ class FacturasService {
           'Host': tenantId,
           'Authorization': 'Bearer $token',
         },
-      );
+      ).timeout(const Duration(seconds: 10));  // ✅ Agregar timeout
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         return Factura.fromJson(data);
       } else if (response.statusCode == 401) {
-        throw TokenExpiredException('Token expirado');
+        throw Exception('Token expirado');  // ✅ Usar Exception normal
       } else {
         throw Exception('Error al cargar factura: ${response.statusCode}');
       }
+    } on TimeoutException {  // ✅ Capturar TimeoutException
+      throw Exception('Timeout al cargar factura');
     } catch (e) {
-      if (e is TokenExpiredException) rethrow;
+      if (e.toString().contains('Token expirado')) rethrow;
       throw Exception('Error de conexión: $e');
     }
   }
@@ -240,7 +242,7 @@ class FacturasService {
           'Host': tenantId,
           'Authorization': 'Bearer $token',
         },
-      );
+      ).timeout(const Duration(seconds: 10));  // ✅ Agregar timeout
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -249,6 +251,8 @@ class FacturasService {
       } else {
         throw Exception('Error al cargar pagos: ${response.statusCode}');
       }
+    } on TimeoutException {  // ✅ Capturar TimeoutException
+      throw Exception('Timeout al cargar pagos');
     } catch (e) {
       throw Exception('Error de conexión: $e');
     }
@@ -880,19 +884,8 @@ class FacturaCard extends StatelessWidget {
                     DateFormat('dd/MM/yyyy').format(factura.fecha),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
-                  if (factura.isVencida) ...[
-                    const SizedBox(width: 12),
-                    Icon(Icons.warning, size: 14, color: Colors.red.shade700),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Vencida',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.red.shade700,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
+                  // ❌ BACKEND NO TIENE fecha_vencimiento - isVencida no existe
+                  // El estado ANULADA se maneja con factura.isAnulada
                 ],
               ),
               const Divider(height: 24),
@@ -907,7 +900,7 @@ class FacturaCard extends StatelessWidget {
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                       Text(
-                        '\$${factura.total.toStringAsFixed(2)}',
+                        '\$${factura.montoTotal.toStringAsFixed(2)}',  // ✅ montoTotal, no total
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -955,9 +948,9 @@ class FacturaCard extends StatelessWidget {
 
   Color _getEstadoColor() {
     if (factura.isPagada) return Colors.green;
-    if (factura.isVencida) return Colors.red;
+    if (factura.isAnulada) return Colors.red;  // ✅ isAnulada existe, isVencida NO
     if (factura.isParcial) return Colors.blue;
-    return Colors.orange;
+    return Colors.orange;  // PENDIENTE
   }
 }
 ```
@@ -966,14 +959,14 @@ class FacturaCard extends StatelessWidget {
 
 ## ✅ Checklist
 
-- [ ] Crear modelos `Factura`, `ItemFactura` y `Pago`
+- [ ] Crear modelos `Factura` y `Pago`
 - [ ] Crear `FacturasService`
 - [ ] Crear `FacturasScreen` con tabs
 - [ ] Widget `FacturaCard`
 - [ ] Formulario de pago
 - [ ] Validación de montos
 - [ ] Indicador de saldo total
-- [ ] Detectar facturas vencidas
+- [ ] Manejo de estados (PENDIENTE, PARCIAL, PAGADA, ANULADA)
 
 ---
 
