@@ -163,12 +163,14 @@ class InformacionMedica {
 
 ```dart
 import 'dart:convert';
+import 'dart:async';  // ✅ Importar para TimeoutException
 import 'package:http/http.dart' as http;
 import 'package:clinica_dental_app/config/constants.dart';
 import 'package:clinica_dental_app/models/historial_clinico.dart';
 
 class HistorialService {
-  final String baseUrl = AppConstants.baseUrlDev;
+  // ✅ IMPORTANTE: Usar URL de producción (Render), NO localhost
+  final String baseUrl = 'https://clinica-dental-backend.onrender.com';
 
   /// ✅ Obtener mi historial clínico (mismo endpoint que el web)
   Future<HistorialClinico> getHistorial({
@@ -176,6 +178,10 @@ class HistorialService {
     required String tenantId,
   }) async {
     try {
+      print('=== GET HISTORIAL ===');
+      print('URL: $baseUrl/api/historial/historiales/mi_historial/');
+      print('Tenant ID: $tenantId');
+      
       final response = await http.get(
         Uri.parse('$baseUrl/api/historial/historiales/mi_historial/'),
         headers: {
@@ -183,13 +189,17 @@ class HistorialService {
           'Host': tenantId,
           'Authorization': 'Bearer $token',
         },
-      ).timeout(const Duration(seconds: 10));  // ✅ Agregar timeout
+      ).timeout(const Duration(seconds: 10));
 
+      print('Response status: ${response.statusCode}');
+      
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
+        print('✅ Historial cargado exitosamente');
         return HistorialClinico.fromJson(data);
       } else if (response.statusCode == 404) {
         // ✅ Paciente sin historial clínico - retornar historial vacío
+        print('ℹ️ Paciente sin historial (404) - retornando vacío');
         return HistorialClinico(
           id: 0,
           consultas: [],
@@ -197,15 +207,19 @@ class HistorialService {
           informacionMedica: null,
         );
       } else if (response.statusCode == 401) {
-        throw TokenExpiredException('Token expirado');
+        print('❌ Token expirado (401)');
+        throw Exception('Token expirado');
       } else {
+        print('❌ Error ${response.statusCode}: ${response.body}');
         throw Exception('Error al cargar historial: ${response.statusCode}');
       }
     } on TimeoutException {
-      // ✅ Manejar timeout - retornar historial vacío
-      throw Exception('Tiempo de espera agotado. Intenta nuevamente.');
+      // ✅ Manejar timeout explícitamente
+      print('⏱️ Timeout al cargar historial');
+      throw Exception('Tiempo de espera agotado al cargar historial. Verifica tu conexión.');
     } catch (e) {
-      if (e is TokenExpiredException) rethrow;
+      print('ERROR COMPLETO en getHistorial: $e');
+      if (e.toString().contains('Token expirado')) rethrow;
       throw Exception('Error de conexión: $e');
     }
   }
@@ -224,18 +238,20 @@ class HistorialService {
           'Host': tenantId,
           'Authorization': 'Bearer $token',
         },
-      );
+      ).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         return ConsultaMedica.fromJson(data);
       } else if (response.statusCode == 401) {
-        throw TokenExpiredException('Token expirado');
+        throw Exception('Token expirado');
       } else {
         throw Exception('Error al cargar episodio: ${response.statusCode}');
       }
+    } on TimeoutException {
+      throw Exception('Tiempo de espera agotado al cargar episodio.');
     } catch (e) {
-      if (e is TokenExpiredException) rethrow;
+      if (e.toString().contains('Token expirado')) rethrow;
       throw Exception('Error de conexión: $e');
     }
   }
