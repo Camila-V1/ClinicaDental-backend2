@@ -17,6 +17,10 @@ El Home tendrá navegación por tabs en la parte inferior:
 
 ## 📡 Servicio del Dashboard
 
+> **✅ ACTUALIZADO - 23/11/2025**  
+> Ahora usa los **mismos endpoints individuales que el web** (probados y funcionando)  
+> Ya no usa `/api/usuarios/dashboard/` que daba errores 500
+
 ### `lib/services/dashboard_service.dart`
 
 ```dart
@@ -36,23 +40,13 @@ class DashboardData {
     required this.saldoPendiente,
     this.proximaCita,
   });
-
-  factory DashboardData.fromJson(Map<String, dynamic> json) {
-    return DashboardData(
-      proximasCitas: json['proximas_citas'] ?? 0,
-      tratamientosActivos: json['tratamientos_activos'] ?? 0,
-      saldoPendiente: double.parse(json['saldo_pendiente']?.toString() ?? '0'),
-      proximaCita: json['proxima_cita'] != null 
-          ? Cita.fromJson(json['proxima_cita'])
-          : null,
-    );
-  }
 }
 
 class Cita {
   final int id;
   final String fechaHora;
   final String motivo;
+  final String motivoTipo;
   final String odontologoNombre;
   final String estado;
 
@@ -60,6 +54,7 @@ class Cita {
     required this.id,
     required this.fechaHora,
     required this.motivo,
+    required this.motivoTipo,
     required this.odontologoNombre,
     required this.estado,
   });
@@ -69,8 +64,9 @@ class Cita {
       id: json['id'],
       fechaHora: json['fecha_hora'],
       motivo: json['motivo'] ?? '',
-      odontologoNombre: json['odontologo']['usuario']['full_name'] ?? '',
-      estado: json['estado'] ?? '',
+      motivoTipo: json['motivo_tipo'] ?? 'CONSULTA_GENERAL',
+      odontologoNombre: json['odontologo']?['usuario']?['nombre'] ?? 'Sin asignar',
+      estado: json['estado'] ?? 'PENDIENTE',
     );
   }
 }
@@ -78,27 +74,95 @@ class Cita {
 class DashboardService {
   final String baseUrl = AppConstants.baseUrlDev;
 
+  /// ✅ Método actualizado - Usa múltiples endpoints como el web
   Future<DashboardData> getDashboard(String token, String tenantId) async {
     try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/api/pacientes/dashboard/'),
+      // ✅ 1. Obtener próximas citas (mismo endpoint que web)
+      final citasResponse = await http.get(
+        Uri.parse('$baseUrl/api/agenda/citas/?ordering=fecha_hora&limit=5'),
         headers: {
           'Content-Type': 'application/json',
-          'X-Tenant-ID': tenantId,
+          'Host': tenantId,
           'Authorization': 'Bearer $token',
         },
       );
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        return DashboardData.fromJson(data);
-      } else {
-        throw Exception('Error al cargar dashboard');
+      // ✅ 2. Obtener planes de tratamiento activos
+      final planesResponse = await http.get(
+        Uri.parse('$baseUrl/api/tratamientos/planes/?estado=en_progreso'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Host': tenantId,
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      // ✅ 3. Obtener estado de cuenta (saldo pendiente)
+      final estadoCuentaResponse = await http.get(
+        Uri.parse('$baseUrl/api/facturacion/facturas/estado_cuenta/'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Host': tenantId,
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (citasResponse.statusCode == 401 || 
+          planesResponse.statusCode == 401 || 
+          estadoCuentaResponse.statusCode == 401) {
+        throw TokenExpiredException('Token expirado. Por favor, inicia sesión nuevamente.');
       }
+
+      // Parsear respuestas
+      final citasData = citasResponse.statusCode == 200 
+          ? json.decode(citasResponse.body) 
+          : {'results': []};
+      
+      final planesData = planesResponse.statusCode == 200
+          ? json.decode(planesResponse.body)
+          : {'results': []};
+      
+      final estadoCuentaData = estadoCuentaResponse.statusCode == 200
+          ? json.decode(estadoCuentaResponse.body)
+          : {'saldo_pendiente': 0.0};
+
+      // Procesar citas
+      final citas = (citasData['results'] as List)
+          .where((c) => c['estado'] != 'CANCELADA' && c['estado'] != 'ATENDIDA')
+          .toList();
+
+      final proximaCita = citas.isNotEmpty ? Cita.fromJson(citas.first) : null;
+
+      // Calcular tratamientos activos
+      final tratamientosActivos = (planesData['results'] as List).length;
+
+      // Obtener saldo pendiente
+      final saldoPendiente = double.parse(
+        estadoCuentaData['saldo_pendiente']?.toString() ?? '0'
+      );
+
+      return DashboardData(
+        proximasCitas: citas.length,
+        tratamientosActivos: tratamientosActivos,
+        saldoPendiente: saldoPendiente,
+        proximaCita: proximaCita,
+      );
+
     } catch (e) {
+      if (e is TokenExpiredException) {
+        rethrow;
+      }
       throw Exception('Error de conexión: $e');
     }
   }
+}
+
+class TokenExpiredException implements Exception {
+  final String message;
+  TokenExpiredException(this.message);
+  
+  @override
+  String toString() => message;
 }
 ```
 
@@ -244,13 +308,28 @@ class _DashboardTabState extends State<DashboardTab> {
 
       final data = await _dashboardService.getDashboard(
         authProvider.accessToken!,
-        clinicaProvider.clinicaSeleccionada!.id,
+        clinicaProvider.clinicaSeleccionada!.schemaName,
       );
 
       setState(() {
         _dashboardData = data;
         _isLoading = false;
       });
+    } on TokenExpiredException catch (e) {
+      // Token expirado - cerrar sesión y redirigir a login
+      if (mounted) {
+        await authProvider.logout();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(e.message),
+              backgroundColor: Colors.orange,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+          // Redirigir a login (usar GoRouter context.go('/login'))
+        }
+      }
     } catch (e) {
       setState(() {
         _error = e.toString();

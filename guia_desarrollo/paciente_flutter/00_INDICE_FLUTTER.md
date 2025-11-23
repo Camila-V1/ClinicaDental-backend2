@@ -1,12 +1,17 @@
 # 📱 App Móvil Flutter - Portal del Paciente
 
-> **⚠️ GUÍAS ACTUALIZADAS** - 22/11/2025  
-> Las guías han sido corregidas para reflejar las rutas reales del backend.  
+> **✅ GUÍAS ACTUALIZADAS** - 23/11/2025  
+> **CAMBIO IMPORTANTE:** Ahora usamos los **mismos endpoints individuales que el web**  
+> **Razón:** El endpoint consolidado `/api/usuarios/dashboard/` daba error 500  
+> **Solución:** Usar endpoints probados y funcionando en producción
+> 
 > **Cambios críticos:**
 > - ✅ `04_login_registro.md` - Rutas de autenticación corregidas
+> - ✅ `05_home_dashboard.md` - **ACTUALIZADO** - Usa endpoints individuales como el web
 > - ✅ `06_mis_citas.md` - Endpoints y estados actualizados
+> - ✅ `ACTUALIZACION_ENDPOINTS_WEB.md` - **NUEVO** - Guía sobre el cambio de arquitectura
 > 
-> Ver `REVISION_GUIAS_FLUTTER.md` en la raíz para detalles completos.
+> Ver `ACTUALIZACION_ENDPOINTS_WEB.md` para detalles completos del cambio.
 
 ## 🎯 Objetivo
 Crear una aplicación móvil Flutter para que los pacientes puedan gestionar sus citas, ver su historial clínico, facturas y más, desde sus dispositivos móviles.
@@ -18,7 +23,11 @@ Crear una aplicación móvil Flutter para que los pacientes puedan gestionar sus
 ### 🏗️ Configuración Inicial
 1. **[01_setup_proyecto.md](01_setup_proyecto.md)** - Crear proyecto Flutter y estructura
 2. **[02_configuracion_dependencias.md](02_configuracion_dependencias.md)** - Paquetes y configuración
-2a. **[02a_selector_clinica_conexion.md](02a_selector_clinica_conexion.md)** - ✅ **NUEVA** - Selector de clínicas y conexión a Render
+2a. **[02a_selector_clinica_conexion.md](02a_selector_clinica_conexion.md)** - ✅ Selector de clínicas y conexión a Render
+
+### 📍 Guías de Endpoints (NUEVO)
+- **[ENDPOINTS_POR_PANTALLA.md](ENDPOINTS_POR_PANTALLA.md)** - ⭐ **REFERENCIA COMPLETA** - Todos los endpoints por pantalla
+- **[ACTUALIZACION_ENDPOINTS_WEB.md](ACTUALIZACION_ENDPOINTS_WEB.md)** - ⭐ Explicación del cambio a patrón web
 
 ### 🔐 Autenticación
 3. **[03_selector_clinica.md](03_selector_clinica.md)** - Pantalla inicial para seleccionar clínica
