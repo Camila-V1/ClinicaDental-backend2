@@ -61,11 +61,11 @@ class ConsultaMedica {
   factory ConsultaMedica.fromJson(Map<String, dynamic> json) {
     return ConsultaMedica(
       id: json['id'],
-      fecha: DateTime.parse(json['fecha']),
-      motivo: json['motivo'] ?? '',
+      fecha: DateTime.parse(json['fecha_atencion']),  // ✅ Backend usa 'fecha_atencion'
+      motivo: json['motivo_consulta'] ?? '',
       diagnostico: json['diagnostico'] ?? '',
-      tratamiento: json['tratamiento'] ?? '',
-      odontologoNombre: json['odontologo']['usuario']['full_name'] ?? '',
+      tratamiento: json['descripcion_procedimiento'] ?? '',
+      odontologoNombre: json['odontologo_nombre'] ?? '',  // ✅ FIX: campo directo, no anidado
       piezasDentales: json['piezas_dentales'] != null
           ? List<String>.from(json['piezas_dentales'])
           : null,
