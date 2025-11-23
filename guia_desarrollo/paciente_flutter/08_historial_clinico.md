@@ -180,19 +180,30 @@ class HistorialService {
         Uri.parse('$baseUrl/api/historial/historiales/mi_historial/'),
         headers: {
           'Content-Type': 'application/json',
-          'Host': tenantId,  // ✅ Usar Host en lugar de X-Tenant-ID
+          'Host': tenantId,
           'Authorization': 'Bearer $token',
         },
-      );
+      ).timeout(const Duration(seconds: 10));  // ✅ Agregar timeout
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         return HistorialClinico.fromJson(data);
+      } else if (response.statusCode == 404) {
+        // ✅ Paciente sin historial clínico - retornar historial vacío
+        return HistorialClinico(
+          id: 0,
+          consultas: [],
+          documentos: [],
+          informacionMedica: null,
+        );
       } else if (response.statusCode == 401) {
         throw TokenExpiredException('Token expirado');
       } else {
         throw Exception('Error al cargar historial: ${response.statusCode}');
       }
+    } on TimeoutException {
+      // ✅ Manejar timeout - retornar historial vacío
+      throw Exception('Tiempo de espera agotado. Intenta nuevamente.');
     } catch (e) {
       if (e is TokenExpiredException) rethrow;
       throw Exception('Error de conexión: $e');
