@@ -143,6 +143,9 @@ class InformacionMedica {
 
 ## 🔌 Servicio
 
+> **✅ ACTUALIZADO - 23/11/2025**  
+> Ahora usa los **mismos endpoints que el web** (probados y funcionando)
+
 ### `lib/services/historial_service.dart`
 
 ```dart
@@ -154,17 +157,17 @@ import 'package:clinica_dental_app/models/historial_clinico.dart';
 class HistorialService {
   final String baseUrl = AppConstants.baseUrlDev;
 
-  // Obtener historial completo
+  /// ✅ Obtener mi historial clínico (mismo endpoint que el web)
   Future<HistorialClinico> getHistorial({
     required String token,
     required String tenantId,
   }) async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/api/historial-clinico/mi-historial/'),
+        Uri.parse('$baseUrl/api/historial/historiales/mi_historial/'),
         headers: {
           'Content-Type': 'application/json',
-          'X-Tenant-ID': tenantId,
+          'Host': tenantId,  // ✅ Usar Host en lugar de X-Tenant-ID
           'Authorization': 'Bearer $token',
         },
       );
@@ -172,26 +175,29 @@ class HistorialService {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         return HistorialClinico.fromJson(data);
+      } else if (response.statusCode == 401) {
+        throw TokenExpiredException('Token expirado');
       } else {
-        throw Exception('Error al cargar historial');
+        throw Exception('Error al cargar historial: ${response.statusCode}');
       }
     } catch (e) {
+      if (e is TokenExpiredException) rethrow;
       throw Exception('Error de conexión: $e');
     }
   }
 
-  // Obtener consulta específica
-  Future<ConsultaMedica> getConsulta({
+  /// ✅ Obtener episodio específico
+  Future<ConsultaMedica> getEpisodio({
     required String token,
     required String tenantId,
-    required int consultaId,
+    required int episodioId,
   }) async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/api/historial-clinico/consultas/$consultaId/'),
+        Uri.parse('$baseUrl/api/historial/episodios/$episodioId/'),
         headers: {
           'Content-Type': 'application/json',
-          'X-Tenant-ID': tenantId,
+          'Host': tenantId,
           'Authorization': 'Bearer $token',
         },
       );
@@ -199,10 +205,13 @@ class HistorialService {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         return ConsultaMedica.fromJson(data);
+      } else if (response.statusCode == 401) {
+        throw TokenExpiredException('Token expirado');
       } else {
-        throw Exception('Error al cargar consulta');
+        throw Exception('Error al cargar episodio: ${response.statusCode}');
       }
     } catch (e) {
+      if (e is TokenExpiredException) rethrow;
       throw Exception('Error de conexión: $e');
     }
   }

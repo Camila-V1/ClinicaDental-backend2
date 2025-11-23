@@ -122,6 +122,9 @@ class ItemTratamiento {
 
 ## 🔌 Servicio
 
+> **✅ ACTUALIZADO - 23/11/2025**  
+> Ahora usa los **mismos endpoints que el web** (probados y funcionando)
+
 ### `lib/services/tratamientos_service.dart`
 
 ```dart
@@ -133,14 +136,14 @@ import 'package:clinica_dental_app/models/tratamiento.dart';
 class TratamientosService {
   final String baseUrl = AppConstants.baseUrlDev;
 
-  // Obtener mis planes de tratamiento
+  /// ✅ Obtener mis planes de tratamiento (mismo endpoint que el web)
   Future<List<PlanTratamiento>> getMisTratamientos({
     required String token,
     required String tenantId,
     String? estado,
   }) async {
     try {
-      String url = '$baseUrl/api/tratamientos/mis-planes/';
+      String url = '$baseUrl/api/tratamientos/planes/';
       
       if (estado != null) {
         url += '?estado=$estado';
@@ -150,7 +153,7 @@ class TratamientosService {
         Uri.parse(url),
         headers: {
           'Content-Type': 'application/json',
-          'X-Tenant-ID': tenantId,
+          'Host': tenantId,  // ✅ Usar Host en lugar de X-Tenant-ID
           'Authorization': 'Bearer $token',
         },
       );
@@ -159,15 +162,18 @@ class TratamientosService {
         final data = json.decode(response.body);
         final List<dynamic> planes = data['results'] ?? data;
         return planes.map((json) => PlanTratamiento.fromJson(json)).toList();
+      } else if (response.statusCode == 401) {
+        throw TokenExpiredException('Token expirado');
       } else {
-        throw Exception('Error al cargar tratamientos');
+        throw Exception('Error al cargar tratamientos: ${response.statusCode}');
       }
     } catch (e) {
+      if (e is TokenExpiredException) rethrow;
       throw Exception('Error de conexión: $e');
     }
   }
 
-  // Obtener detalle de plan
+  /// ✅ Obtener detalle de plan con items
   Future<PlanTratamiento> getPlanDetalle({
     required String token,
     required String tenantId,
@@ -178,7 +184,7 @@ class TratamientosService {
         Uri.parse('$baseUrl/api/tratamientos/planes/$planId/'),
         headers: {
           'Content-Type': 'application/json',
-          'X-Tenant-ID': tenantId,
+          'Host': tenantId,
           'Authorization': 'Bearer $token',
         },
       );
@@ -186,13 +192,52 @@ class TratamientosService {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         return PlanTratamiento.fromJson(data);
+      } else if (response.statusCode == 401) {
+        throw TokenExpiredException('Token expirado');
       } else {
-        throw Exception('Error al cargar plan');
+        throw Exception('Error al cargar plan: ${response.statusCode}');
+      }
+    } catch (e) {
+      if (e is TokenExpiredException) rethrow;
+      throw Exception('Error de conexión: $e');
+    }
+  }
+  
+  /// ✅ Obtener items de un plan
+  Future<List<ItemTratamiento>> getPlanItems({
+    required String token,
+    required String tenantId,
+    required int planId,
+  }) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/tratamientos/planes/$planId/items/'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Host': tenantId,
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final List<dynamic> items = data['results'] ?? data;
+        return items.map((json) => ItemTratamiento.fromJson(json)).toList();
+      } else {
+        throw Exception('Error al cargar items: ${response.statusCode}');
       }
     } catch (e) {
       throw Exception('Error de conexión: $e');
     }
   }
+}
+
+class TokenExpiredException implements Exception {
+  final String message;
+  TokenExpiredException(this.message);
+  
+  @override
+  String toString() => message;
 }
 ```
 

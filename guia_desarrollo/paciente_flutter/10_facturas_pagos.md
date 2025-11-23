@@ -133,6 +133,9 @@ class Pago {
 
 ## 🔌 Servicios
 
+> **✅ ACTUALIZADO - 23/11/2025**  
+> Ahora usa los **mismos endpoints que el web** (probados y funcionando)
+
 ### `lib/services/facturas_service.dart`
 
 ```dart
@@ -144,14 +147,14 @@ import 'package:clinica_dental_app/models/factura.dart';
 class FacturasService {
   final String baseUrl = AppConstants.baseUrlDev;
 
-  // Obtener mis facturas
+  /// ✅ Obtener mis facturas (mismo endpoint que el web)
   Future<List<Factura>> getMisFacturas({
     required String token,
     required String tenantId,
     String? estado,
   }) async {
     try {
-      String url = '$baseUrl/api/facturacion/mis-facturas/';
+      String url = '$baseUrl/api/facturacion/facturas/mis_facturas/';
       
       if (estado != null) {
         url += '?estado=$estado';
@@ -161,24 +164,53 @@ class FacturasService {
         Uri.parse(url),
         headers: {
           'Content-Type': 'application/json',
-          'X-Tenant-ID': tenantId,
+          'Host': tenantId,  // ✅ Usar Host en lugar de X-Tenant-ID
           'Authorization': 'Bearer $token',
         },
       );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        final List<dynamic> facturas = data['results'] ?? data;
+        // El endpoint mis_facturas retorna una lista directa
+        final List<dynamic> facturas = data is List ? data : (data['results'] ?? []);
         return facturas.map((json) => Factura.fromJson(json)).toList();
+      } else if (response.statusCode == 401) {
+        throw TokenExpiredException('Token expirado');
       } else {
-        throw Exception('Error al cargar facturas');
+        throw Exception('Error al cargar facturas: ${response.statusCode}');
+      }
+    } catch (e) {
+      if (e is TokenExpiredException) rethrow;
+      throw Exception('Error de conexión: $e');
+    }
+  }
+  
+  /// ✅ Obtener estado de cuenta (saldo pendiente total)
+  Future<Map<String, dynamic>> getEstadoCuenta({
+    required String token,
+    required String tenantId,
+  }) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/facturacion/facturas/estado_cuenta/'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Host': tenantId,
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        throw Exception('Error al cargar estado de cuenta: ${response.statusCode}');
       }
     } catch (e) {
       throw Exception('Error de conexión: $e');
     }
   }
 
-  // Obtener detalle de factura
+  /// ✅ Obtener detalle de factura
   Future<Factura> getFactura({
     required String token,
     required String tenantId,
@@ -189,7 +221,7 @@ class FacturasService {
         Uri.parse('$baseUrl/api/facturacion/facturas/$facturaId/'),
         headers: {
           'Content-Type': 'application/json',
-          'X-Tenant-ID': tenantId,
+          'Host': tenantId,
           'Authorization': 'Bearer $token',
         },
       );
@@ -197,8 +229,39 @@ class FacturasService {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         return Factura.fromJson(data);
+      } else if (response.statusCode == 401) {
+        throw TokenExpiredException('Token expirado');
       } else {
-        throw Exception('Error al cargar factura');
+        throw Exception('Error al cargar factura: ${response.statusCode}');
+      }
+    } catch (e) {
+      if (e is TokenExpiredException) rethrow;
+      throw Exception('Error de conexión: $e');
+    }
+  }
+  
+  /// ✅ Obtener pagos de una factura
+  Future<List<Pago>> getPagosFactura({
+    required String token,
+    required String tenantId,
+    required int facturaId,
+  }) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/facturacion/facturas/$facturaId/pagos/'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Host': tenantId,
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final List<dynamic> pagos = data is List ? data : (data['results'] ?? []);
+        return pagos.map((json) => Pago.fromJson(json)).toList();
+      } else {
+        throw Exception('Error al cargar pagos: ${response.statusCode}');
       }
     } catch (e) {
       throw Exception('Error de conexión: $e');

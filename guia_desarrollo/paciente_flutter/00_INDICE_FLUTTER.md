@@ -34,12 +34,12 @@ Crear una aplicación móvil Flutter para que los pacientes puedan gestionar sus
 4. **[04_login_registro.md](04_login_registro.md)** - ✅ **ACTUALIZADA** - Login, registro y tokens JWT
 
 ### 📱 Vistas Principales
-5. **[05_home_dashboard.md](05_home_dashboard.md)** - Dashboard con resumen de información
+5. **[05_home_dashboard.md](05_home_dashboard.md)** - ✅ **ACTUALIZADA** - Dashboard con endpoints individuales
 6. **[06_mis_citas.md](06_mis_citas.md)** - ✅ **ACTUALIZADA** - Ver y gestionar citas
 7. **[07_agendar_cita.md](07_agendar_cita.md)** - Crear nueva cita
-8. **[08_historial_clinico.md](08_historial_clinico.md)** - Ver historial médico
-9. **[09_tratamientos.md](09_tratamientos.md)** - Planes de tratamiento activos
-10. **[10_facturas_pagos.md](10_facturas_pagos.md)** - Ver facturas y realizar pagos
+8. **[08_historial_clinico.md](08_historial_clinico.md)** - ✅ **ACTUALIZADA** - Ver historial médico (endpoint web)
+9. **[09_tratamientos.md](09_tratamientos.md)** - ✅ **ACTUALIZADA** - Planes de tratamiento (endpoint web)
+10. **[10_facturas_pagos.md](10_facturas_pagos.md)** - ✅ **ACTUALIZADA** - Ver facturas (endpoint web)
 11. **[11_perfil_configuracion.md](11_perfil_configuracion.md)** - Editar perfil y notificaciones
 
 ### 🛠️ Servicios y Utilidades
