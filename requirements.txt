@@ -28,6 +28,9 @@ Pillow==11.1.0
 # Almacenamiento de archivos (AWS S3, etc.)
 django-storages==1.14.6
 
+# Supabase Storage (para backups)
+supabase==2.23.0
+
 # Variables de entorno
 python-decouple==3.8
 
