@@ -90,6 +90,13 @@ class Cita(models.Model):
         verbose_name='Estado'
     )
     
+    # Estado de pago
+    pagada = models.BooleanField(
+        default=False,
+        verbose_name='Pagada',
+        help_text='Indica si la cita ha sido pagada'
+    )
+    
     # Timestamps automáticos
     creado = models.DateTimeField(auto_now_add=True, verbose_name='Fecha de creación')
     actualizado = models.DateTimeField(auto_now=True, verbose_name='Última actualización')

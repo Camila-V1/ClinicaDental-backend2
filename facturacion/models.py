@@ -121,26 +121,66 @@ class Factura(models.Model):
 class Pago(models.Model):
     """
     Representa un pago (parcial o total) aplicado a una Factura (CU30, CU32, CU33).
+    También soporta pagos online directos para citas y tratamientos.
     """
+    class TipoPago(models.TextChoices):
+        FACTURA = 'FACTURA', 'Pago de Factura'
+        CITA = 'CITA', 'Pago de Cita'
+        TRATAMIENTO = 'TRATAMIENTO', 'Pago de Tratamiento'
+        PLAN = 'PLAN', 'Pago de Plan de Tratamiento'
+        OTRO = 'OTRO', 'Otro'
+    
     class MetodoPago(models.TextChoices):
         EFECTIVO = 'EFECTIVO', 'Efectivo'
         TARJETA = 'TARJETA', 'Tarjeta'
         TRANSFERENCIA = 'TRANSFERENCIA', 'Transferencia Bancaria'
         QR = 'QR', 'Pago QR'
         CHEQUE = 'CHEQUE', 'Cheque'
+        STRIPE = 'STRIPE', 'Stripe (Tarjeta Online)'
+        PAYPAL = 'PAYPAL', 'PayPal'
+        MERCADOPAGO = 'MERCADOPAGO', 'MercadoPago'
         OTRO = 'OTRO', 'Otro'
         
     class EstadoPago(models.TextChoices):
         PENDIENTE = 'PENDIENTE', 'Pendiente'
+        PROCESANDO = 'PROCESANDO', 'Procesando'
         COMPLETADO = 'COMPLETADO', 'Completado'
         FALLIDO = 'FALLIDO', 'Fallido'
         CANCELADO = 'CANCELADO', 'Cancelado'
+        REEMBOLSADO = 'REEMBOLSADO', 'Reembolsado'
 
+    # Tipo de pago
+    tipo_pago = models.CharField(
+        max_length=20,
+        choices=TipoPago.choices,
+        default=TipoPago.FACTURA,
+        help_text="Tipo de pago realizado"
+    )
+
+    # Relaciones (opcionales según el tipo)
     factura = models.ForeignKey(
         Factura,
         on_delete=models.CASCADE,
         related_name='pagos',
+        null=True,
+        blank=True,
         help_text="Factura a la que se aplica este pago"
+    )
+    cita = models.ForeignKey(
+        'agenda.Cita',
+        on_delete=models.SET_NULL,
+        related_name='pagos',
+        null=True,
+        blank=True,
+        help_text="Cita relacionada con este pago"
+    )
+    plan_tratamiento = models.ForeignKey(
+        'tratamientos.PlanDeTratamiento',
+        on_delete=models.SET_NULL,
+        related_name='pagos',
+        null=True,
+        blank=True,
+        help_text="Plan de tratamiento relacionado"
     )
     paciente = models.ForeignKey(
         PerfilPaciente,
@@ -170,11 +210,43 @@ class Pago(models.Model):
     )
     
     fecha_pago = models.DateTimeField(auto_now_add=True)
+    fecha_completado = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Fecha en que se completó el pago"
+    )
+    
+    # Campos para pagos online (Stripe, PayPal, MercadoPago)
+    transaccion_id = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text="ID de la sesión de checkout (Stripe session_id, PayPal order_id, etc.)"
+    )
+    payment_intent_id = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text="ID de la intención de pago (Stripe payment_intent)"
+    )
+    datos_pago = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Datos completos de la transacción de la pasarela"
+    )
+    
+    # Campo antiguo para compatibilidad
     referencia_transaccion = models.CharField(
         max_length=255, 
         blank=True, 
         null=True, 
         help_text="ID de transacción, Nro. de cheque, etc."
+    )
+    
+    descripcion = models.CharField(
+        max_length=500,
+        blank=True,
+        help_text="Descripción del pago"
     )
     
     notas = models.TextField(
@@ -189,24 +261,37 @@ class Pago(models.Model):
         ordering = ['-fecha_pago']
 
     def __str__(self):
-        return f"Pago de Bs. {self.monto_pagado} para Factura #{self.factura.id if self.factura else 'N/A'}"
+        if self.tipo_pago == self.TipoPago.FACTURA and self.factura:
+            return f"Pago de Bs. {self.monto_pagado} para Factura #{self.factura.id}"
+        elif self.tipo_pago == self.TipoPago.CITA and self.cita:
+            return f"Pago de Bs. {self.monto_pagado} para Cita #{self.cita.id}"
+        elif self.tipo_pago == self.TipoPago.PLAN and self.plan_tratamiento:
+            return f"Pago de Bs. {self.monto_pagado} para Plan #{self.plan_tratamiento.id}"
+        return f"Pago de Bs. {self.monto_pagado} ({self.get_tipo_pago_display()})"
 
     def save(self, *args, **kwargs):
         """
-        Al guardar un pago, actualiza el total pagado en la factura.
+        Al guardar un pago, actualiza el total pagado en la factura si aplica.
         """
         super().save(*args, **kwargs)
         
-        # Solo recalcular si el pago está completado
+        # Solo recalcular si el pago está completado y tiene factura
         if self.estado_pago == self.EstadoPago.COMPLETADO and self.factura:
             self.factura.recalcular_monto_pagado()
-
+    
     def marcar_completado(self):
         """
-        Marca el pago como completado y actualiza la factura.
+        Marca el pago como completado y actualiza la factura o entidad relacionada.
         """
+        from django.utils import timezone
         self.estado_pago = self.EstadoPago.COMPLETADO
+        self.fecha_completado = timezone.now()
         self.save()
+        
+        # Marcar cita como pagada si aplica
+        if self.tipo_pago == self.TipoPago.CITA and self.cita:
+            self.cita.pagada = True
+            self.cita.save()
 
 # Agregar método a Factura para recalcular
 def recalcular_monto_pagado(self):
