@@ -48,6 +48,26 @@ class Clinica(TenantMixin):
         ('CANCELADA', 'Cancelada'),
     ]
     
+    BACKUP_SCHEDULE_CHOICES = [
+        ('disabled', 'Desactivado'),
+        ('daily', 'Diario'),
+        ('every_12h', 'Cada 12 horas'),
+        ('every_6h', 'Cada 6 horas'),
+        ('weekly', 'Semanal'),
+        ('monthly', 'Mensual'),
+        ('scheduled', 'Programado (Fecha específica)'),
+    ]
+    
+    WEEKDAY_CHOICES = [
+        (0, 'Lunes'),
+        (1, 'Martes'),
+        (2, 'Miércoles'),
+        (3, 'Jueves'),
+        (4, 'Viernes'),
+        (5, 'Sábado'),
+        (6, 'Domingo'),
+    ]
+    
     # Información básica
     nombre = models.CharField(max_length=200)
     dominio = models.CharField(max_length=200, unique=True, help_text="Dominio/identificador del tenant")
@@ -78,6 +98,47 @@ class Clinica(TenantMixin):
     
     # Notas administrativas
     notas = models.TextField(blank=True, help_text="Notas internas del administrador")
+    
+    # ============================================================================
+    # CONFIGURACIÓN DE BACKUPS AUTOMÁTICOS
+    # ============================================================================
+    backup_schedule = models.CharField(
+        max_length=20,
+        choices=BACKUP_SCHEDULE_CHOICES,
+        default='disabled',
+        help_text="Frecuencia de los backups automáticos"
+    )
+    
+    backup_time = models.TimeField(
+        null=True,
+        blank=True,
+        help_text="Hora específica para backups (ej: 02:00 AM para diarios/semanales/mensuales)"
+    )
+    
+    backup_weekday = models.IntegerField(
+        choices=WEEKDAY_CHOICES,
+        null=True,
+        blank=True,
+        help_text="Día de la semana para backups semanales (0=Lunes, 6=Domingo)"
+    )
+    
+    backup_day_of_month = models.IntegerField(
+        null=True,
+        blank=True,
+        help_text="Día del mes para backups mensuales (1-28)"
+    )
+    
+    last_backup_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Fecha y hora del último backup automático exitoso"
+    )
+    
+    next_scheduled_backup = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Fecha y hora exacta programada para el próximo backup (solo para 'scheduled')"
+    )
 
     # Si se crea esta instancia desde el admin, auto_create_schema=True
     auto_create_schema = True

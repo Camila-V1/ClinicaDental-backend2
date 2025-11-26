@@ -82,6 +82,7 @@ TENANT_APPS = [
     'facturacion',
     'inventario',
     'reportes',
+    'backups',  # Sistema de backups automáticos
 
     # Third-party for tenant runtime
     'rest_framework',
@@ -320,6 +321,12 @@ TENANT_DOMAIN_MODEL = "tenants.Domain"
 # --- Configuración del Modelo de Autenticación ---
 # Le dice a Django que use nuestro modelo 'Usuario' de la app 'usuarios'
 AUTH_USER_MODEL = 'usuarios.Usuario'
+
+# ============================================================================
+# CONFIGURACIÓN DE SUPABASE (BACKUPS)
+# ============================================================================
+SUPABASE_URL = config('SUPABASE_URL', default='')
+SUPABASE_KEY = config('SUPABASE_KEY', default='')
 
 # --- Configuración de Logging ---
 # Para poder ver errores detallados en producción (Render)
