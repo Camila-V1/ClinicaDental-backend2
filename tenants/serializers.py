@@ -62,7 +62,7 @@ class SolicitudRegistroSerializer(serializers.ModelSerializer):
         """Validar que el email no esté ya registrado."""
         if SolicitudRegistro.objects.filter(
             email=value,
-            estado__in=['PENDIENTE', 'APROBADA', 'PROCESADA']
+            estado__in=['PENDIENTE_PAGO', 'PAGO_PROCESANDO', 'PAGO_EXITOSO', 'COMPLETADA']
         ).exists():
             raise serializers.ValidationError(
                 "Ya existe una solicitud activa con este email."

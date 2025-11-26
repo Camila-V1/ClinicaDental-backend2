@@ -298,8 +298,8 @@ class SolicitudRegistroViewSet(viewsets.ModelViewSet):
 
 🌐 URLS DE ACCESO
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  Panel Admin:      {settings.ALLOWED_HOSTS[0] if settings.ALLOWED_HOSTS else 'localhost'}/admin/
-  API:              {settings.ALLOWED_HOSTS[0] if settings.ALLOWED_HOSTS else 'localhost'}/api/
+  Panel Admin:      https://clinica-dental-backend.onrender.com/admin/
+  API:              https://clinica-dental-backend.onrender.com/api/
 
 💳 INFORMACIÓN DEL PAGO
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -314,11 +314,11 @@ class SolicitudRegistroViewSet(viewsets.ModelViewSet):
   2. Este archivo contiene información sensible - guárdalo en un lugar seguro
   3. No compartas estas credenciales con nadie
   4. Puedes descargar este archivo solo hasta: {solicitud.token_expira.strftime('%d/%m/%Y %H:%M') if solicitud.token_expira else 'N/A'}
-  5. Si tienes problemas, contacta a soporte: {settings.DEFAULT_FROM_EMAIL if hasattr(settings, 'DEFAULT_FROM_EMAIL') else 'soporte@clinica.com'}
+  5. Si tienes problemas, contacta a soporte: {settings.DEFAULT_FROM_EMAIL}
 
 📞 SOPORTE TÉCNICO
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  Email: {settings.DEFAULT_FROM_EMAIL if hasattr(settings, 'DEFAULT_FROM_EMAIL') else 'soporte@clinica.com'}
+  Email: {settings.DEFAULT_FROM_EMAIL}
   
 ¡Bienvenido a Clínica Dental System!
 
@@ -418,7 +418,7 @@ ID Solicitud: {solicitud.id}
     
     def _enviar_email_credenciales(self, solicitud):
         """Enviar email con link de descarga de credenciales."""
-        base_url = settings.ALLOWED_HOSTS[0] if settings.ALLOWED_HOSTS else 'localhost'
+        base_url = 'clinica-dental-backend.onrender.com'
         download_url = f"https://{base_url}/api/tenants/solicitudes/{solicitud.id}/descargar_credenciales/?token={solicitud.token_descarga}"
         
         asunto = f"¡Tu clínica {solicitud.nombre_clinica} está lista!"
@@ -453,7 +453,7 @@ El equipo de Clínica Dental
         send_mail(
             asunto,
             mensaje,
-            settings.DEFAULT_FROM_EMAIL if hasattr(settings, 'DEFAULT_FROM_EMAIL') else 'noreply@clinica.com',
+            settings.DEFAULT_FROM_EMAIL,
             [solicitud.email],
             fail_silently=True
         )
@@ -480,7 +480,7 @@ def info_registro(request):
         ],
         'planes_disponibles': PlanSuscripcionSerializer(planes, many=True).data,
         'contacto': {
-            'email': settings.DEFAULT_FROM_EMAIL if hasattr(settings, 'DEFAULT_FROM_EMAIL') else 'contacto@clinica.com',
+            'email': settings.DEFAULT_FROM_EMAIL,
             'mensaje': 'Para más información, contáctanos'
         }
     })

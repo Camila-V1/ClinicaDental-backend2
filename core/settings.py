@@ -224,6 +224,11 @@ if not DEBUG:
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+# Configuración de email
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Desarrollo: imprime en consola
+DEFAULT_FROM_EMAIL = 'noreply@clinica-dental.com'
+SERVER_EMAIL = 'admin@clinica-dental.com'
+
 # --- Configuración de CORS ---
 
 # Orígenes (servidores de frontend) que tienen permiso para hacer peticiones
