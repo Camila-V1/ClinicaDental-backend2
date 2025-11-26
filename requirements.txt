@@ -32,7 +32,7 @@ django-storages==1.14.6
 supabase==2.23.0
 
 # Pasarelas de pago
-stripe==11.7.0
+stripe==10.13.0
 paypalrestsdk==1.13.1
 mercadopago==2.2.3
 
