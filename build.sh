@@ -132,40 +132,15 @@ python manage.py migrate_schemas --schema=clinica_demo
 echo ""
 echo "🌱 Poblando datos iniciales del sistema..."
 
-# Poblar planes de suscripción (NUEVO - Sistema Multi-Tenant)
-echo "   → Creando planes de suscripción..."
-python poblar_planes_suscripcion.py
-
-# Ejecutar el script de población completa
+# Ejecutar el script de población completa (incluye todo lo necesario)
+echo "   → Poblando sistema completo..."
 python poblar_sistema_completo.py
-
-# Crear usuarios con credenciales actualizadas
-echo "   → Creando/actualizando usuarios de prueba..."
-python crear_usuarios_prueba.py
-
-# Poblar datos completos de María García
-echo "   → Poblando datos de María García..."
-python poblar_maria_garcia.py
-
-# REPARACIÓN DE EMERGENCIA: Asegurar que todos los usuarios tengan perfiles
-echo "   → Verificando y reparando perfiles de usuarios..."
-python manage.py fix_perfiles
 
 echo ""
 echo "✅ Datos iniciales creados correctamente:"
 echo "   - Tenant: clinica-demo"
-echo "   - Admin: admin@clinica-demo.com / admin123"
-echo "   - Odontólogo: odontologo@clinica-demo.com / odontologo123"
-echo "   - Paciente: paciente@clinica-demo.com / paciente123"
-echo "   📱 USUARIOS FLUTTER:"
-echo "      - paciente1@test.com / password123"
-echo "      - maria.garcia@email.com / password123"
-echo "      - dr.martinez@clinica.com / password123"
-echo "   - 5 Pacientes adicionales con datos completos"
-echo "   - Servicios y tratamientos"
-echo "   - Inventario de insumos"
-echo "   - Citas, episodios, odontogramas"
-echo "   - Planes de tratamiento y facturación"
+echo "   - Usuarios, servicios, tratamientos, inventario"
+echo "   - Citas, episodios, planes de tratamiento"
 
 # ============================================================================
 # 5. VERIFICAR CONFIGURACIÓN
