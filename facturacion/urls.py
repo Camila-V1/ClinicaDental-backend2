@@ -2,11 +2,12 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import FacturaViewSet, PagoViewSet
+from .views_pagos import PagoViewSet as PagoStripeViewSet
 
 # Configurar router para API REST
 router = DefaultRouter()
 router.register(r'facturas', FacturaViewSet, basename='facturas')
-router.register(r'pagos', PagoViewSet, basename='pagos')
+router.register(r'pagos', PagoStripeViewSet, basename='pagos')  # Actualizado para usar views_pagos
 
 urlpatterns = [
     # API REST endpoints (ya incluido en urls_tenant como /api/facturacion/)
@@ -24,46 +25,33 @@ urlpatterns = [
     path('facturas/reporte-financiero/', 
          FacturaViewSet.as_view({'get': 'reporte_financiero'}), 
          name='factura-reporte-financiero'),
-    
-    path('pagos/<int:pk>/anular/', 
-         PagoViewSet.as_view({'post': 'anular'}), 
-         name='pago-anular'),
-    
-    path('pagos/por-factura/', 
-         PagoViewSet.as_view({'get': 'por_factura'}), 
-         name='pagos-por-factura'),
 ]
 
 """
 Endpoints disponibles:
 
 FACTURAS:
-- GET /api/facturas/                    - Listar facturas (filtradas por usuario)
-- POST /api/facturas/                   - Crear nueva factura desde presupuesto
-- GET /api/facturas/{id}/               - Detalle de factura específica  
-- PUT /api/facturas/{id}/               - Actualizar factura
-- DELETE /api/facturas/{id}/            - Eliminar factura
-- POST /api/facturas/{id}/marcar-pagada/ - Marcar como completamente pagada
-- POST /api/facturas/{id}/cancelar/     - Cancelar factura (solo admin)
-- GET /api/facturas/reporte-financiero/ - Reporte financiero (admin/doctor)
+- GET /api/facturacion/facturas/                    - Listar facturas
+- POST /api/facturacion/facturas/                   - Crear factura
+- GET /api/facturacion/facturas/{id}/               - Detalle de factura  
+- PUT /api/facturacion/facturas/{id}/               - Actualizar factura
+- DELETE /api/facturacion/facturas/{id}/            - Eliminar factura
+- POST /api/facturacion/facturas/{id}/marcar-pagada/ - Marcar como pagada
+- POST /api/facturacion/facturas/{id}/cancelar/     - Cancelar factura
+- GET /api/facturacion/facturas/reporte-financiero/ - Reporte financiero
 
-PAGOS:
-- GET /api/pagos/                       - Listar pagos (filtrados por usuario)
-- POST /api/pagos/                      - Registrar nuevo pago
-- GET /api/pagos/{id}/                  - Detalle de pago específico
-- PUT /api/pagos/{id}/                  - Actualizar pago
-- DELETE /api/pagos/{id}/               - Eliminar pago
-- POST /api/pagos/{id}/anular/          - Anular pago (solo admin)
-- GET /api/pagos/por-factura/?factura_id={id} - Pagos de una factura específica
+PAGOS CON STRIPE:
+- POST /api/facturacion/pagos/crear-pago-cita/      - Crear pago para cita
+- POST /api/facturacion/pagos/crear-pago-tratamiento/ - Crear pago para tratamiento
+- POST /api/facturacion/pagos/crear-pago-plan/      - Crear pago para plan
+- POST /api/facturacion/pagos/{id}/confirmar/       - Confirmar pago (webhook)
+- GET /api/facturacion/pagos/{id}/estado/           - Verificar estado de pago
+- GET /api/facturacion/pagos/                       - Listar historial de pagos
 
-PERMISOS POR ROL:
-- Admin: Acceso completo a todas las facturas y pagos del tenant
-- Doctor: Ve facturas/pagos de sus pacientes solamente
-- Paciente: Solo ve sus propias facturas y pagos
-
-CASOS DE USO IMPLEMENTADOS:
-- CU30: Generar factura desde presupuesto aceptado
-- CU31: Registrar pagos parciales o totales
-- CU32: Consultar estado de cuenta del paciente
+CASOS DE USO:
+- CU30: Generar factura desde presupuesto
+- CU31: Registrar pagos (efectivo, tarjeta, online)
+- CU32: Consultar estado de cuenta
 - CU33: Generar reportes financieros
+- NUEVO: Pagos online con Stripe para citas y tratamientos
 """

@@ -10,11 +10,11 @@ from decimal import Decimal
 class PaymentHandler:
     """Clase base para manejadores de pago."""
     
-    def create_payment(self, solicitud, return_url, cancel_url):
+    def create_payment(self, solicitud_o_pago, return_url, cancel_url):
         """Crea un pago en la pasarela. Retorna dict con payment_url y payment_id."""
         raise NotImplementedError
     
-    def verify_payment(self, payment_id, transaction_data):
+    def verify_payment(self, payment_id, transaction_data=None):
         """Verifica un pago. Retorna (success: bool, data: dict)."""
         raise NotImplementedError
 
@@ -22,10 +22,33 @@ class PaymentHandler:
 class StripePaymentHandler(PaymentHandler):
     """Handler para pagos con Stripe."""
     
-    def create_payment(self, solicitud, return_url, cancel_url):
+    def create_payment(self, solicitud_o_pago, return_url, cancel_url):
         """Crea una sesión de Checkout de Stripe."""
         import stripe
         stripe.api_key = settings.STRIPE_SECRET_KEY
+        
+        # Determinar si es solicitud de registro o pago regular
+        if hasattr(solicitud_o_pago, 'plan_solicitado'):
+            # Es una SolicitudRegistro
+            producto_nombre = f'{solicitud_o_pago.plan_solicitado.nombre} - {solicitud_o_pago.nombre_clinica}'
+            descripcion = solicitud_o_pago.plan_solicitado.descripcion
+            precio = solicitud_o_pago.plan_solicitado.precio
+            referencia_id = str(solicitud_o_pago.id)
+            metadata = {
+                'solicitud_id': str(solicitud_o_pago.id),
+                'clinica_nombre': solicitud_o_pago.nombre_clinica,
+                'plan': solicitud_o_pago.plan_solicitado.nombre,
+            }
+        else:
+            # Es un Pago (cita/tratamiento/plan)
+            producto_nombre = solicitud_o_pago.descripcion
+            descripcion = f"Pago #{solicitud_o_pago.id}"
+            precio = solicitud_o_pago.monto_pagado
+            referencia_id = str(solicitud_o_pago.id)
+            metadata = {
+                'pago_id': str(solicitud_o_pago.id),
+                'descripcion': solicitud_o_pago.descripcion,
+            }
         
         try:
             session = stripe.checkout.Session.create(
@@ -34,22 +57,18 @@ class StripePaymentHandler(PaymentHandler):
                     'price_data': {
                         'currency': 'usd',
                         'product_data': {
-                            'name': f'{solicitud.plan_solicitado.nombre} - {solicitud.nombre_clinica}',
-                            'description': solicitud.plan_solicitado.descripcion,
+                            'name': producto_nombre,
+                            'description': descripcion,
                         },
-                        'unit_amount': int(solicitud.plan_solicitado.precio * 100),  # Centavos
+                        'unit_amount': int(precio * 100),  # Centavos
                     },
                     'quantity': 1,
                 }],
                 mode='payment',
                 success_url=return_url + '?session_id={CHECKOUT_SESSION_ID}',
                 cancel_url=cancel_url,
-                client_reference_id=str(solicitud.id),
-                metadata={
-                    'solicitud_id': str(solicitud.id),
-                    'clinica_nombre': solicitud.nombre_clinica,
-                    'plan': solicitud.plan_solicitado.nombre,
-                }
+                client_reference_id=referencia_id,
+                metadata=metadata
             )
             
             return {
