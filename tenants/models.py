@@ -222,10 +222,20 @@ class SolicitudRegistro(models.Model):
     """
     
     ESTADO_CHOICES = [
-        ('PENDIENTE', 'Pendiente de Revisión'),
-        ('APROBADA', 'Aprobada'),
-        ('RECHAZADA', 'Rechazada'),
-        ('PROCESADA', 'Procesada (Clínica Creada)'),
+        ('PENDIENTE_PAGO', 'Pendiente de Pago'),
+        ('PAGO_PROCESANDO', 'Procesando Pago'),
+        ('PAGO_EXITOSO', 'Pago Exitoso - Creando Clínica'),
+        ('COMPLETADA', 'Completada (Clínica Creada)'),
+        ('PAGO_FALLIDO', 'Pago Fallido'),
+        ('CANCELADA', 'Cancelada'),
+    ]
+    
+    METODO_PAGO_CHOICES = [
+        ('STRIPE', 'Stripe'),
+        ('PAYPAL', 'PayPal'),
+        ('MERCADOPAGO', 'MercadoPago'),
+        ('TRANSFERENCIA', 'Transferencia Bancaria'),
+        ('OTRO', 'Otro'),
     ]
     
     # Información de la clínica
@@ -261,10 +271,65 @@ class SolicitudRegistro(models.Model):
     )
     
     # Estado de la solicitud
-    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='PENDIENTE')
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='PENDIENTE_PAGO')
     motivo_rechazo = models.TextField(blank=True)
     
-    # Relación con la clínica creada (si fue aprobada)
+    # ============================================================================
+    # INFORMACIÓN DE PAGO AUTOMÁTICO
+    # ============================================================================
+    metodo_pago = models.CharField(
+        max_length=20,
+        choices=METODO_PAGO_CHOICES,
+        blank=True,
+        help_text="Método de pago utilizado"
+    )
+    monto_pagado = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Monto pagado en USD"
+    )
+    transaccion_id = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="ID de transacción de la pasarela de pago"
+    )
+    pago_exitoso = models.BooleanField(default=False)
+    fecha_pago = models.DateTimeField(null=True, blank=True)
+    datos_pago = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Datos adicionales de la transacción (JSON)"
+    )
+    
+    # ============================================================================
+    # CREDENCIALES GENERADAS AUTOMÁTICAMENTE
+    # ============================================================================
+    usuario_admin_generado = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Email/usuario del administrador generado automáticamente"
+    )
+    password_admin_generado = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Contraseña temporal generada (se limpia después de la entrega)"
+    )
+    credenciales_descargadas = models.BooleanField(
+        default=False,
+        help_text="Indica si el cliente ya descargó el archivo de credenciales"
+    )
+    fecha_descarga_credenciales = models.DateTimeField(null=True, blank=True)
+    token_descarga = models.CharField(
+        max_length=64,
+        blank=True,
+        unique=True,
+        help_text="Token único para descargar credenciales (válido 24h)"
+    )
+    token_expira = models.DateTimeField(null=True, blank=True)
+    
+    # Relación con la clínica creada (si fue completada)
     clinica_creada = models.ForeignKey(
         Clinica,
         on_delete=models.SET_NULL,
