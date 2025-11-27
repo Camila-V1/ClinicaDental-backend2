@@ -6,8 +6,6 @@ from .views import (
     DeleteBackupView
 )
 
-app_name = 'backups'
-
 urlpatterns = [
     path('create/', CreateBackupView.as_view(), name='create_backup'),
     path('history/', BackupHistoryListView.as_view(), name='backup_history'),
