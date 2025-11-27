@@ -107,7 +107,7 @@ def limpiar_tenant(schema_name='clinica_demo'):
                     print(f"  ✓ Items de Plan de Tratamiento: {cantidad} registros eliminados")
                 
                 # 4. Planes de Tratamiento (depende de HistorialClinico)
-                cantidad = PlanTratamiento.objects.all().delete()[0]
+                cantidad = PlanDeTratamiento.objects.all().delete()[0]
                 if cantidad > 0:
                     print(f"  ✓ Planes de Tratamiento: {cantidad} registros eliminados")
                 
