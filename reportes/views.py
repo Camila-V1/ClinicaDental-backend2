@@ -411,12 +411,12 @@ class ReportesViewSet(viewsets.ViewSet):
         # ====== ESTADÍSTICAS DE TRATAMIENTOS ======
         # Planes completados
         tratamientos_completados = PlanDeTratamiento.objects.filter(
-            estado='COMPLETADO'
+            estado='completado'
         ).count()
         
-        # Planes activos (EN_PROGRESO, PROPUESTO, APROBADO)
+        # Planes activos (en_progreso, propuesto, aprobado)
         planes_activos = PlanDeTratamiento.objects.filter(
-            estado__in=['EN_PROGRESO', 'PROPUESTO', 'APROBADO']
+            estado__in=['en_progreso', 'propuesto', 'aprobado']
         ).count()
         
         # Total de procedimientos realizados
@@ -492,7 +492,7 @@ class ReportesViewSet(viewsets.ViewSet):
             'citas_canceladas': citas_canceladas,
             
             # Tratamientos
-            'tratamientos_completados': tratamientos_completados,
+            'planes_completados': tratamientos_completados,
             'planes_activos': planes_activos,
             'total_procedimientos': total_procedimientos,
             
