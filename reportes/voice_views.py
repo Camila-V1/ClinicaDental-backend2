@@ -170,12 +170,12 @@ class VoiceReportQueryView(APIView):
         
         return [{
             'id': factura.id,
-            'numero': factura.numero_factura,
+            'numero': f"FAC-{factura.id:06d}",
             'fecha': factura.fecha_emision.strftime('%d/%m/%Y'),
-            'paciente': factura.paciente.full_name if factura.paciente else 'N/A',
+            'paciente': factura.paciente.usuario.full_name if factura.paciente else 'N/A',
             'monto_total': float(factura.monto_total),
             'monto_pagado': float(factura.monto_pagado),
-            'saldo': float(factura.saldo),
+            'saldo': float(factura.saldo_pendiente),
             'estado': factura.get_estado_display()
         } for factura in facturas[:100]]
     
@@ -197,11 +197,11 @@ class VoiceReportQueryView(APIView):
         return [{
             'id': plan.id,
             'fecha': plan.fecha_creacion.strftime('%d/%m/%Y'),
-            'paciente': plan.paciente.full_name if plan.paciente else 'N/A',
-            'odontologo': plan.odontologo.full_name if plan.odontologo else 'N/A',
+            'paciente': plan.paciente.usuario.full_name if plan.paciente else 'N/A',
+            'odontologo': plan.odontologo.usuario.full_name if plan.odontologo else 'N/A',
             'titulo': plan.titulo,
             'estado': plan.get_estado_display(),
-            'total': float(plan.total)
+            'total': float(plan.precio_total_plan)
         } for plan in planes[:100]]
     
     def _obtener_pacientes(self, fecha_inicio, fecha_fin, filtros):
@@ -243,8 +243,8 @@ class VoiceReportQueryView(APIView):
             'fecha': pago.fecha_pago.strftime('%d/%m/%Y %H:%M'),
             'monto': float(pago.monto),
             'metodo_pago': pago.get_metodo_pago_display(),
-            'factura': pago.factura.numero_factura if pago.factura else 'N/A',
-            'paciente': pago.factura.paciente.full_name if pago.factura and pago.factura.paciente else 'N/A'
+            'factura': f"FAC-{pago.factura.id:06d}" if pago.factura else 'N/A',
+            'paciente': pago.factura.paciente.usuario.full_name if pago.factura and pago.factura.paciente else 'N/A'
         } for pago in pagos[:100]]
     
     def _generar_resumen(self, interpretacion, datos):
