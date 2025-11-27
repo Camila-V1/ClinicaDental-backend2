@@ -94,8 +94,9 @@ import 'package:http/http.dart' as http;
 import 'package:clinica_dental_app/config/constants.dart';
 import 'package:clinica_dental_app/models/cita.dart';
 
-class CitasService {
-  final String baseUrl = AppConstants.baseUrlDev;
+class CitaService {
+  // ✅ IMPORTANTE: Usar URL de producción (Render), NO localhost
+  final String baseUrl = 'https://clinica-dental-backend.onrender.com';
 
   // Obtener mis citas
   // ✅ Backend filtra automáticamente por usuario autenticado

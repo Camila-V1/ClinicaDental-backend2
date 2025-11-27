@@ -755,7 +755,8 @@ import 'package:http/http.dart' as http;
 import 'package:clinica_dental_app/config/constants.dart';
 
 class UsuarioService {
-  final String baseUrl = AppConstants.baseUrlDev;
+  // ✅ IMPORTANTE: Usar URL de producción (Render), NO localhost
+  final String baseUrl = 'https://clinica-dental-backend.onrender.com';
 
   Future<void> actualizarPerfil({
     required String token,

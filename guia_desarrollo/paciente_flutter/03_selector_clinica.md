@@ -73,7 +73,8 @@ import 'package:clinica_dental_app/config/constants.dart';
 import 'package:clinica_dental_app/models/clinica.dart';
 
 class ClinicaService {
-  final String baseUrl = AppConstants.baseUrlDev;
+  // ✅ IMPORTANTE: Usar URL de producción (Render), NO localhost
+  final String baseUrl = 'https://clinica-dental-backend.onrender.com';
 
   // Obtener lista de clínicas disponibles
   Future<List<Clinica>> getClinicas() async {

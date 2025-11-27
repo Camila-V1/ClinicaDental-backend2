@@ -29,6 +29,7 @@ python manage.py collectstatic --no-input --clear
 # ============================================================================
 # 3. EJECUTAR MIGRACIONES
 # ============================================================================
+python manage.py migrate
 echo ""
 echo "🔄 Ejecutando migraciones de base de datos..."
 echo "   → Migraciones compartidas (public schema)..."
