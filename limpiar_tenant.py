@@ -40,7 +40,7 @@ def limpiar_tenant(schema_name='clinica_demo'):
             # Importar modelos
             from usuarios.models import Usuario, PerfilOdontologo, PerfilPaciente, Especialidad
             from agenda.models import Cita
-            from historial_clinico.models import HistorialClinico, EpisodioAtencion, Odontograma
+            from historial_clinico.models import HistorialClinico, EpisodioAtencion, Odontograma, PlanTratamiento, ItemPlanTratamiento
             from tratamientos.models import Servicio, CategoriaServicio
             from inventario.models import Insumo, CategoriaInsumo
             from facturacion.models import Pago, Factura
@@ -56,6 +56,8 @@ def limpiar_tenant(schema_name='clinica_demo'):
                 'Historiales Clínicos': HistorialClinico.objects.count(),
                 'Episodios': EpisodioAtencion.objects.count(),
                 'Odontogramas': Odontograma.objects.count(),
+                'Planes de Tratamiento': PlanTratamiento.objects.count(),
+                'Items Plan Tratamiento': ItemPlanTratamiento.objects.count(),
                 'Servicios': Servicio.objects.count(),
                 'Categorías Servicio': CategoriaServicio.objects.count(),
                 'Insumos': Insumo.objects.count(),
@@ -99,27 +101,37 @@ def limpiar_tenant(schema_name='clinica_demo'):
                 if cantidad > 0:
                     print(f"  ✓ Facturas: {cantidad} registros eliminados")
                 
-                # 3. Odontogramas (depende de HistorialClinico)
+                # 3. Items de Planes de Tratamiento (depende de PlanTratamiento y Servicio)
+                cantidad = ItemPlanTratamiento.objects.all().delete()[0]
+                if cantidad > 0:
+                    print(f"  ✓ Items de Plan de Tratamiento: {cantidad} registros eliminados")
+                
+                # 4. Planes de Tratamiento (depende de HistorialClinico)
+                cantidad = PlanTratamiento.objects.all().delete()[0]
+                if cantidad > 0:
+                    print(f"  ✓ Planes de Tratamiento: {cantidad} registros eliminados")
+                
+                # 5. Odontogramas (depende de HistorialClinico)
                 cantidad = Odontograma.objects.all().delete()[0]
                 if cantidad > 0:
                     print(f"  ✓ Odontogramas: {cantidad} registros eliminados")
                 
-                # 4. Episodios (depende de HistorialClinico)
+                # 6. Episodios (depende de HistorialClinico)
                 cantidad = EpisodioAtencion.objects.all().delete()[0]
                 if cantidad > 0:
                     print(f"  ✓ Episodios de Atención: {cantidad} registros eliminados")
                 
-                # 5. Historiales Clínicos (depende de PerfilPaciente)
+                # 7. Historiales Clínicos (depende de PerfilPaciente)
                 cantidad = HistorialClinico.objects.all().delete()[0]
                 if cantidad > 0:
                     print(f"  ✓ Historiales Clínicos: {cantidad} registros eliminados")
                 
-                # 6. Citas (depende de PerfilOdontologo y PerfilPaciente)
+                # 8. Citas (depende de PerfilOdontologo y PerfilPaciente)
                 cantidad = Cita.objects.all().delete()[0]
                 if cantidad > 0:
                     print(f"  ✓ Citas: {cantidad} registros eliminados")
                 
-                # 7. Servicios (depende de CategoriaServicio)
+                # 9. Servicios (depende de CategoriaServicio)
                 cantidad = Servicio.objects.all().delete()[0]
                 if cantidad > 0:
                     print(f"  ✓ Servicios: {cantidad} registros eliminados")
@@ -128,7 +140,7 @@ def limpiar_tenant(schema_name='clinica_demo'):
                 if cantidad > 0:
                     print(f"  ✓ Categorías de Servicio: {cantidad} registros eliminados")
                 
-                # 8. Insumos (depende de CategoriaInsumo)
+                # 10. Insumos (depende de CategoriaInsumo)
                 cantidad = Insumo.objects.all().delete()[0]
                 if cantidad > 0:
                     print(f"  ✓ Insumos: {cantidad} registros eliminados")
@@ -137,7 +149,7 @@ def limpiar_tenant(schema_name='clinica_demo'):
                 if cantidad > 0:
                     print(f"  ✓ Categorías de Insumo: {cantidad} registros eliminados")
                 
-                # 9. Perfiles (dependen de Usuario)
+                # 11. Perfiles (dependen de Usuario)
                 cantidad = PerfilOdontologo.objects.all().delete()[0]
                 if cantidad > 0:
                     print(f"  ✓ Perfiles de Odontólogo: {cantidad} registros eliminados")
@@ -146,12 +158,12 @@ def limpiar_tenant(schema_name='clinica_demo'):
                 if cantidad > 0:
                     print(f"  ✓ Perfiles de Paciente: {cantidad} registros eliminados")
                 
-                # 10. Especialidades
+                # 12. Especialidades
                 cantidad = Especialidad.objects.all().delete()[0]
                 if cantidad > 0:
                     print(f"  ✓ Especialidades: {cantidad} registros eliminados")
                 
-                # 11. Usuarios (base, debe ser último)
+                # 13. Usuarios (base, debe ser último)
                 cantidad = Usuario.objects.all().delete()[0]
                 if cantidad > 0:
                     print(f"  ✓ Usuarios: {cantidad} registros eliminados")
