@@ -1,5 +1,6 @@
 # reportes/views.py
 
+import logging
 from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
@@ -8,6 +9,9 @@ from django.db.models import Count, Sum, Avg, Q, F, Max, Min
 from django.utils import timezone
 from datetime import timedelta, date
 from decimal import Decimal
+
+# Configurar logger
+logger = logging.getLogger(__name__)
 
 # Importamos los modelos que vamos a consultar
 from agenda.models import Cita
