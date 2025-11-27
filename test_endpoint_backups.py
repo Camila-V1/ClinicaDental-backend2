@@ -52,6 +52,10 @@ with tenant_context(tenant):
         view = BackupHistoryListView.as_view()
         response = view(request)
         
+        # Renderizar la respuesta (necesario para ListAPIView)
+        if hasattr(response, 'render'):
+            response.render()
+        
         print()
         print(f"📊 Status Code: {response.status_code}")
         
@@ -59,14 +63,29 @@ with tenant_context(tenant):
             print("✅ ÉXITO: El endpoint responde correctamente")
             
             if hasattr(response, 'data'):
-                print(f"📦 Datos devueltos: {response.data}")
-                print(f"📈 Cantidad de backups: {len(response.data)}")
+                data = response.data
+                print(f"📦 Datos devueltos: {data}")
+                
+                if isinstance(data, list):
+                    print(f"📈 Cantidad de backups: {len(data)}")
+                    
+                    if len(data) == 0:
+                        print("ℹ️  No hay backups registrados (esperado en sistema nuevo)")
+                    else:
+                        print("📄 Primer backup:")
+                        print(f"   - ID: {data[0].get('id')}")
+                        print(f"   - Nombre: {data[0].get('file_name')}")
+                        print(f"   - Tamaño: {data[0].get('file_size_mb')} MB")
+                else:
+                    print(f"⚠️  Formato de respuesta inesperado: {type(data)}")
             else:
-                print("⚠️  La respuesta no tiene 'data' (posible issue con el renderer)")
+                print("⚠️  La respuesta no tiene 'data'")
         else:
             print(f"❌ ERROR: Status code inesperado: {response.status_code}")
             if hasattr(response, 'data'):
                 print(f"   Detalles: {response.data}")
+            if hasattr(response, 'content'):
+                print(f"   Content: {response.content.decode('utf-8')}")
                 
     except Exception as e:
         print(f"❌ ERROR al ejecutar la vista: {e}")
