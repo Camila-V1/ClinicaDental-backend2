@@ -49,7 +49,6 @@ def poblar_facturacion(pacientes, citas_atendidas):
                 razon_social=cita.paciente.usuario.full_name,
                 monto_total=monto,
                 monto_pagado=monto,
-                saldo_pendiente=Decimal('0.00'),
                 estado='PAGADA',
                 fecha_emision=cita.fecha_hora.date()
             )
@@ -105,7 +104,6 @@ def poblar_facturacion(pacientes, citas_atendidas):
                 razon_social=cita.paciente.usuario.full_name,
                 monto_total=monto,
                 monto_pagado=Decimal('0.00'),
-                saldo_pendiente=monto,
                 estado='PENDIENTE',
                 fecha_emision=timezone.now().date()
             )
