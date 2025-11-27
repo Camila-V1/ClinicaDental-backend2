@@ -53,15 +53,10 @@ class CreateBackupView(APIView):
             )
         
         try:
-            # Intentar crear backup con pg_dump
-            try:
-                backup_data_bytes, file_extension = self._create_pg_dump_bytes(schema_name)
-                backup_format = 'sql'
-                logger.info(f"Backup SQL creado para {schema_name}")
-            except Exception as pg_error:
-                logger.warning(f"pg_dump falló, usando dumpdata: {pg_error}")
-                backup_data_bytes, file_extension = self._create_dumpdata_bytes()
-                backup_format = 'json'
+            # Usar dumpdata (JSON) directamente - más compatible con Render
+            backup_data_bytes, file_extension = self._create_dumpdata_bytes()
+            backup_format = 'json'
+            logger.info(f"Backup JSON creado para {schema_name}")
             
             # Generar nombre de archivo
             timestamp = datetime.now().strftime('%Y-%m-%d-%H%M%S')
