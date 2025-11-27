@@ -1024,6 +1024,8 @@ def crear_facturas_pagos(citas_completadas):
     )
     
     Pago.objects.create(
+        tipo_pago='CITA',
+        cita=citas_completadas[0],
         factura=factura1,
         paciente=paciente1_perfil,
         monto_pagado=Decimal('50.00'),
@@ -1047,6 +1049,8 @@ def crear_facturas_pagos(citas_completadas):
     )
     
     Pago.objects.create(
+        tipo_pago='CITA',
+        cita=citas_completadas[1],
         factura=factura2,
         paciente=paciente2_perfil,
         monto_pagado=Decimal('80.00'),
@@ -1071,6 +1075,8 @@ def crear_facturas_pagos(citas_completadas):
     
     # Pago parcial
     Pago.objects.create(
+        tipo_pago='CITA',
+        cita=citas_completadas[2],
         factura=factura3,
         paciente=paciente3_perfil,
         monto_pagado=Decimal('150.00'),
