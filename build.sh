@@ -127,20 +127,12 @@ echo "   → Migraciones del tenant (clinica_demo schema)..."
 python manage.py migrate_schemas --schema=clinica_demo
 
 # ============================================================================
-# 4. POBLAR DATOS INICIALES
+# 4. POBLAR DATOS INICIALES (COMENTADO - Ejecutar manualmente cuando necesites)
 # ============================================================================
+# Para poblar datos ejecuta manualmente:
+# python scripts_poblacion/poblar_todo.py
 echo ""
-echo "🌱 Poblando datos iniciales del sistema..."
-
-# Ejecutar el script de población completa (incluye todo lo necesario)
-echo "   → Poblando sistema completo..."
-python poblar_sistema_completo.py
-
-echo ""
-echo "✅ Datos iniciales creados correctamente:"
-echo "   - Tenant: clinica-demo"
-echo "   - Usuarios, servicios, tratamientos, inventario"
-echo "   - Citas, episodios, planes de tratamiento"
+echo "📝 Para poblar datos ejecuta: python scripts_poblacion/poblar_todo.py"
 
 # ============================================================================
 # 5. VERIFICAR CONFIGURACIÓN

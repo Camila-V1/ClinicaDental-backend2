@@ -2,7 +2,7 @@
 Módulo para crear y verificar tenants
 """
 import os
-from tenants.models import Clinica, Domain, Plan
+from tenants.models import Clinica, Domain, PlanSuscripcion
 
 
 def crear_o_verificar_tenant(schema_name, nombre, dominio_principal):
@@ -42,12 +42,12 @@ def crear_o_verificar_tenant(schema_name, nombre, dominio_principal):
         return tenant
     
     # Crear plan si no existe
-    plan, _ = Plan.objects.get_or_create(
-        nombre='Plan Gratuito',
+    plan, _ = PlanSuscripcion.objects.get_or_create(
+        tipo='GRATUITO',
         defaults={
+            'nombre': 'Plan Gratuito',
             'precio': 0.00,
-            'tipo': 'GRATUITO',
-            'descripcion': 'Plan de demostración',
+            'duracion_dias': 365,
             'max_usuarios': 10,
             'max_pacientes': 100,
         }
