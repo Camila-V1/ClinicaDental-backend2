@@ -129,8 +129,20 @@ class ReportesViewSet(viewsets.ViewSet):
         
         Respuesta: Lista de objetos con etiqueta y valor
         
-        VERSIÓN: 3.0 - Con KPIs adicionales y manejo robusto de errores
+        VERSIÓN: 3.1 - Con KPIs adicionales y manejo robusto de errores
         """
+        # Inicializar variables con valores por defecto
+        total_pacientes = 0
+        citas_hoy = 0
+        ingresos_mes = Decimal('0.00')
+        saldo_pendiente = Decimal('0.00')
+        tratamientos_activos = 0
+        planes_completados = 0
+        promedio_factura = Decimal('0.00')
+        facturas_vencidas = 0
+        total_procedimientos = 0
+        pacientes_nuevos_mes = 0
+        
         try:
             hoy = timezone.now().date()
             mes_actual = hoy.month
@@ -185,10 +197,12 @@ class ReportesViewSet(viewsets.ViewSet):
             num_facturas = facturas_mes.count()
             promedio_factura = (total_facturado / num_facturas) if num_facturas > 0 else Decimal('0.00')
             
-            # 8. Facturas Vencidas (pendientes con fecha vencida)
+            # 8. Facturas Vencidas (pendientes del mes pasado o anteriores)
+            # Como no hay fecha_vencimiento, consideramos facturas PENDIENTES de meses anteriores
+            inicio_mes = timezone.datetime(anio_actual, mes_actual, 1).date()
             facturas_vencidas = Factura.objects.filter(
                 estado='PENDIENTE',
-                fecha_vencimiento__lt=hoy
+                fecha_emision__date__lt=inicio_mes
             ).count()
             
             # 9. Total Procedimientos Completados (este mes)
@@ -205,37 +219,25 @@ class ReportesViewSet(viewsets.ViewSet):
                 perfil_paciente__isnull=False
             ).count()
 
-            data = [
-                {"etiqueta": "Pacientes Activos", "valor": total_pacientes},
-                {"etiqueta": "Citas Hoy", "valor": citas_hoy},
-                {"etiqueta": "Ingresos Este Mes", "valor": float(ingresos_mes)},
-                {"etiqueta": "Saldo Pendiente", "valor": float(saldo_pendiente)},
-                {"etiqueta": "Tratamientos Activos", "valor": tratamientos_activos},
-                {"etiqueta": "Planes Completados", "valor": planes_completados},
-                {"etiqueta": "Promedio por Factura", "valor": float(promedio_factura)},
-                {"etiqueta": "Facturas Vencidas", "valor": facturas_vencidas},
-                {"etiqueta": "Total Procedimientos", "valor": total_procedimientos},
-                {"etiqueta": "Pacientes Nuevos Mes", "valor": pacientes_nuevos_mes},
-            ]
         except Exception as e:
-            # En caso de cualquier error, retornar KPIs en cero con mensaje de error en logs
+            # En caso de cualquier error, usar los valores por defecto ya inicializados
             import logging
             logger = logging.getLogger(__name__)
             logger.error(f"Error en dashboard_kpis: {str(e)}", exc_info=True)
-            
-            # Retornar datos por defecto
-            data = [
-                {"etiqueta": "Pacientes Activos", "valor": 0},
-                {"etiqueta": "Citas Hoy", "valor": 0},
-                {"etiqueta": "Ingresos Este Mes", "valor": 0.0},
-                {"etiqueta": "Saldo Pendiente", "valor": 0.0},
-                {"etiqueta": "Tratamientos Activos", "valor": 0},
-                {"etiqueta": "Planes Completados", "valor": 0},
-                {"etiqueta": "Promedio por Factura", "valor": 0.0},
-                {"etiqueta": "Facturas Vencidas", "valor": 0},
-                {"etiqueta": "Total Procedimientos", "valor": 0},
-                {"etiqueta": "Pacientes Nuevos Mes", "valor": 0},
-            ]
+        
+        # Construir respuesta con los valores (ya sea calculados o por defecto)
+        data = [
+            {"etiqueta": "Pacientes Activos", "valor": total_pacientes},
+            {"etiqueta": "Citas Hoy", "valor": citas_hoy},
+            {"etiqueta": "Ingresos Este Mes", "valor": float(ingresos_mes)},
+            {"etiqueta": "Saldo Pendiente", "valor": float(saldo_pendiente)},
+            {"etiqueta": "Tratamientos Activos", "valor": tratamientos_activos},
+            {"etiqueta": "Planes Completados", "valor": planes_completados},
+            {"etiqueta": "Promedio por Factura", "valor": float(promedio_factura)},
+            {"etiqueta": "Facturas Vencidas", "valor": facturas_vencidas},
+            {"etiqueta": "Total Procedimientos", "valor": total_procedimientos},
+            {"etiqueta": "Pacientes Nuevos Mes", "valor": pacientes_nuevos_mes},
+        ]
         
         # Exportar si se solicita
         export_response = self._export_report(
