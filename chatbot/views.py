@@ -13,7 +13,7 @@ from .nlp_processor import chatbot_processor
 from agenda.models import Cita
 from facturacion.models import Factura, Pago
 from tratamientos.models import PlanDeTratamiento
-from historial_clinico.models import EpisodioClinico
+from historial_clinico.models import EpisodioAtencion
 from usuarios.models import PerfilPaciente
 
 import logging
@@ -341,7 +341,7 @@ class ChatbotQueryView(APIView):
     
     def _get_historial_clinico(self, paciente, interpretacion):
         """Obtiene el historial clínico del paciente."""
-        episodios = EpisodioClinico.objects.filter(
+        episodios = EpisodioAtencion.objects.filter(
             paciente=paciente
         ).select_related('odontologo__usuario').order_by('-fecha')[:10]
         
