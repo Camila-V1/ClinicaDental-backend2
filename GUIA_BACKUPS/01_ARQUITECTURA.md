@@ -26,9 +26,9 @@ class BackupRecord(models.Model):
     file_size = models.BigIntegerField()
     # Tamaño en bytes
     
-    backup_type = models.CharField(max_length=20, choices=[
+    backup_type = models.CharField(max_length=10, choices=[
         ('manual', 'Manual'),
-        ('automatico', 'Automático')
+        ('automatic', 'Automático')
     ])
     
     created_by = models.ForeignKey(
@@ -131,11 +131,8 @@ Bucket: backups/
 
 ```python
 class BackupRecordSerializer(serializers.ModelSerializer):
-    created_by_email = serializers.EmailField(
-        source='created_by.email',
-        read_only=True
-    )
-    file_size_mb = serializers.FloatField(read_only=True)
+    created_by = serializers.SerializerMethodField()
+    file_size_mb = serializers.ReadOnlyField()
     
     class Meta:
         model = BackupRecord
@@ -147,9 +144,17 @@ class BackupRecordSerializer(serializers.ModelSerializer):
             'file_size_mb',
             'backup_type',
             'created_by',
-            'created_by_email',
             'created_at'
         ]
+    
+    def get_created_by(self, obj):
+        if obj.created_by:
+            return {
+                'id': obj.created_by.id,
+                'email': obj.created_by.email,
+                'nombre': obj.created_by.nombre
+            }
+        return None
 ```
 
 **Ejemplo de respuesta:**
@@ -161,8 +166,11 @@ class BackupRecordSerializer(serializers.ModelSerializer):
   "file_size": 2457600,
   "file_size_mb": 2.34,
   "backup_type": "manual",
-  "created_by": 5,
-  "created_by_email": "admin@clinicademo1.com",
+  "created_by": {
+    "id": 5,
+    "email": "admin@clinicademo1.com",
+    "nombre": "Administrador"
+  },
   "created_at": "2025-11-27T14:30:52.123456Z"
 }
 ```
@@ -254,7 +262,7 @@ CREATE TABLE backups_backuprecord (
     file_name VARCHAR(255) NOT NULL,
     file_path TEXT NOT NULL,
     file_size BIGINT NOT NULL,
-    backup_type VARCHAR(20) NOT NULL CHECK (backup_type IN ('manual', 'automatico')),
+    backup_type VARCHAR(10) NOT NULL CHECK (backup_type IN ('manual', 'automatic')),
     created_by_id INTEGER REFERENCES usuarios_usuario(id) ON DELETE SET NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );

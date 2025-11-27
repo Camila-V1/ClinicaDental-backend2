@@ -37,8 +37,11 @@ x-tenant-id: 1
     "file_size": 2457600,
     "file_size_mb": 2.34,
     "backup_type": "manual",
-    "created_by": 5,
-    "created_by_email": "admin@clinicademo1.com",
+    "created_by": {
+      "id": 5,
+      "email": "admin@clinicademo1.com",
+      "nombre": "Administrador"
+    },
     "created_at": "2025-11-27T14:30:52.123456Z"
   },
   {
@@ -47,9 +50,8 @@ x-tenant-id: 1
     "file_path": "clinica_demo/backup-sql-clinica_demo-2025-11-27-100000.sql",
     "file_size": 2450000,
     "file_size_mb": 2.33,
-    "backup_type": "automatico",
+    "backup_type": "automatic",
     "created_by": null,
-    "created_by_email": null,
     "created_at": "2025-11-27T10:00:00.000000Z"
   },
   {
@@ -59,8 +61,11 @@ x-tenant-id: 1
     "file_size": 2400000,
     "file_size_mb": 2.29,
     "backup_type": "manual",
-    "created_by": 5,
-    "created_by_email": "admin@clinicademo1.com",
+    "created_by": {
+      "id": 5,
+      "email": "admin@clinicademo1.com",
+      "nombre": "Administrador"
+    },
     "created_at": "2025-11-26T23:00:00.000000Z"
   }
 ]
@@ -119,8 +124,11 @@ Content-Type: application/json
     "file_size": 2460000,
     "file_size_mb": 2.35,
     "backup_type": "manual",
-    "created_by": 5,
-    "created_by_email": "admin@clinicademo1.com",
+    "created_by": {
+      "id": 5,
+      "email": "admin@clinicademo1.com",
+      "nombre": "Administrador"
+    },
     "created_at": "2025-11-27T15:30:45.123456Z"
   }
 }
