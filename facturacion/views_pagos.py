@@ -11,6 +11,7 @@ from django.db import transaction
 from decimal import Decimal
 
 from .models import Pago, Factura
+from .serializers import PagoSerializer
 from agenda.models import Cita
 from tratamientos.models import PlanDeTratamiento
 from usuarios.models import PerfilPaciente
@@ -21,6 +22,8 @@ class PagoViewSet(viewsets.ModelViewSet):
     """
     ViewSet para gestionar pagos con Stripe.
     """
+    queryset = Pago.objects.all()
+    serializer_class = PagoSerializer
     permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
