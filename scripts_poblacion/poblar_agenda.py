@@ -83,35 +83,35 @@ def poblar_agenda(odontologos, pacientes, servicios):
     print("  → Citas de hoy...")
     
     hoy = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    hora_actual = timezone.now().hour
     
-    # Cita en la mañana (ya atendida)
-    cita_manana = Cita.objects.create(
-        odontologo=odontologos[0],
-        paciente=pacientes[0],
-        fecha_hora=hoy.replace(hour=9, minute=0),
-        motivo_tipo='LIMPIEZA',
-        motivo='Limpieza dental programada',
-        estado='ATENDIDA',
-        observaciones='Limpieza realizada, paciente sin complicaciones',
-        pagada=True
-    )
-    citas_creadas.append(cita_manana)
+    # Crear varias citas para hoy (3-5 citas)
+    horarios_citas_hoy = [
+        (9, 0, 'ATENDIDA', 'Limpieza dental matutina'),
+        (10, 30, 'ATENDIDA', 'Consulta de control'),
+        (11, 0, 'ATENDIDA', 'Revisión dental'),
+        (14, 0, 'CONFIRMADA' if hora_actual < 14 else 'ATENDIDA', 'Extracción simple'),
+        (15, 30, 'CONFIRMADA' if hora_actual < 15 else 'ATENDIDA', 'Obturación'),
+        (16, 0, 'CONFIRMADA' if hora_actual < 16 else 'PENDIENTE', 'Limpieza dental'),
+        (17, 0, 'CONFIRMADA', 'Consulta de urgencia'),
+    ]
     
-    # Cita confirmada para más tarde
-    if timezone.now().hour < 15:
-        odonts_list = list(odontologos)
-        pacs_list = list(pacientes)
-        cita_tarde = Cita.objects.create(
-            odontologo=odonts_list[-1] if len(odonts_list) > 1 else odonts_list[0],
-            paciente=pacs_list[-1] if len(pacs_list) > 1 else pacs_list[0],
-            fecha_hora=hoy.replace(hour=15, minute=30),
-            motivo_tipo='CONSULTA',
-            motivo='Consulta odontológica general',
-            estado='CONFIRMADA',
-            observaciones='Paciente confirmó asistencia',
-            pagada=False
+    # Crear 5 citas para hoy
+    for i, (hora, minuto, estado, motivo) in enumerate(horarios_citas_hoy[:5]):
+        odontologo = odontologos[i % len(odontologos)]
+        paciente = pacientes[i % len(pacientes)]
+        
+        cita = Cita.objects.create(
+            odontologo=odontologo,
+            paciente=paciente,
+            fecha_hora=hoy.replace(hour=hora, minute=minuto),
+            motivo_tipo=random.choice(['CONSULTA', 'LIMPIEZA', 'REVISION']),
+            motivo=motivo,
+            estado=estado,
+            observaciones=f'{estado.capitalize()} - {motivo}',
+            pagada=(estado == 'ATENDIDA')
         )
-        citas_creadas.append(cita_tarde)
+        citas_creadas.append(cita)
     
     print(f"    ✓ {len([c for c in citas_creadas if c.fecha_hora.date() == hoy.date()])} citas hoy")
     

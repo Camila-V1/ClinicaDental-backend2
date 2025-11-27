@@ -31,6 +31,7 @@ from scripts_poblacion import (
     poblar_agenda,
     poblar_historial,
     poblar_facturacion,
+    poblar_planes_tratamiento,
 )
 
 
@@ -139,29 +140,39 @@ def main():
         )
         print_success(f"Creados {len(historiales)} historiales, {len(episodios)} episodios y {len(odontogramas)} odontogramas")
         
-        # Paso 7: Poblar Facturación (solo Pagos para demo)
-        print_header("💰 PASO 7: POBLAR FACTURACIÓN")
+        # Paso 7: Poblar Planes de Tratamiento
+        print_header("🦷 PASO 7: POBLAR PLANES DE TRATAMIENTO")
+        planes, items_plan = poblar_planes_tratamiento.poblar_planes_tratamiento(
+            pacientes, odontologos, servicios
+        )
+        print_success(f"Creados {len(planes)} planes de tratamiento con {len(items_plan)} procedimientos")
+        
+        # Paso 8: Poblar Facturación
+        print_header("💰 PASO 8: POBLAR FACTURACIÓN")
         facturas, pagos = poblar_facturacion.poblar_facturacion(
             pacientes, citas_atendidas
         )
-        print_success(f"Creados {len(pagos)} pagos (facturas requieren presupuestos aprobados)")
+        print_success(f"Creadas {len(facturas)} facturas y {len(pagos)} pagos")
     
     # Resumen Final
     print_header("✅ POBLACIÓN COMPLETADA EXITOSAMENTE")
     print(f"""
     📊 RESUMEN:
     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    🏥 Clínica:        {NOMBRE_CLINICA}
-    🌐 Dominio:        {DOMINIO_PRINCIPAL}
-    📁 Schema:         {SCHEMA_NAME}
+    🏥 Clínica:           {NOMBRE_CLINICA}
+    🌐 Dominio:           {DOMINIO_PRINCIPAL}
+    📁 Schema:            {SCHEMA_NAME}
     
-    👥 Usuarios:       {len(usuarios)}
-    🦷 Servicios:      {len(servicios)}
-    📦 Insumos:        {len(insumos)}
-    📅 Citas:          {len(citas)}
-    📋 Historiales:    {len(historiales)}
-    📋 Episodios:      {len(episodios)}
-    💰 Pagos:          {len(pagos)}
+    👥 Usuarios:          {len(usuarios)}
+    🦷 Servicios:         {len(servicios)}
+    📦 Insumos:           {len(insumos)}
+    📅 Citas:             {len(citas)}
+    📋 Historiales:       {len(historiales)}
+    📋 Episodios:         {len(episodios)}
+    🦷 Planes Trat.:      {len(planes)}
+    🔧 Procedimientos:    {len(items_plan)}
+    💰 Facturas:          {len(facturas)}
+    💰 Pagos:             {len(pagos)}
     
     🔐 CREDENCIALES DE ACCESO:
     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
