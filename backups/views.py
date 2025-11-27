@@ -281,7 +281,7 @@ class DeleteBackupView(APIView):
     permission_classes = [IsAuthenticated]
     
     def delete(self, request, pk):
-        if request.user.rol != 'ADMIN':
+        if request.user.tipo_usuario != 'ADMIN':
             return Response(
                 {'error': 'Solo los administradores pueden eliminar backups'},
                 status=status.HTTP_403_FORBIDDEN
@@ -316,3 +316,184 @@ class DeleteBackupView(APIView):
                 {'error': f'Error al eliminar backup: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+class RestoreBackupView(APIView):
+    """
+    Vista para restaurar un backup en el schema actual.
+    
+    POST /api/backups/history/{id}/restore/
+    
+    ADVERTENCIA: Esta operación es DESTRUCTIVA y eliminará todos los datos actuales.
+    Solo ADMIN puede ejecutarla.
+    """
+    
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request, pk):
+        # Solo ADMIN puede restaurar
+        if request.user.tipo_usuario != 'ADMIN':
+            return Response(
+                {'error': 'Solo los administradores pueden restaurar backups'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        schema_name = connection.schema_name
+        
+        if schema_name == 'public':
+            return Response(
+                {'error': 'No se puede restaurar en el schema public'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            backup_record = BackupRecord.objects.get(pk=pk)
+        except BackupRecord.DoesNotExist:
+            return Response(
+                {'error': 'Backup no encontrado'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Verificar confirmación explícita
+        confirm = request.data.get('confirm', False)
+        if not confirm:
+            return Response(
+                {
+                    'error': 'Debe confirmar la restauración',
+                    'message': 'Esta operación eliminará todos los datos actuales. Envíe "confirm": true para confirmar.',
+                    'backup_info': {
+                        'file_name': backup_record.file_name,
+                        'created_at': backup_record.created_at,
+                        'created_by': backup_record.created_by.email if backup_record.created_by else 'Sistema'
+                    }
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            # Descargar backup desde Supabase
+            logger.info(f"📥 Descargando backup {pk} desde Supabase...")
+            file_bytes = download_backup_from_supabase(backup_record.file_path)
+            
+            # Determinar tipo de backup y restaurar
+            if backup_record.file_name.endswith('.sql'):
+                self._restore_from_sql(file_bytes, schema_name)
+            elif backup_record.file_name.endswith('.json'):
+                self._restore_from_json(file_bytes)
+            else:
+                raise ValueError(f"Formato de backup no soportado: {backup_record.file_name}")
+            
+            logger.info(
+                f"✅ Backup {pk} restaurado exitosamente en {schema_name} por {request.user.email}"
+            )
+            
+            return Response({
+                'message': 'Backup restaurado exitosamente',
+                'backup_info': {
+                    'file_name': backup_record.file_name,
+                    'created_at': backup_record.created_at,
+                    'restored_by': request.user.email,
+                    'restored_at': timezone.now()
+                }
+            }, status=status.HTTP_200_OK)
+        
+        except Exception as e:
+            logger.error(f"❌ Error al restaurar backup {pk}: {str(e)}")
+            return Response(
+                {'error': f'Error al restaurar backup: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    def _restore_from_sql(self, file_bytes, schema_name):
+        """Restaura desde un archivo SQL usando psql."""
+        db_settings = settings.DATABASES['default']
+        
+        # Guardar SQL temporalmente
+        import tempfile
+        with tempfile.NamedTemporaryFile(mode='wb', suffix='.sql', delete=False) as tmp_file:
+            tmp_file.write(file_bytes)
+            tmp_file_path = tmp_file.name
+        
+        try:
+            # Limpiar schema actual (excepto la tabla de backups)
+            with connection.cursor() as cursor:
+                # Obtener todas las tablas del schema
+                cursor.execute(f"""
+                    SELECT tablename FROM pg_tables 
+                    WHERE schemaname = '{schema_name}'
+                    AND tablename NOT IN ('backups_backuprecord', 'backups_backupconfiguration')
+                """)
+                tables = [row[0] for row in cursor.fetchall()]
+                
+                # Eliminar datos de cada tabla
+                for table in tables:
+                    cursor.execute(f'TRUNCATE TABLE "{schema_name}"."{table}" CASCADE')
+            
+            # Restaurar usando psql
+            command = [
+                'psql',
+                '--dbname', db_settings['NAME'],
+                '--host', db_settings['HOST'],
+                '--port', str(db_settings['PORT']),
+                '--username', db_settings['USER'],
+                '--file', tmp_file_path,
+                '--set', f'search_path={schema_name},public'
+            ]
+            
+            env = {'PGPASSWORD': db_settings['PASSWORD']}
+            
+            process = subprocess.Popen(
+                command,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                env=env
+            )
+            
+            stdout, stderr = process.communicate()
+            
+            if process.returncode != 0:
+                raise subprocess.CalledProcessError(
+                    process.returncode,
+                    command,
+                    stderr=stderr
+                )
+        
+        finally:
+            # Eliminar archivo temporal
+            import os
+            os.unlink(tmp_file_path)
+    
+    def _restore_from_json(self, file_bytes):
+        """Restaura desde un archivo JSON usando loaddata."""
+        from django.core.management import call_command
+        
+        # Guardar JSON temporalmente
+        import tempfile
+        with tempfile.NamedTemporaryFile(mode='wb', suffix='.json', delete=False) as tmp_file:
+            tmp_file.write(file_bytes)
+            tmp_file_path = tmp_file.name
+        
+        try:
+            # Limpiar datos actuales (excepto backups)
+            tenant_apps = [
+                'usuarios', 'inventario', 'tratamientos',
+                'agenda', 'historial_clinico', 'facturacion', 'reportes'
+            ]
+            
+            from django.apps import apps
+            for app_label in tenant_apps:
+                try:
+                    app_config = apps.get_app_config(app_label)
+                    for model in app_config.get_models():
+                        if model._meta.db_table not in ['backups_backuprecord', 'backups_backupconfiguration']:
+                            model.objects.all().delete()
+                except Exception as e:
+                    logger.warning(f"⚠️ No se pudo limpiar {app_label}: {str(e)}")
+            
+            # Cargar datos desde JSON
+            call_command('loaddata', tmp_file_path)
+        
+        finally:
+            # Eliminar archivo temporal
+            import os
+            os.unlink(tmp_file_path)
