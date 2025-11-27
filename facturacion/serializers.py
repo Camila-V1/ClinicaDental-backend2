@@ -10,18 +10,35 @@ class PagoSerializer(serializers.ModelSerializer):
     """
     paciente_nombre = serializers.CharField(source='paciente.usuario.full_name', read_only=True)
     paciente_email = serializers.EmailField(source='paciente.usuario.email', read_only=True)
-    factura_numero = serializers.IntegerField(source='factura.id', read_only=True)
-    factura_total = serializers.DecimalField(source='factura.monto_total', max_digits=10, decimal_places=2, read_only=True)
+    factura_numero = serializers.SerializerMethodField()
+    factura_total = serializers.SerializerMethodField()
+    cita_info = serializers.SerializerMethodField()
+    
+    def get_factura_numero(self, obj):
+        return obj.factura.id if obj.factura else None
+    
+    def get_factura_total(self, obj):
+        return obj.factura.monto_total if obj.factura else None
+    
+    def get_cita_info(self, obj):
+        if obj.tipo_pago == 'CITA' and obj.cita:
+            return {
+                'id': obj.cita.id,
+                'fecha': obj.cita.fecha_hora.strftime('%Y-%m-%d %H:%M'),
+                'servicio': obj.cita.servicio.nombre if obj.cita.servicio else None
+            }
+        return None
     
     class Meta:
         model = Pago
         fields = (
-            'id', 'factura', 'factura_numero', 'factura_total',
+            'id', 'tipo_pago', 'factura', 'factura_numero', 'factura_total',
+            'cita', 'cita_info',
             'paciente', 'paciente_nombre', 'paciente_email', 
             'monto_pagado', 'metodo_pago', 'estado_pago', 
             'fecha_pago', 'referencia_transaccion', 'notas'
         )
-        read_only_fields = ('id', 'fecha_pago', 'paciente_nombre', 'paciente_email', 'factura_numero', 'factura_total')
+        read_only_fields = ('id', 'fecha_pago', 'paciente_nombre', 'paciente_email', 'factura_numero', 'factura_total', 'cita_info')
     
     def validate_monto_pagado(self, value):
         """Validar que el monto sea positivo."""
