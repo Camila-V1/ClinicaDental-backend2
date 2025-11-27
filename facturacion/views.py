@@ -331,23 +331,29 @@ class PagoViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         """Filtrar pagos según tipo de usuario"""
         user = self.request.user
-        queryset = Pago.objects.all().select_related('factura', 'factura__paciente')
+        queryset = Pago.objects.all().select_related('factura', 'factura__paciente', 'paciente', 'cita', 'plan_tratamiento')
         
         # Admin ve todos los pagos
         if user.is_staff:
             return queryset
         
         # Doctor ve pagos de facturas de sus pacientes
-        if hasattr(user, 'perfilprofesional'):
+        if hasattr(user, 'perfil_odontologo'):
             # Obtener pacientes del doctor
             pacientes_ids = PerfilPaciente.objects.filter(
-                historialclinico__episodioatencion__doctor=user.perfilprofesional
-            ).values_list('id', flat=True).distinct()
-            return queryset.filter(factura__paciente_id__in=pacientes_ids)
+                historialclinico__episodioatencion__odontologo=user.perfil_odontologo
+            ).values_list('usuario_id', flat=True).distinct()
+            return queryset.filter(
+                Q(factura__paciente__usuario_id__in=pacientes_ids) |
+                Q(paciente__usuario_id__in=pacientes_ids)
+            )
         
         # Paciente solo ve sus pagos
-        if hasattr(user, 'perfilpaciente'):
-            return queryset.filter(factura__paciente=user.perfilpaciente)
+        if hasattr(user, 'perfil_paciente'):
+            return queryset.filter(
+                Q(factura__paciente__usuario=user) |
+                Q(paciente__usuario=user)
+            )
         
         return queryset.none()
     
