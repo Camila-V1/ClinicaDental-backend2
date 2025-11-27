@@ -3,6 +3,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import ReportesViewSet, BitacoraViewSet
+from .voice_views import VoiceReportQueryView
 
 # Configurar router para API REST de reportes
 router = DefaultRouter()
@@ -12,6 +13,9 @@ router.register(r'bitacora', BitacoraViewSet, basename='bitacora')
 urlpatterns = [
     # API REST endpoints
     path('', include(router.urls)),
+    
+    # Endpoint para reportes por voz con NLP
+    path('voice-query/', VoiceReportQueryView.as_view(), name='voice-query'),
 ]
 
 """
