@@ -79,42 +79,58 @@ class ReportesViewSet(viewsets.ViewSet):
         """
         formato = request.query_params.get('formato', '').lower()
         
+        logger.info(f"📊 _export_report llamado: formato={formato}, title={title}")
+        
         if formato not in ['pdf', 'excel']:
+            logger.info("📊 Formato no es pdf/excel, devolviendo None para JSON")
             return None  # Devolver JSON por defecto
         
-        tenant_name = self._get_tenant_name(request)
+        try:
+            tenant_name = self._get_tenant_name(request)
+            
+            if formato == 'pdf':
+                logger.info(f"📄 Generando PDF: {title}")
+                pdf = PDFReportGenerator(title, tenant_name)
+                pdf.add_header()
+                
+                if metrics:
+                    pdf.add_key_metrics(metrics)
+                
+                if data:
+                    # Convertir lista de diccionarios a tabla
+                    if len(data) > 0:
+                        headers = list(data[0].keys())
+                        rows = [headers] + [[str(item.get(k, '')) for k in headers] for item in data]
+                        pdf.add_table(rows, title="Datos del Reporte")
+                
+                response = pdf.generate()
+                logger.info(f"✅ PDF generado exitosamente")
+                return response
+            
+            elif formato == 'excel':
+                logger.info(f"📊 Generando Excel: {title}")
+                excel = ExcelReportGenerator(title, tenant_name)
+                excel.add_header()
+                
+                if metrics:
+                    excel.add_key_metrics(metrics)
+                
+                if data:
+                    # Convertir lista de diccionarios a tabla
+                    if len(data) > 0:
+                        headers = list(data[0].keys())
+                        rows = [headers] + [[item.get(k, '') for k in headers] for item in data]
+                        excel.add_table(rows, title="Datos del Reporte")
+                
+                response = excel.generate()
+                logger.info(f"✅ Excel generado exitosamente")
+                return response
         
-        if formato == 'pdf':
-            pdf = PDFReportGenerator(title, tenant_name)
-            pdf.add_header()
-            
-            if metrics:
-                pdf.add_key_metrics(metrics)
-            
-            if data:
-                # Convertir lista de diccionarios a tabla
-                if len(data) > 0:
-                    headers = list(data[0].keys())
-                    rows = [headers] + [[str(item.get(k, '')) for k in headers] for item in data]
-                    pdf.add_table(rows, title="Datos del Reporte")
-            
-            return pdf.generate()
-        
-        elif formato == 'excel':
-            excel = ExcelReportGenerator(title, tenant_name)
-            excel.add_header()
-            
-            if metrics:
-                excel.add_key_metrics(metrics)
-            
-            if data:
-                # Convertir lista de diccionarios a tabla
-                if len(data) > 0:
-                    headers = list(data[0].keys())
-                    rows = [headers] + [[item.get(k, '') for k in headers] for item in data]
-                    excel.add_table(rows, title="Datos del Reporte")
-            
-            return excel.generate()
+        except Exception as e:
+            logger.error(f"❌ Error en _export_report: {str(e)}")
+            import traceback
+            logger.error(traceback.format_exc())
+            return None
         
         return None
 
