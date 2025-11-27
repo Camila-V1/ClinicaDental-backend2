@@ -28,6 +28,7 @@ from scripts_poblacion import (
     poblar_usuarios,
     poblar_tratamientos,
     poblar_inventario,
+    poblar_materiales_servicios,
     poblar_agenda,
     poblar_historial,
     poblar_facturacion,
@@ -127,6 +128,13 @@ def main():
         categorias, insumos = poblar_inventario.poblar_inventario()
         print_success(f"Creadas {len(categorias)} categorías y {len(insumos)} insumos")
         
+        # Paso 4.5: Poblar Materiales de Servicios
+        print_header("🧰 PASO 4.5: POBLAR MATERIALES DE SERVICIOS")
+        materiales_fijos, materiales_opcionales = poblar_materiales_servicios.poblar_materiales_servicios(
+            servicios, insumos
+        )
+        print_success(f"Creados {len(materiales_fijos)} materiales fijos y {len(materiales_opcionales)} opcionales")
+        
         # Paso 5: Poblar Agenda
         print_header("📅 PASO 5: POBLAR AGENDA")
         citas = poblar_agenda.poblar_agenda(odontologos, pacientes, servicios)
@@ -166,6 +174,8 @@ def main():
     👥 Usuarios:          {len(usuarios)}
     🦷 Servicios:         {len(servicios)}
     📦 Insumos:           {len(insumos)}
+    🧰 Materiales Fijos:  {len(materiales_fijos)}
+    🧰 Materiales Opc.:   {len(materiales_opcionales)}
     📅 Citas:             {len(citas)}
     📋 Historiales:       {len(historiales)}
     📋 Episodios:         {len(episodios)}

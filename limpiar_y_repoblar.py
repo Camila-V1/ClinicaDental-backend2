@@ -65,21 +65,25 @@ def limpiar_datos_tenant(schema_name):
                 # 4. Agenda (depende de pacientes y odontólogos)
                 ('agenda', 'Cita'),
                 
-                # 5. Servicios (dependen de categorías)
+                # 5. Materiales de servicios (dependen de servicios e insumos)
+                ('tratamientos', 'MaterialServicioFijo'),
+                ('tratamientos', 'MaterialServicioOpcional'),
+                
+                # 6. Servicios (dependen de categorías)
                 ('tratamientos', 'Servicio'),
                 ('tratamientos', 'CategoriaServicio'),
                 
-                # 6. Inventario
+                # 7. Inventario
                 ('inventario', 'MovimientoInventario'),
                 ('inventario', 'Insumo'),
                 ('inventario', 'CategoriaInsumo'),
                 
-                # 7. Usuarios (al final porque muchos dependen de ellos)
+                # 8. Usuarios (al final porque muchos dependen de ellos)
                 ('usuarios', 'PerfilOdontologo'),
                 ('usuarios', 'PerfilPaciente'),
                 ('usuarios', 'Usuario'),
                 
-                # 8. Reportes
+                # 9. Reportes
                 ('reportes', 'BitacoraAccion'),
             ]
             

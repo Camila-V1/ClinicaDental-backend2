@@ -7,7 +7,7 @@
 ```powershell
 # Limpiar todos los datos del tenant
 python limpiar_tenant.py
-
+python limpiar_y_repoblar.py
 # Cuando pregunte, escribir: SI
 ```
 
