@@ -136,9 +136,20 @@ class ValoracionViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_403_FORBIDDEN
             )
         
+        # Obtener el perfil del paciente
+        from usuarios.models import PerfilPaciente
+        try:
+            perfil_paciente = PerfilPaciente.objects.get(usuario=request.user)
+        except PerfilPaciente.DoesNotExist:
+            return Response({
+                'count': 0,
+                'citas': [],
+                'mensaje': 'No se encontró perfil de paciente'
+            })
+        
         # Buscar citas completadas sin valoración
         citas_pendientes = Cita.objects.filter(
-            paciente=request.user,
+            paciente=perfil_paciente,
             estado='COMPLETADA'
         ).exclude(
             id__in=Valoracion.objects.filter(
@@ -185,3 +196,59 @@ class ValoracionViewSet(viewsets.ModelViewSet):
             })
         
         return Response(resultado)
+    
+    @action(detail=False, methods=['post'], url_path='enviar-notificacion-prueba')
+    def enviar_notificacion_prueba(self, request):
+        """
+        Endpoint para enviar notificación de prueba al usuario actual
+        """
+        try:
+            usuario = request.user
+            
+            if not usuario.fcm_token:
+                return Response({
+                    'error': 'Usuario no tiene token FCM registrado'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Importar el servicio de Firebase
+            from firebase_admin import messaging
+            
+            # Crear mensaje
+            message = messaging.Message(
+                notification=messaging.Notification(
+                    title=request.data.get('titulo', '🦷 Prueba de Notificación'),
+                    body=request.data.get('mensaje', '¡Hola! Esta es una notificación de prueba.')
+                ),
+                data=request.data.get('data', {
+                    'tipo': 'PRUEBA',
+                    'usuario_id': str(usuario.id)
+                }),
+                token=usuario.fcm_token,
+                android=messaging.AndroidConfig(
+                    priority='high',
+                    notification=messaging.AndroidNotification(
+                        icon='ic_notification',
+                        color='#2196F3',
+                        sound='default'
+                    )
+                )
+            )
+            
+            # Enviar notificación
+            response = messaging.send(message)
+            
+            logger.info(f"✅ Notificación de prueba enviada a {usuario.email}. Message ID: {response}")
+            
+            return Response({
+                'success': True,
+                'message': 'Notificación enviada exitosamente',
+                'message_id': response,
+                'usuario': usuario.email,
+                'fcm_token': usuario.fcm_token[:50] + '...'
+            })
+            
+        except Exception as e:
+            logger.error(f"❌ Error enviando notificación de prueba: {e}")
+            return Response({
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
