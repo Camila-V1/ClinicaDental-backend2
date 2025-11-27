@@ -56,7 +56,7 @@ def poblar_planes_tratamiento(pacientes, odontologos, servicios):
             paciente=paciente,
             odontologo=odontologo,
             fecha_creacion=fecha_creacion,
-            diagnostico=f"Tratamiento dental completado para {paciente.usuario.get_full_name()}",
+            diagnostico=f"Tratamiento dental completado para {paciente.usuario.nombre} {paciente.usuario.apellido}",
             observaciones="Tratamiento finalizado satisfactoriamente",
             estado='COMPLETADO'
         )
@@ -104,7 +104,7 @@ def poblar_planes_tratamiento(pacientes, odontologos, servicios):
             paciente=paciente,
             odontologo=odontologo,
             fecha_creacion=fecha_creacion,
-            diagnostico=f"Plan de tratamiento para {paciente.usuario.get_full_name()}",
+            diagnostico=f"Plan de tratamiento para {paciente.usuario.nombre} {paciente.usuario.apellido}",
             observaciones="Tratamiento en curso",
             estado='EN_PROGRESO'
         )
@@ -159,7 +159,7 @@ def poblar_planes_tratamiento(pacientes, odontologos, servicios):
             paciente=paciente,
             odontologo=odontologo,
             fecha_creacion=fecha_creacion,
-            diagnostico=f"Plan propuesto para {paciente.usuario.get_full_name()}",
+            diagnostico=f"Plan propuesto para {paciente.usuario.nombre} {paciente.usuario.apellido}",
             observaciones="Esperando aprobación del paciente" if estado == 'PROPUESTO' else "Plan aprobado, listo para iniciar",
             estado=estado
         )
