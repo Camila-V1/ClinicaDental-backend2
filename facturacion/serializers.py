@@ -25,7 +25,7 @@ class PagoSerializer(serializers.ModelSerializer):
             return {
                 'id': obj.cita.id,
                 'fecha': obj.cita.fecha_hora.strftime('%Y-%m-%d %H:%M'),
-                'servicio': obj.cita.servicio.nombre if obj.cita.servicio else None
+                'motivo': obj.cita.get_motivo_tipo_display() if obj.cita.motivo_tipo else None
             }
         return None
     
