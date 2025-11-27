@@ -85,8 +85,20 @@ print("-" * 80)
 try:
     from facturacion.views_pagos import PagoViewSet
     print("✅ PagoViewSet importado correctamente")
-    print(f"   serializer_class: {getattr(PagoViewSet, 'serializer_class', 'NO DEFINIDO')}")
-    print(f"   queryset: {getattr(PagoViewSet, 'queryset', 'NO DEFINIDO')}")
+    
+    # Verificar serializer_class sin ejecutar queryset
+    serializer = getattr(PagoViewSet, 'serializer_class', None)
+    if serializer:
+        print(f"   serializer_class: {serializer}")
+    else:
+        print("   ❌ serializer_class: NO DEFINIDO")
+    
+    # Verificar que queryset está definido sin ejecutarlo
+    if hasattr(PagoViewSet, 'queryset'):
+        print(f"   queryset: DEFINIDO (model={PagoViewSet.queryset.model.__name__})")
+    else:
+        print("   ❌ queryset: NO DEFINIDO")
+        
 except Exception as e:
     print(f"❌ Error importando PagoViewSet: {str(e)}")
 

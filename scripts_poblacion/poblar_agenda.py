@@ -67,8 +67,7 @@ def poblar_agenda(odontologos, pacientes, servicios):
                 'motivo_tipo': motivo_tipo,
                 'motivo': motivos_texto[motivo_tipo],
                 'estado': 'ATENDIDA',
-                'observaciones': 'Cita atendida satisfactoriamente',
-                'pagada': True
+                'observaciones': 'Cita atendida satisfactoriamente'
             }
         )
         
@@ -108,8 +107,7 @@ def poblar_agenda(odontologos, pacientes, servicios):
             motivo_tipo=random.choice(['CONSULTA', 'LIMPIEZA', 'REVISION']),
             motivo=motivo,
             estado=estado,
-            observaciones=f'{estado.capitalize()} - {motivo}',
-            pagada=(estado == 'ATENDIDA')
+            observaciones=f'{estado.capitalize()} - {motivo}'
         )
         citas_creadas.append(cita)
     
@@ -157,8 +155,7 @@ def poblar_agenda(odontologos, pacientes, servicios):
             defaults={
                 'motivo_tipo': motivo_tipo,
                 'motivo': motivos_dict[motivo_tipo],
-                'estado': estado,
-                'pagada': False
+                'estado': estado
             }
         )
         
@@ -187,8 +184,7 @@ def poblar_agenda(odontologos, pacientes, servicios):
             motivo_tipo='CONSULTA',
             motivo='Cita cancelada por el paciente',
             estado='CANCELADA',
-            observaciones='Paciente canceló por motivos personales',
-            pagada=False
+            observaciones='Paciente canceló por motivos personales'
         )
         citas_creadas.append(cita)
     

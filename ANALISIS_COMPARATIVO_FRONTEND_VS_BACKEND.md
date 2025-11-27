@@ -4,8 +4,19 @@
 **Fecha de Análisis:** 26 de Noviembre de 2025  
 **Proyecto:** ClinicaDental-frontend2  
 **Backend Total:** 13 Módulos - 92 Endpoints
-
+python manage.py shell
 ---
+
+
+
+from django_tenants.utils import schema_context
+from backups.models import BackupRecord
+
+with schema_context('clinica_demo'):
+    print(f"Backups: {BackupRecord.objects.count()}")
+
+
+
 
 ## 📋 RESUMEN EJECUTIVO
 
