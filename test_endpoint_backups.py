@@ -13,6 +13,7 @@ django.setup()
 
 from django.test import RequestFactory
 from django_tenants.utils import tenant_context, get_tenant_model
+from rest_framework.test import APIRequestFactory, force_authenticate
 from backups.views import BackupHistoryListView
 from usuarios.models import Usuario
 
@@ -40,17 +41,19 @@ with tenant_context(tenant):
     print(f"👤 Usuario de prueba: {user.email}")
     print()
     
-    # Crear request simulado
-    factory = RequestFactory()
-    request = factory.get('/api/backups/history/')
-    request.user = user
-    
     # Ejecutar la vista
     print("🔄 Ejecutando vista BackupHistoryListView...")
     
     try:
         view = BackupHistoryListView.as_view()
-        response = view(request)
+        
+        # Usar APIRequestFactory y force_authenticate
+        from rest_framework.test import APIRequestFactory, force_authenticate
+        api_factory = APIRequestFactory()
+        api_request = api_factory.get('/api/backups/history/')
+        force_authenticate(api_request, user=user)
+        
+        response = view(api_request)
         
         # Renderizar la respuesta (necesario para ListAPIView)
         if hasattr(response, 'render'):
