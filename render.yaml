@@ -67,7 +67,7 @@ services:
   # CRON JOB - Backups Automáticos
   # ============================================================================
   - type: cron
-    name: backup-automatico-worker
+    name: backup-automatico-cron
     env: python
     region: oregon
     plan: free
