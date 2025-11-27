@@ -110,34 +110,35 @@ def poblar_usuarios():
     # 4. ODONTÓLOGO 2
     # =========================================================================
     print("  → Odontólogo 2...")
-    if not Usuario.objects.filter(email='dra.lopez@clinica-demo.com').exists():
-        odontologo2 = Usuario.objects.create_user(
-            email='dra.lopez@clinica-demo.com',
-            password='odontologo123',
-            nombre='Dra. María',
-            apellido='López',
-            ci='77665544',
-            sexo='F',
-            telefono='70444444',
-            tipo_usuario='ODONTOLOGO',
-            is_staff=True,
-            is_active=True
-        )
-        
-        # Crear perfil de odontólogo
+    odontologo2, created = Usuario.objects.get_or_create(
+        email='dra.lopez@clinica-demo.com',
+        defaults={
+            'nombre': 'Dra. María',
+            'apellido': 'López',
+            'ci': '77665544',
+            'sexo': 'F',
+            'telefono': '70444444',
+            'tipo_usuario': 'ODONTOLOGO',
+            'is_staff': True,
+            'is_active': True
+        }
+    )
+    
+    if created:
+        odontologo2.set_password('odontologo123')
+        odontologo2.save()
+    
+    # Crear perfil si no existe
+    if not hasattr(odontologo2, 'perfil_odontologo'):
         PerfilOdontologo.objects.create(
             usuario=odontologo2,
             especialidad=especialidad_endodoncia,
             cedulaProfesional='LIC-2024-002',
             experienciaProfesional='8 años de experiencia en endodoncia y cirugía oral'
         )
-        
-        usuarios_creados.append(odontologo2)
-        print(f"    ✓ Odontólogo 2 creado: {odontologo2.email} / odontologo123")
-    else:
-        odontologo2 = Usuario.objects.get(email='dra.lopez@clinica-demo.com')
-        usuarios_creados.append(odontologo2)
-        print(f"    ✓ Odontólogo 2 ya existe: {odontologo2.email}")
+    
+    usuarios_creados.append(odontologo2)
+    print(f"    ✓ Odontólogo 2 {'creado' if created else 'ya existe'}: {odontologo2.email} / odontologo123")
     
     # =========================================================================
     # 5. PACIENTES
@@ -145,88 +146,91 @@ def poblar_usuarios():
     print("  → Pacientes...")
     
     # Paciente 1
-    if not Usuario.objects.filter(email='paciente1@test.com').exists():
-        paciente1 = Usuario.objects.create_user(
-            email='paciente1@test.com',
-            password='paciente123',
-            nombre='María',
-            apellido='García',
-            ci='55667788',
-            sexo='F',
-            telefono='70333333',
-            tipo_usuario='PACIENTE',
-            is_active=True
-        )
-        
-        # Crear perfil de paciente
+    paciente1, created = Usuario.objects.get_or_create(
+        email='paciente1@test.com',
+        defaults={
+            'nombre': 'María',
+            'apellido': 'García',
+            'ci': '55667788',
+            'sexo': 'F',
+            'telefono': '70333333',
+            'tipo_usuario': 'PACIENTE',
+            'is_active': True
+        }
+    )
+    
+    if created:
+        paciente1.set_password('paciente123')
+        paciente1.save()
+    
+    # Crear perfil si no existe
+    if not hasattr(paciente1, 'perfil_paciente'):
         PerfilPaciente.objects.create(
             usuario=paciente1,
             fecha_de_nacimiento=date(1995, 3, 15),
             direccion='Zona Sur #321, La Paz'
         )
-        
-        usuarios_creados.append(paciente1)
-        print(f"    ✓ Paciente 1 creado: {paciente1.email} / paciente123")
-    else:
-        paciente1 = Usuario.objects.get(email='paciente1@test.com')
-        usuarios_creados.append(paciente1)
-        print(f"    ✓ Paciente 1 ya existe: {paciente1.email}")
+    
+    usuarios_creados.append(paciente1)
+    print(f"    ✓ Paciente 1 {'creado' if created else 'ya existe'}: {paciente1.email} / paciente123")
     
     # Paciente 2
-    if not Usuario.objects.filter(email='paciente2@test.com').exists():
-        paciente2 = Usuario.objects.create_user(
-            email='paciente2@test.com',
-            password='paciente123',
-            nombre='Juan',
-            apellido='Pérez',
-            ci='99887766',
-            sexo='M',
-            telefono='70555555',
-            tipo_usuario='PACIENTE',
-            is_active=True
-        )
-        
-        # Crear perfil de paciente
+    paciente2, created = Usuario.objects.get_or_create(
+        email='paciente2@test.com',
+        defaults={
+            'nombre': 'Juan',
+            'apellido': 'Pérez',
+            'ci': '99887766',
+            'sexo': 'M',
+            'telefono': '70555555',
+            'tipo_usuario': 'PACIENTE',
+            'is_active': True
+        }
+    )
+    
+    if created:
+        paciente2.set_password('paciente123')
+        paciente2.save()
+    
+    # Crear perfil si no existe
+    if not hasattr(paciente2, 'perfil_paciente'):
         PerfilPaciente.objects.create(
             usuario=paciente2,
             fecha_de_nacimiento=date(1988, 7, 22),
             direccion='Zona Norte #654, La Paz'
         )
-        
-        usuarios_creados.append(paciente2)
-        print(f"    ✓ Paciente 2 creado: {paciente2.email} / paciente123")
-    else:
-        paciente2 = Usuario.objects.get(email='paciente2@test.com')
-        usuarios_creados.append(paciente2)
-        print(f"    ✓ Paciente 2 ya existe: {paciente2.email}")
+    
+    usuarios_creados.append(paciente2)
+    print(f"    ✓ Paciente 2 {'creado' if created else 'ya existe'}: {paciente2.email} / paciente123")
     
     # Paciente 3
-    if not Usuario.objects.filter(email='paciente3@test.com').exists():
-        paciente3 = Usuario.objects.create_user(
-            email='paciente3@test.com',
-            password='paciente123',
-            nombre='Laura',
-            apellido='Sánchez',
-            ci='44556677',
-            sexo='F',
-            telefono='70666666',
-            tipo_usuario='PACIENTE',
-            is_active=True
-        )
-        
-        # Crear perfil de paciente
+    paciente3, created = Usuario.objects.get_or_create(
+        email='paciente3@test.com',
+        defaults={
+            'nombre': 'Laura',
+            'apellido': 'Sánchez',
+            'ci': '44556677',
+            'sexo': 'F',
+            'telefono': '70666666',
+            'tipo_usuario': 'PACIENTE',
+            'is_active': True
+        }
+    )
+    
+    if created:
+        paciente3.set_password('paciente123')
+        paciente3.save()
+    
+    # Crear perfil si no existe
+    if not hasattr(paciente3, 'perfil_paciente'):
         PerfilPaciente.objects.create(
             usuario=paciente3,
             fecha_de_nacimiento=date(2000, 11, 10),
             direccion='Zona Centro #987, La Paz'
         )
-        
-        usuarios_creados.append(paciente3)
-        print(f"    ✓ Paciente 3 creado: {paciente3.email} / paciente123")
-    else:
-        paciente3 = Usuario.objects.get(email='paciente3@test.com')
-        usuarios_creados.append(paciente3)
-        print(f"    ✓ Paciente 3 ya existe: {paciente3.email}")
+    
+    usuarios_creados.append(paciente3)
+    print(f"    ✓ Paciente 3 {'creado' if created else 'ya existe'}: {paciente3.email} / paciente123")
     
     # =========================================================================
     # RESUMEN
