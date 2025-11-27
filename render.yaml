@@ -64,6 +64,45 @@ services:
     # numInstances: 1
 
   # ============================================================================
+  # CRON JOB - Backups Automáticos
+  # ============================================================================
+  - type: cron
+    name: backup-automatico-worker
+    env: python
+    region: oregon
+    plan: free
+    
+    # Ejecutar cada hora (revisa si hay backups programados)
+    schedule: "0 * * * *"
+    
+    # Comando a ejecutar
+    buildCommand: "bash build.sh"
+    startCommand: "python manage.py run_scheduled_backups"
+    
+    # Environment variables (heredadas del web service)
+    envVars:
+      - key: DATABASE_URL
+        fromService:
+          type: web
+          name: clinica-dental-backend
+          envVarKey: DATABASE_URL
+      
+      - key: SUPABASE_URL
+        fromService:
+          type: web
+          name: clinica-dental-backend
+          envVarKey: SUPABASE_URL
+      
+      - key: SUPABASE_KEY
+        fromService:
+          type: web
+          name: clinica-dental-backend
+          envVarKey: SUPABASE_KEY
+      
+      - key: DEFAULT_TENANT_SCHEMA
+        value: clinica_demo
+
+  # ============================================================================
   # DATABASE - PostgreSQL
   # ============================================================================
 databases:
