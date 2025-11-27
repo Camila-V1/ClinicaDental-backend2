@@ -57,8 +57,8 @@ def poblar_planes_tratamiento(pacientes, odontologos, servicios):
             odontologo=odontologo,
             fecha_creacion=fecha_creacion,
             titulo=f"Plan Completado - {paciente.usuario.apellido}",
-            diagnostico=f"Tratamiento dental completado para {paciente.usuario.nombre} {paciente.usuario.apellido}",
-            observaciones="Tratamiento finalizado satisfactoriamente",
+            descripcion=f"Tratamiento dental completado para {paciente.usuario.nombre} {paciente.usuario.apellido}",
+            notas_internas="Tratamiento finalizado satisfactoriamente",
             estado='completado'
         )
         planes_creados.append(plan)
@@ -103,8 +103,8 @@ def poblar_planes_tratamiento(pacientes, odontologos, servicios):
             odontologo=odontologo,
             fecha_creacion=fecha_creacion,
             titulo=f"Tratamiento en Curso - {paciente.usuario.apellido}",
-            diagnostico=f"Plan de tratamiento para {paciente.usuario.nombre} {paciente.usuario.apellido}",
-            observaciones="Tratamiento en curso",
+            descripcion=f"Plan de tratamiento para {paciente.usuario.nombre} {paciente.usuario.apellido}",
+            notas_internas="Tratamiento en curso",
             estado='en_progreso'
         )
         planes_creados.append(plan)
@@ -159,8 +159,8 @@ def poblar_planes_tratamiento(pacientes, odontologos, servicios):
             odontologo=odontologo,
             fecha_creacion=fecha_creacion,
             titulo=f"{'Propuesta' if estado == 'propuesto' else 'Plan Aprobado'} - {paciente.usuario.apellido}",
-            diagnostico=f"Plan propuesto para {paciente.usuario.nombre} {paciente.usuario.apellido}",
-            observaciones="Esperando aprobación del paciente" if estado == 'propuesto' else "Plan aprobado, listo para iniciar",
+            descripcion=f"Plan propuesto para {paciente.usuario.nombre} {paciente.usuario.apellido}",
+            notas_internas="Esperando aprobación del paciente" if estado == 'propuesto' else "Plan aprobado, listo para iniciar",
             estado=estado
         )
         planes_creados.append(plan)
@@ -199,8 +199,8 @@ def poblar_planes_tratamiento(pacientes, odontologos, servicios):
             odontologo=odontologo,
             fecha_creacion=fecha_creacion,
             titulo=f"Plan Cancelado - {paciente.usuario.apellido}",
-            diagnostico="Plan cancelado por el paciente",
-            observaciones="Paciente decidió no continuar con el tratamiento",
+            descripcion="Plan cancelado por el paciente",
+            notas_internas="Paciente decidió no continuar con el tratamiento",
             estado='cancelado'
         )
         planes_creados.append(plan)
