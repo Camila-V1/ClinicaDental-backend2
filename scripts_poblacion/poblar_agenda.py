@@ -99,9 +99,11 @@ def poblar_agenda(odontologos, pacientes, servicios):
     
     # Cita confirmada para más tarde
     if timezone.now().hour < 15:
+        odonts_list = list(odontologos)
+        pacs_list = list(pacientes)
         cita_tarde = Cita.objects.create(
-            odontologo=odontologos[-1] if len(odontologos) > 1 else odontologos[0],
-            paciente=pacientes[-1] if len(pacientes) > 1 else pacientes[0],
+            odontologo=odonts_list[-1] if len(odonts_list) > 1 else odonts_list[0],
+            paciente=pacs_list[-1] if len(pacs_list) > 1 else pacs_list[0],
             fecha_hora=hoy.replace(hour=15, minute=30),
             motivo_tipo='CONSULTA',
             motivo='Consulta odontológica general',
