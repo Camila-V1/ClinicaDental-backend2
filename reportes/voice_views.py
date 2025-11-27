@@ -166,7 +166,7 @@ class VoiceReportQueryView(APIView):
         if filtros.get('monto_maximo'):
             queryset = queryset.filter(monto_total__lte=filtros['monto_maximo'])
         
-        facturas = queryset.select_related('paciente').order_by('-fecha_emision')
+        facturas = queryset.select_related('paciente__usuario').order_by('-fecha_emision')
         
         return [{
             'id': factura.id,
@@ -192,7 +192,7 @@ class VoiceReportQueryView(APIView):
         if filtros.get('estado'):
             queryset = queryset.filter(estado=filtros['estado'])
         
-        planes = queryset.select_related('paciente', 'odontologo').order_by('-fecha_creacion')
+        planes = queryset.select_related('paciente__usuario', 'odontologo__usuario').order_by('-fecha_creacion')
         
         return [{
             'id': plan.id,
@@ -228,7 +228,7 @@ class VoiceReportQueryView(APIView):
     
     def _obtener_ingresos(self, fecha_inicio, fecha_fin, filtros):
         """Obtiene resumen de ingresos."""
-        queryset = Pago.objects.filter(estado='completado')
+        queryset = Pago.objects.filter(estado_pago='COMPLETADO')
         
         if fecha_inicio and fecha_fin:
             queryset = queryset.filter(
@@ -236,12 +236,12 @@ class VoiceReportQueryView(APIView):
                 fecha_pago__date__lte=fecha_fin
             )
         
-        pagos = queryset.select_related('factura__paciente').order_by('-fecha_pago')
+        pagos = queryset.select_related('factura__paciente__usuario').order_by('-fecha_pago')
         
         return [{
             'id': pago.id,
             'fecha': pago.fecha_pago.strftime('%d/%m/%Y %H:%M'),
-            'monto': float(pago.monto),
+            'monto': float(pago.monto_pagado),
             'metodo_pago': pago.get_metodo_pago_display(),
             'factura': f"FAC-{pago.factura.id:06d}" if pago.factura else 'N/A',
             'paciente': pago.factura.paciente.usuario.full_name if pago.factura and pago.factura.paciente else 'N/A'
