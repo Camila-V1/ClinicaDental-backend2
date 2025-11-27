@@ -361,6 +361,62 @@ def crear_inventario():
             'precio_costo': Decimal('3.00'),
             'precio_venta': Decimal('8.00'),
             'unidad_medida': 'unidad'
+        },
+        # Insumos con STOCK BAJO (para probar alertas)
+        {
+            'categoria': categorias['Materiales Dentales'],
+            'nombre': 'Resina Compuesta B1',
+            'descripcion': 'Resina fotopolimerizable color B1',
+            'codigo': 'RES-B1-001',
+            'stock_minimo': Decimal('10'),
+            'stock_actual': Decimal('8'),  # ⚠️ STOCK BAJO
+            'precio_costo': Decimal('45.00'),
+            'precio_venta': Decimal('75.00'),
+            'unidad_medida': 'unidad'
+        },
+        {
+            'categoria': categorias['Anestésicos'],
+            'nombre': 'Articaína 4%',
+            'descripcion': 'Anestésico local de acción rápida',
+            'codigo': 'ANE-ART-001',
+            'stock_minimo': Decimal('20'),
+            'stock_actual': Decimal('15'),  # ⚠️ STOCK BAJO
+            'precio_costo': Decimal('4.50'),
+            'precio_venta': Decimal('10.00'),
+            'unidad_medida': 'unidad'
+        },
+        {
+            'categoria': categorias['Insumos Descartables'],
+            'nombre': 'Agujas Dentales 27G',
+            'descripcion': 'Agujas descartables calibre 27',
+            'codigo': 'AGU-27G-001',
+            'stock_minimo': Decimal('50'),
+            'stock_actual': Decimal('45'),  # ⚠️ STOCK BAJO
+            'precio_costo': Decimal('0.30'),
+            'precio_venta': Decimal('0.80'),
+            'unidad_medida': 'unidad'
+        },
+        {
+            'categoria': categorias['Materiales Dentales'],
+            'nombre': 'Cemento de Ionómero',
+            'descripcion': 'Cemento de ionómero de vidrio',
+            'codigo': 'CEM-ION-001',
+            'stock_minimo': Decimal('12'),
+            'stock_actual': Decimal('5'),  # ⚠️ STOCK MUY BAJO
+            'precio_costo': Decimal('35.00'),
+            'precio_venta': Decimal('55.00'),
+            'unidad_medida': 'unidad'
+        },
+        {
+            'categoria': categorias['Instrumental'],
+            'nombre': 'Fresas Diamantadas',
+            'descripcion': 'Juego de fresas diamantadas',
+            'codigo': 'FRE-DIA-001',
+            'stock_minimo': Decimal('15'),
+            'stock_actual': Decimal('12'),  # ⚠️ STOCK BAJO
+            'precio_costo': Decimal('25.00'),
+            'precio_venta': Decimal('40.00'),
+            'unidad_medida': 'juego'
         }
     ]
     

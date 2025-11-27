@@ -213,11 +213,10 @@ class VoiceReportParser:
                 logger.info(f"📅 Mes {mes_nombre}: {self.fecha_inicio} a {self.fecha_fin}")
                 return
         
-        # Si no se detecta ninguna fecha, usar el mes actual
-        logger.warning("⚠️ No se detectó fecha específica, usando mes actual")
-        self.fecha_inicio = hoy.replace(day=1)
-        ultimo_dia = calendar.monthrange(hoy.year, hoy.month)[1]
-        self.fecha_fin = hoy.replace(day=ultimo_dia)
+        # Si no se detecta ninguna fecha, usar un rango amplio (últimos 6 meses)
+        logger.warning("⚠️ No se detectó fecha específica, usando últimos 6 meses")
+        self.fecha_inicio = hoy - timedelta(days=180)  # 6 meses atrás
+        self.fecha_fin = hoy
     
     def _extraer_filtros(self):
         """Extrae filtros adicionales del texto."""
@@ -262,10 +261,15 @@ class VoiceReportParser:
             if self.fecha_inicio == self.fecha_fin:
                 partes.append(f"del {self.fecha_inicio.strftime('%d/%m/%Y')}")
             else:
-                partes.append(
-                    f"desde el {self.fecha_inicio.strftime('%d/%m/%Y')} "
-                    f"hasta el {self.fecha_fin.strftime('%d/%m/%Y')}"
-                )
+                # Verificar si es un rango muy amplio (indica búsqueda general)
+                dias_diferencia = (self.fecha_fin - self.fecha_inicio).days
+                if dias_diferencia > 150:  # Más de 5 meses = búsqueda general
+                    partes.append("(todos los registros disponibles)")
+                else:
+                    partes.append(
+                        f"desde el {self.fecha_inicio.strftime('%d/%m/%Y')} "
+                        f"hasta el {self.fecha_fin.strftime('%d/%m/%Y')}"
+                    )
         
         # Filtros
         if self.filtros_adicionales.get('estado'):

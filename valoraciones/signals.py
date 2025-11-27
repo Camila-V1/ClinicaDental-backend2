@@ -34,14 +34,14 @@ def enviar_notificacion_valoracion_cita_completada(sender, instance, created, **
                 
                 logger.info(
                     f"📲 Enviando notificación de valoración a {paciente.email} "
-                    f"por cita con {instance.odontologo.nombre_completo}"
+                    f"por cita con {instance.odontologo.full_name}"
                 )
                 
                 # Enviar notificación
                 exito = FirebaseNotificationService.enviar_notificacion_valoracion(
                     device_token=paciente.fcm_token,
                     cita_id=instance.id,
-                    odontologo_nombre=instance.odontologo.nombre_completo
+                    odontologo_nombre=instance.odontologo.full_name
                 )
                 
                 if exito:
