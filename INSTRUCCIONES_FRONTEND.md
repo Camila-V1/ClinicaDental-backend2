@@ -6,6 +6,66 @@
 
 ---
 
+## 🔄 FLUJO DE DATOS (Backend → Frontend)
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ 1. BACKEND (Django REST Framework)                              │
+│    reportes/views.py → dashboard_kpis()                         │
+│                                                                   │
+│    Retorna ARRAY de 10 objetos:                                 │
+│    [                                                             │
+│      { "etiqueta": "Pacientes Activos", "valor": 5 },           │
+│      { "etiqueta": "Citas Hoy", "valor": 0 },                   │
+│      { "etiqueta": "Ingresos Este Mes", "valor": 280.0 },       │
+│      ...                                                         │
+│    ]                                                             │
+└────────────────────────┬────────────────────────────────────────┘
+                         │
+                         │ HTTP GET /api/reportes/reportes/dashboard-kpis/
+                         │ Authorization: Bearer <token>
+                         │ Host: clinica-demo.clinicadental-backend2.onrender.com
+                         ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ 2. SERVICIO (TypeScript)                                        │
+│    adminDashboardService.ts → getKPIs()                         │
+│                                                                   │
+│    Transforma ARRAY → OBJETO:                                   │
+│    {                                                             │
+│      total_pacientes: 5,                                         │
+│      citas_hoy: 0,                                               │
+│      ingresos_mes: 280.0,                                        │
+│      saldo_pendiente: 525.0,                                     │
+│      tratamientos_activos: 0,                                    │
+│      planes_completados: 0,                                      │
+│      promedio_factura: 176.25,                                   │
+│      facturas_vencidas: 1,                                       │
+│      total_procedimientos: 0,                                    │
+│      pacientes_nuevos_mes: 5                                     │
+│    }                                                             │
+└────────────────────────┬────────────────────────────────────────┘
+                         │
+                         │ useQuery('dashboard-kpis', getKPIs)
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ 3. COMPONENTE (React)                                           │
+│    Dashboard.tsx                                                 │
+│                                                                   │
+│    Renderiza:                                                    │
+│    <KPICard                                                      │
+│      label="Pacientes Activos"                                   │
+│      value={kpis.total_pacientes}  ← ✅ ACCESO CORRECTO         │
+│      icon="Users"                                                │
+│    />                                                            │
+│                                                                   │
+│    ❌ INCORRECTO: value={kpis[0].valor}                         │
+│    ✅ CORRECTO:   value={kpis.total_pacientes}                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
 ## 📊 Resumen de la Situación
 
 ### ✅ Lo que YA está funcionando en el BACKEND:
@@ -15,12 +75,17 @@
    - ✅ Todos los valores son correctos
    - ✅ Formato: `[{ "etiqueta": "...", "valor": ... }]`
 
-2. **Datos reales en Render:**
+2. **Datos reales en Render (actualizados 27/11/2025):**
    - ✅ 5 Pacientes Activos
+   - ✅ 0 Citas Hoy
    - ✅ Bs. 280.00 de Ingresos Este Mes
    - ✅ Bs. 525.00 de Saldo Pendiente
+   - ✅ 0 Tratamientos Activos
+   - ✅ 0 Planes Completados
    - ✅ Bs. 176.25 Promedio por Factura
    - ✅ 1 Factura Vencida
+   - ✅ 0 Total Procedimientos
+   - ✅ 5 Pacientes Nuevos del Mes
 
 ### ❌ Lo que está FALLANDO en el FRONTEND:
 
@@ -293,8 +358,12 @@ Host: clinica-demo.clinicadental-backend2.onrender.com
   { "etiqueta": "Promedio por Factura", "valor": 176.25 },
   { "etiqueta": "Facturas Vencidas", "valor": 1 },
   { "etiqueta": "Total Procedimientos", "valor": 0 },
-  { "etiqueta": "Pacientes Nuevos Mes", "valor": 0 }
+  { "etiqueta": "Pacientes Nuevos Mes", "valor": 5 }
 ]
+```
+
+**IMPORTANTE:** Los valores pueden variar según los datos en tu base de datos.
+Los valores mostrados arriba son los actuales al 27/11/2025.
 ```
 
 ### **2. Verificar logs del frontend:**
@@ -377,6 +446,87 @@ git push
 2. ❌ **NO buscar por palabras clave** → Usar etiquetas EXACTAS del backend
 3. ❌ **NO asumir conversión automática** → El backend envía Bs., no US$
 4. ❌ **NO olvidar console.logs** → Ayudan a debuggear el flujo de datos
+
+---
+
+## 🔍 DEBUGGING Y TROUBLESHOOTING
+
+### **Si el dashboard sigue mostrando 0:**
+
+1. **Verificar la consola del navegador:**
+   - Abre DevTools (F12)
+   - Ve a la pestaña Console
+   - Busca los logs: `🔍 [AdminDashboardService] KPIs recibidos del backend`
+   - Verifica que el array tenga 10 elementos
+
+2. **Verificar la respuesta de la API:**
+   - Abre DevTools (F12)
+   - Ve a la pestaña Network
+   - Busca la petición `dashboard-kpis`
+   - Haz clic y ve a la pestaña Response
+   - Verifica que retorne el array completo de 10 KPIs
+
+3. **Verificar el mapeo:**
+   - El log `✅ [AdminDashboardService] KPIs mapeados` debe mostrar el objeto con valores > 0
+   - Si muestra todo en 0, hay un problema en el mapeo de etiquetas
+   - Verifica que las etiquetas sean EXACTAS (con mayúsculas y minúsculas)
+
+4. **Verificar autenticación:**
+   - Si la API retorna 401 o 403, el token JWT puede estar expirado
+   - Haz logout y login nuevamente
+
+### **Si algunos KPIs específicos están en 0:**
+
+Esto es **NORMAL** y depende de los datos en tu base de datos:
+
+- **Citas Hoy = 0:** No hay citas programadas para hoy
+- **Tratamientos Activos = 0:** No hay planes de tratamiento en progreso
+- **Planes Completados = 0:** No se completó ningún plan este mes
+- **Total Procedimientos = 0:** No se realizaron procedimientos este mes
+
+**Solución:** Crear datos de prueba o esperar a que haya actividad real.
+
+### **Si hay error de CORS:**
+
+Verifica que el frontend esté configurado para usar el dominio correcto:
+
+```typescript
+// En tu archivo de configuración de axios
+const api = axios.create({
+  baseURL: 'https://clinicadental-backend2.onrender.com',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Y agregar el header Host en las peticiones
+api.interceptors.request.use((config) => {
+  config.headers['Host'] = 'clinica-demo.clinicadental-backend2.onrender.com';
+  return config;
+});
+```
+
+### **Comandos útiles para debugging:**
+
+```bash
+# Ver logs del backend en Render
+# (desde el dashboard de Render.com)
+
+# Probar el endpoint directamente con curl
+curl -X GET "https://clinicadental-backend2.onrender.com/api/reportes/reportes/dashboard-kpis/" \
+  -H "Authorization: Bearer TU_TOKEN_JWT" \
+  -H "Host: clinica-demo.clinicadental-backend2.onrender.com"
+
+# Probar desde el navegador (abrir consola y ejecutar):
+fetch('https://clinicadental-backend2.onrender.com/api/reportes/reportes/dashboard-kpis/', {
+  headers: {
+    'Authorization': 'Bearer ' + localStorage.getItem('token'),
+    'Host': 'clinica-demo.clinicadental-backend2.onrender.com'
+  }
+})
+  .then(r => r.json())
+  .then(d => console.log('KPIs del backend:', d));
+```
 
 ---
 
