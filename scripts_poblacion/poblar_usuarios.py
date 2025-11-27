@@ -76,34 +76,35 @@ def poblar_usuarios():
     # 3. ODONTÓLOGO 1
     # =========================================================================
     print("  → Odontólogo 1...")
-    if not Usuario.objects.filter(email='odontologo@clinica-demo.com').exists():
-        odontologo = Usuario.objects.create_user(
-            email='odontologo@clinica-demo.com',
-            password='odontologo123',
-            nombre='Dr. Carlos',
-            apellido='Rodríguez',
-            ci='87654321',
-            sexo='M',
-            telefono='70111111',
-            tipo_usuario='ODONTOLOGO',
-            is_staff=True,
-            is_active=True
-        )
-        
-        # Crear perfil de odontólogo
+    odontologo, created = Usuario.objects.get_or_create(
+        email='odontologo@clinica-demo.com',
+        defaults={
+            'nombre': 'Dr. Carlos',
+            'apellido': 'Rodríguez',
+            'ci': '87654321',
+            'sexo': 'M',
+            'telefono': '70111111',
+            'tipo_usuario': 'ODONTOLOGO',
+            'is_staff': True,
+            'is_active': True
+        }
+    )
+    
+    if created:
+        odontologo.set_password('odontologo123')
+        odontologo.save()
+    
+    # Crear perfil si no existe
+    if not hasattr(odontologo, 'perfil_odontologo'):
         PerfilOdontologo.objects.create(
             usuario=odontologo,
             especialidad=especialidad_general,
             cedulaProfesional='LIC-2024-001',
             experienciaProfesional='5 años de experiencia en odontología general y preventiva'
         )
-        
-        usuarios_creados.append(odontologo)
-        print(f"    ✓ Odontólogo creado: {odontologo.email} / odontologo123")
-    else:
-        odontologo = Usuario.objects.get(email='odontologo@clinica-demo.com')
-        usuarios_creados.append(odontologo)
-        print(f"    ✓ Odontólogo ya existe: {odontologo.email}")
+    
+    usuarios_creados.append(odontologo)
+    print(f"    ✓ Odontólogo {'creado' if created else 'ya existe'}: {odontologo.email} / odontologo123")
     
     # =========================================================================
     # 4. ODONTÓLOGO 2
