@@ -83,7 +83,7 @@ def poblar_planes_tratamiento(pacientes, odontologos, servicios):
             )
             items_creados.append(item)
     
-    print(f"    ✓ {len([p for p in planes_creados if p.estado == 'COMPLETADO'])} planes completados")
+    print(f"    ✓ {len([p for p in planes_creados if p.estado == 'completado'])} planes completados")
     
     # =========================================================================
     # 2. PLANES EN PROGRESO
@@ -137,7 +137,7 @@ def poblar_planes_tratamiento(pacientes, odontologos, servicios):
         
         plan.actualizar_progreso()
     
-    print(f"    ✓ {len([p for p in planes_creados if p.estado == 'EN_PROGRESO'])} planes en progreso")
+    print(f"    ✓ {len([p for p in planes_creados if p.estado == 'en_progreso'])} planes en progreso")
     
     # =========================================================================
     # 3. PLANES PROPUESTOS/APROBADOS
@@ -180,7 +180,7 @@ def poblar_planes_tratamiento(pacientes, odontologos, servicios):
             )
             items_creados.append(item)
     
-    print(f"    ✓ {len([p for p in planes_creados if p.estado in ['PROPUESTO', 'APROBADO']])} planes propuestos/aprobados")
+    print(f"    ✓ {len([p for p in planes_creados if p.estado in ['propuesto', 'aprobado']])} planes propuestos/aprobados")
     
     # =========================================================================
     # 4. ALGUNOS PLANES CANCELADOS
@@ -219,7 +219,7 @@ def poblar_planes_tratamiento(pacientes, odontologos, servicios):
             )
             items_creados.append(item)
     
-    print(f"    ✓ {len([p for p in planes_creados if p.estado == 'CANCELADO'])} planes cancelados")
+    print(f"    ✓ {len([p for p in planes_creados if p.estado == 'cancelado'])} planes cancelados")
     
     # =========================================================================
     # RESUMEN
