@@ -83,7 +83,7 @@ def main():
     for tenant in tenants:
         schema_name = tenant.schema_name
         print(f"\n{'='*70}")
-        print(f"🏥 Procesando: {tenant.name} (schema: {schema_name})")
+        print(f"🏥 Procesando: {tenant.nombre} (schema: {schema_name})")
         print(f"{'='*70}")
         
         # Verificar si la tabla existe
