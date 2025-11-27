@@ -42,32 +42,70 @@ def limpiar_datos_tenant(schema_name):
         with schema_context(schema_name):
             from django.apps import apps
             
-            # Obtener todos los modelos del tenant (excepto los del sistema)
-            apps_a_limpiar = [
-                'agenda',
-                'historial_clinico',
-                'tratamientos',
-                'facturacion',
-                'inventario',
-                'usuarios',
-                'reportes',
+            # ORDEN CORRECTO: De dependientes a independientes
+            # Primero eliminar los modelos que dependen de otros
+            modelos_orden = [
+                # 1. Facturación (depende de pacientes y citas)
+                ('facturacion', 'Pago'),
+                ('facturacion', 'Factura'),
+                
+                # 2. Historial clínico (depende de pacientes y citas)
+                ('historial_clinico', 'DocumentoClinico'),
+                ('historial_clinico', 'Odontograma'),
+                ('historial_clinico', 'DetalleOdontograma'),
+                ('historial_clinico', 'EpisodioClinico'),
+                ('historial_clinico', 'HistorialClinico'),
+                
+                # 3. Tratamientos - Items de planes (dependen de planes y servicios)
+                ('tratamientos', 'ItemPlanTratamiento'),
+                ('tratamientos', 'PlanDeTratamiento'),
+                ('tratamientos', 'ItemPresupuesto'),
+                ('tratamientos', 'Presupuesto'),
+                
+                # 4. Agenda (depende de pacientes y odontólogos)
+                ('agenda', 'Cita'),
+                
+                # 5. Servicios (dependen de categorías)
+                ('tratamientos', 'Servicio'),
+                ('tratamientos', 'CategoriaServicio'),
+                
+                # 6. Inventario
+                ('inventario', 'MovimientoInventario'),
+                ('inventario', 'Insumo'),
+                ('inventario', 'CategoriaInsumo'),
+                
+                # 7. Usuarios (al final porque muchos dependen de ellos)
+                ('usuarios', 'PerfilOdontologo'),
+                ('usuarios', 'PerfilPaciente'),
+                ('usuarios', 'Usuario'),
+                
+                # 8. Reportes
+                ('reportes', 'BitacoraAccion'),
             ]
             
-            print("\n📦 Limpiando datos por app:")
-            for app_name in apps_a_limpiar:
+            print("\n📦 Limpiando datos en orden correcto:")
+            total_eliminados = 0
+            
+            for app_name, modelo_name in modelos_orden:
                 try:
                     app_config = apps.get_app_config(app_name)
-                    modelos = app_config.get_models()
+                    modelo = app_config.get_model(modelo_name)
                     
-                    for modelo in modelos:
-                        count = modelo.objects.count()
-                        if count > 0:
-                            modelo.objects.all().delete()
-                            print(f"   ✓ {app_name}.{modelo.__name__}: {count} registros eliminados")
+                    count = modelo.objects.count()
+                    if count > 0:
+                        modelo.objects.all().delete()
+                        total_eliminados += count
+                        print(f"   ✓ {app_name}.{modelo_name}: {count} registros eliminados")
                 
                 except LookupError:
-                    print(f"   ⚠️  App {app_name} no encontrada")
+                    # App o modelo no encontrado, continuar
                     continue
+                except Exception as e:
+                    # Si hay error en un modelo específico, continuar con los demás
+                    print(f"   ⚠️  Error en {app_name}.{modelo_name}: {str(e)[:100]}")
+                    continue
+            
+            print(f"\n✅ Total de registros eliminados: {total_eliminados}")
         
         print("\n✅ Datos del tenant limpiados correctamente")
         return True
