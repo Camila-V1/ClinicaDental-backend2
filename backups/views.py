@@ -38,7 +38,7 @@ class CreateBackupView(APIView):
     
     def post(self, request):
         # Verificar que el usuario sea ADMIN
-        if request.user.rol != 'ADMIN':
+        if request.user.tipo_usuario != 'ADMIN':
             return Response(
                 {'error': 'Solo los administradores pueden crear backups'},
                 status=status.HTTP_403_FORBIDDEN
