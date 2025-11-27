@@ -24,12 +24,12 @@ print()
 TenantModel = get_tenant_model()
 try:
     tenant = TenantModel.objects.get(schema_name='clinica_demo')
-    print(f"✅ Tenant encontrado: {tenant.schema_name} - {tenant.name}")
+    print(f"✅ Tenant encontrado: {tenant.schema_name} - {tenant.nombre}")
 except TenantModel.DoesNotExist:
     print("❌ No existe tenant 'clinica_demo'")
     print("\n📋 Tenants disponibles:")
     for t in TenantModel.objects.all():
-        print(f"   - {t.schema_name}: {t.name}")
+        print(f"   - {t.schema_name}: {t.nombre}")
     sys.exit(1)
 
 print()
