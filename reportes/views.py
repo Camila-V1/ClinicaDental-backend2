@@ -147,9 +147,28 @@ class ReportesViewSet(viewsets.ViewSet):
         GET /api/reportes/dashboard-kpis/?formato=pdf
         GET /api/reportes/dashboard-kpis/?formato=excel
         
-        Respuesta: Lista de objetos con etiqueta y valor
+        Respuesta JSON: Objeto con dos formatos para flexibilidad
+        {
+            "items": [  # Array de objetos {etiqueta, valor} para tablas
+                {"etiqueta": "Pacientes Activos", "valor": 3},
+                {"etiqueta": "Citas Hoy", "valor": 5},
+                ...
+            ],
+            "kpis": {  # Objeto plano para acceso directo en frontend
+                "total_pacientes": 3,
+                "citas_hoy": 5,
+                "ingresos_mes": 510.00,
+                "saldo_pendiente": 260.00,
+                "tratamientos_activos": 12,
+                "planes_completados": 7,
+                "promedio_factura": 38.50,
+                "facturas_vencidas": 0,
+                "total_procedimientos": 38,
+                "pacientes_nuevos_mes": 3
+            }
+        }
         
-        VERSIÓN: 3.1 - Con KPIs adicionales y manejo robusto de errores
+        VERSIÓN: 3.2 - Formato dual (array + objeto) para mejor usabilidad
         """
         # Inicializar variables con valores por defecto
         total_pacientes = 0
@@ -281,8 +300,25 @@ class ReportesViewSet(viewsets.ViewSet):
         if export_response:
             return export_response
         
-        serializer = ReporteSimpleSerializer(data, many=True)
-        return Response(serializer.data)
+        # Devolver tanto el formato de array (para compatibilidad)
+        # como un objeto plano (para facilitar el uso en frontend)
+        response_data = {
+            'items': data,  # Array original
+            'kpis': {  # Objeto plano para acceso directo
+                'total_pacientes': total_pacientes,
+                'citas_hoy': citas_hoy,
+                'ingresos_mes': float(ingresos_mes),
+                'saldo_pendiente': float(saldo_pendiente),
+                'tratamientos_activos': tratamientos_activos,
+                'planes_completados': planes_completados,
+                'promedio_factura': float(promedio_factura),
+                'facturas_vencidas': facturas_vencidas,
+                'total_procedimientos': total_procedimientos,
+                'pacientes_nuevos_mes': pacientes_nuevos_mes
+            }
+        }
+        
+        return Response(response_data)
 
     @action(detail=False, methods=['get'], url_path='tendencia-citas')
     def tendencia_citas(self, request):
