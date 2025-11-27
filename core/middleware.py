@@ -25,8 +25,8 @@ class DefaultTenantMiddleware:
         self.default_tenant_schema = os.environ.get('DEFAULT_TENANT_SCHEMA', 'clinica_demo')
     
     def __call__(self, request):
-        # Solo aplicar para requests a /api/ (excepto /api/token/ que puede funcionar en public)
-        if request.path.startswith('/api/') and not request.path.startswith('/api/token/'):
+        # Solo aplicar para requests a /api/ (excepto /api/token/ y /api/public/)
+        if request.path.startswith('/api/') and not request.path.startswith('/api/token/') and not request.path.startswith('/api/public/'):
             # Obtener el hostname actual
             hostname = request.get_host().split(':')[0]
             
