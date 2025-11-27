@@ -121,7 +121,7 @@ class ReportesViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'], url_path='dashboard-kpis')
     def dashboard_kpis(self, request):
         """
-        Devuelve los 4 KPIs principales para el dashboard.
+        Devuelve los KPIs principales para el dashboard.
         
         GET /api/reportes/dashboard-kpis/
         GET /api/reportes/dashboard-kpis/?formato=pdf
@@ -129,10 +129,12 @@ class ReportesViewSet(viewsets.ViewSet):
         
         Respuesta: Lista de objetos con etiqueta y valor
         
-        VERSIÓN: 2.0 - Con manejo robusto de errores
+        VERSIÓN: 3.0 - Con KPIs adicionales y manejo robusto de errores
         """
         try:
             hoy = timezone.now().date()
+            mes_actual = hoy.month
+            anio_actual = hoy.year
             
             # 1. Total Pacientes Activos
             total_pacientes = PerfilPaciente.objects.filter(
@@ -146,8 +148,6 @@ class ReportesViewSet(viewsets.ViewSet):
             ).count()
             
             # 3. Ingresos del Mes (Pagos completados este mes)
-            mes_actual = hoy.month
-            anio_actual = hoy.year
             ingresos_mes = Pago.objects.filter(
                 fecha_pago__year=anio_actual,
                 fecha_pago__month=mes_actual,
@@ -163,12 +163,59 @@ class ReportesViewSet(viewsets.ViewSet):
                 except Exception as e:
                     # Si una factura tiene problemas, continuar con las demás
                     continue
+            
+            # 5. Tratamientos Activos (Planes en progreso)
+            tratamientos_activos = PlanDeTratamiento.objects.filter(
+                estado__in=['EN_PROGRESO', 'PROPUESTO', 'APROBADO']
+            ).count()
+            
+            # 6. Planes Completados (este mes)
+            planes_completados = PlanDeTratamiento.objects.filter(
+                estado='COMPLETADO',
+                fecha_creacion__year=anio_actual,
+                fecha_creacion__month=mes_actual
+            ).count()
+            
+            # 7. Promedio por Factura (del mes actual)
+            facturas_mes = Factura.objects.filter(
+                fecha_emision__year=anio_actual,
+                fecha_emision__month=mes_actual
+            )
+            total_facturado = facturas_mes.aggregate(total=Sum('monto_total'))['total'] or Decimal('0.00')
+            num_facturas = facturas_mes.count()
+            promedio_factura = (total_facturado / num_facturas) if num_facturas > 0 else Decimal('0.00')
+            
+            # 8. Facturas Vencidas (pendientes con fecha vencida)
+            facturas_vencidas = Factura.objects.filter(
+                estado='PENDIENTE',
+                fecha_vencimiento__lt=hoy
+            ).count()
+            
+            # 9. Total Procedimientos Completados (este mes)
+            total_procedimientos = ItemPlanTratamiento.objects.filter(
+                estado='COMPLETADO',
+                fecha_realizacion__year=anio_actual,
+                fecha_realizacion__month=mes_actual
+            ).count()
+            
+            # 10. Pacientes Nuevos del Mes
+            pacientes_nuevos_mes = Usuario.objects.filter(
+                date_joined__year=anio_actual,
+                date_joined__month=mes_actual,
+                perfil_paciente__isnull=False
+            ).count()
 
             data = [
                 {"etiqueta": "Pacientes Activos", "valor": total_pacientes},
                 {"etiqueta": "Citas Hoy", "valor": citas_hoy},
-                {"etiqueta": "Ingresos Este Mes", "valor": ingresos_mes},
-                {"etiqueta": "Saldo Pendiente", "valor": saldo_pendiente},
+                {"etiqueta": "Ingresos Este Mes", "valor": float(ingresos_mes)},
+                {"etiqueta": "Saldo Pendiente", "valor": float(saldo_pendiente)},
+                {"etiqueta": "Tratamientos Activos", "valor": tratamientos_activos},
+                {"etiqueta": "Planes Completados", "valor": planes_completados},
+                {"etiqueta": "Promedio por Factura", "valor": float(promedio_factura)},
+                {"etiqueta": "Facturas Vencidas", "valor": facturas_vencidas},
+                {"etiqueta": "Total Procedimientos", "valor": total_procedimientos},
+                {"etiqueta": "Pacientes Nuevos Mes", "valor": pacientes_nuevos_mes},
             ]
         except Exception as e:
             # En caso de cualquier error, retornar KPIs en cero con mensaje de error en logs
@@ -180,8 +227,14 @@ class ReportesViewSet(viewsets.ViewSet):
             data = [
                 {"etiqueta": "Pacientes Activos", "valor": 0},
                 {"etiqueta": "Citas Hoy", "valor": 0},
-                {"etiqueta": "Ingresos Este Mes", "valor": Decimal('0.00')},
-                {"etiqueta": "Saldo Pendiente", "valor": Decimal('0.00')},
+                {"etiqueta": "Ingresos Este Mes", "valor": 0.0},
+                {"etiqueta": "Saldo Pendiente", "valor": 0.0},
+                {"etiqueta": "Tratamientos Activos", "valor": 0},
+                {"etiqueta": "Planes Completados", "valor": 0},
+                {"etiqueta": "Promedio por Factura", "valor": 0.0},
+                {"etiqueta": "Facturas Vencidas", "valor": 0},
+                {"etiqueta": "Total Procedimientos", "valor": 0},
+                {"etiqueta": "Pacientes Nuevos Mes", "valor": 0},
             ]
         
         # Exportar si se solicita
@@ -192,8 +245,14 @@ class ReportesViewSet(viewsets.ViewSet):
             metrics={
                 "Pacientes Activos": total_pacientes,
                 "Citas Hoy": citas_hoy,
-                "Ingresos Este Mes": format_currency(ingresos_mes),
-                "Saldo Pendiente": format_currency(saldo_pendiente)
+                "Ingresos Este Mes": format_currency(Decimal(str(ingresos_mes))),
+                "Saldo Pendiente": format_currency(Decimal(str(saldo_pendiente))),
+                "Tratamientos Activos": tratamientos_activos,
+                "Planes Completados": planes_completados,
+                "Promedio por Factura": format_currency(Decimal(str(promedio_factura))),
+                "Facturas Vencidas": facturas_vencidas,
+                "Total Procedimientos": total_procedimientos,
+                "Pacientes Nuevos Mes": pacientes_nuevos_mes
             }
         )
         if export_response:
