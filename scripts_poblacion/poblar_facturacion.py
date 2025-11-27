@@ -12,40 +12,57 @@ import random
 
 def poblar_facturacion(pacientes, citas_atendidas):
     """
-    Crea pagos para citas atendidas
+    Crea facturas y pagos para citas atendidas
     
     Args:
         pacientes: Lista de PerfilPaciente
         citas_atendidas: Lista de Cita atendidas
     
     Returns:
-        tuple: ([], pagos_creados) - Sin facturas por ahora
+        tuple: (facturas_creadas, pagos_creados)
     """
-    from facturacion.models import Pago
+    from facturacion.models import Factura, Pago
     
     print("\n=== POBLANDO FACTURACIÓN Y PAGOS ===")
     
+    facturas_creadas = []
     pagos_creados = []
     
     # Métodos de pago disponibles
     metodos_pago = ['EFECTIVO', 'TARJETA', 'TRANSFERENCIA', 'QR']
     
     # =========================================================================
-    # CREAR PAGOS PARA CITAS ATENDIDAS
+    # CREAR FACTURAS Y PAGOS PARA CITAS ATENDIDAS
     # =========================================================================
-    print("\n1. Creando pagos para citas atendidas...")
+    print("\n1. Creando facturas y pagos para citas atendidas...")
     
     for cita in citas_atendidas[:15]:  # Primeras 15 citas atendidas
         # Obtener precio de la cita según su tipo
         monto = cita.precio
         
-        # Solo crear pago si tiene costo
+        # Solo crear factura y pago si tiene costo
         if monto > 0:
+            # Crear factura
+            factura = Factura.objects.create(
+                paciente=cita.paciente,
+                nit_ci=cita.paciente.usuario.ci or '0',
+                razon_social=cita.paciente.usuario.full_name,
+                monto_total=monto,
+                monto_pagado=monto,
+                saldo_pendiente=Decimal('0.00'),
+                estado='PAGADA',
+                fecha_emision=cita.fecha_hora.date()
+            )
+            
+            facturas_creadas.append(factura)
+            
+            # Crear pago vinculado a la factura
             metodo = random.choice(metodos_pago)
             
             pago = Pago.objects.create(
                 tipo_pago='CITA',
                 cita=cita,
+                factura=factura,
                 paciente=cita.paciente,
                 monto_pagado=monto,
                 metodo_pago=metodo,
@@ -62,14 +79,15 @@ def poblar_facturacion(pacientes, citas_atendidas):
             
             pagos_creados.append(pago)
     
-    print(f"   ✓ {len(pagos_creados)} pagos de citas creados")
+    print(f"   ✓ {len(facturas_creadas)} facturas creadas")
+    print(f"   ✓ {len(pagos_creados)} pagos completados creados")
     
     # =========================================================================
-    # ALGUNOS PAGOS PENDIENTES
+    # ALGUNAS FACTURAS PENDIENTES
     # =========================================================================
-    print("\n2. Creando algunos pagos pendientes...")
+    print("\n2. Creando algunas facturas pendientes...")
     
-    # Tomar algunas citas futuras y crear pagos pendientes
+    # Tomar algunas citas futuras y crear facturas pendientes
     from agenda.models import Cita
     citas_futuras = Cita.objects.filter(
         estado='CONFIRMADA',
@@ -80,11 +98,27 @@ def poblar_facturacion(pacientes, citas_atendidas):
         monto = cita.precio
         
         if monto > 0:
+            # Crear factura pendiente
+            factura = Factura.objects.create(
+                paciente=cita.paciente,
+                nit_ci=cita.paciente.usuario.ci or '0',
+                razon_social=cita.paciente.usuario.full_name,
+                monto_total=monto,
+                monto_pagado=Decimal('0.00'),
+                saldo_pendiente=monto,
+                estado='PENDIENTE',
+                fecha_emision=timezone.now().date()
+            )
+            
+            facturas_creadas.append(factura)
+            
+            # Crear pago pendiente vinculado
             metodo = random.choice(metodos_pago)
             
             pago = Pago.objects.create(
                 tipo_pago='CITA',
                 cita=cita,
+                factura=factura,
                 paciente=cita.paciente,
                 monto_pagado=monto,
                 metodo_pago=metodo,
@@ -100,9 +134,14 @@ def poblar_facturacion(pacientes, citas_atendidas):
     # =========================================================================
     # RESUMEN
     # =========================================================================
+    total_facturas = Factura.objects.count()
     total_pagos = Pago.objects.count()
     
-    # Calcular estadísticas
+    # Calcular estadísticas de facturas
+    facturas_pagadas = Factura.objects.filter(estado='PAGADA').count()
+    facturas_pendientes = Factura.objects.filter(estado='PENDIENTE').count()
+    
+    # Calcular estadísticas de pagos
     pagos_completados = Pago.objects.filter(estado_pago='COMPLETADO').count()
     pagos_pendientes = Pago.objects.filter(estado_pago='PENDIENTE').count()
     
@@ -114,7 +153,10 @@ def poblar_facturacion(pacientes, citas_atendidas):
     )
     
     print("\n=== RESUMEN FACTURACIÓN ===")
-    print(f"Pagos totales: {total_pagos}")
+    print(f"Facturas totales: {total_facturas}")
+    print(f"  - Pagadas: {facturas_pagadas}")
+    print(f"  - Pendientes: {facturas_pendientes}")
+    print(f"\nPagos totales: {total_pagos}")
     print(f"  - Completados: {pagos_completados}")
     print(f"  - Pendientes: {pagos_pendientes}")
     print(f"\nTotal cobrado: Bs. {total_cobrado:,.2f}")
@@ -136,10 +178,7 @@ def poblar_facturacion(pacientes, citas_atendidas):
         if count > 0:
             print(f"  - {metodo}: {count} pagos (Bs. {total_metodo:,.2f})")
     
-    print("\n⚠️  NOTA: Las facturas requieren presupuestos aprobados.")
-    print("    Este demo solo incluye pagos directos a citas.")
-    
-    return ([], pagos_creados)
+    return (facturas_creadas, pagos_creados)
 
 
 # Funciones auxiliares
