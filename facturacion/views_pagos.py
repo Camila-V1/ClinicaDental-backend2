@@ -22,7 +22,6 @@ class PagoViewSet(viewsets.ModelViewSet):
     """
     ViewSet para gestionar pagos con Stripe.
     """
-    queryset = Pago.objects.all()
     serializer_class = PagoSerializer
     permission_classes = [IsAuthenticated]
     
