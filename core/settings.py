@@ -82,7 +82,7 @@ TENANT_APPS = [
     'facturacion',
     'inventario',
     'reportes',
-    'backups',  # Sistema de backups automáticos
+    'backups.apps.BackupsConfig',  # Sistema de backups automáticos
     'chatbot',  # Chatbot asistente
 
     # Third-party for tenant runtime
