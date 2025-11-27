@@ -265,6 +265,7 @@ CORS_ALLOW_HEADERS = [
     'x-csrftoken',
     'x-requested-with',
     'x-tenant-id',  # Para multi-tenant con subdominios
+    'x-tenant',  # Para exportación de reportes
     'host',  # ✅ Para apps móviles (Header Host)
     'x-mobile-app',  # ✅ Para identificar apps móviles
 ]
