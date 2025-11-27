@@ -13,11 +13,56 @@ import json
 import io
 import logging
 
-from .models import BackupRecord
-from .serializers import BackupRecordSerializer
+from .models import BackupRecord, BackupConfiguration
+from .serializers import BackupRecordSerializer, BackupConfigurationSerializer
 from .supabase_storage import upload_backup_to_supabase, download_backup_from_supabase
 
 logger = logging.getLogger(__name__)
+
+
+class BackupConfigurationView(APIView):
+    """
+    Vista para obtener y actualizar la configuración de backups automáticos.
+    
+    GET /api/backups/config/ - Obtener configuración actual
+    PATCH /api/backups/config/ - Actualizar configuración
+    """
+    
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """Obtener configuración actual (crea una por defecto si no existe)."""
+        config, created = BackupConfiguration.objects.get_or_create(
+            id=1,  # Solo una configuración por tenant
+            defaults={
+                'backup_schedule': 'daily',
+                'backup_time': '02:00:00',
+                'retention_days': 30,
+                'is_active': True
+            }
+        )
+        
+        serializer = BackupConfigurationSerializer(config)
+        return Response(serializer.data)
+    
+    def patch(self, request):
+        """Actualizar configuración (solo ADMIN)."""
+        if request.user.tipo_usuario != 'ADMIN':
+            return Response(
+                {'error': 'Solo los administradores pueden modificar la configuración'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        config, created = BackupConfiguration.objects.get_or_create(id=1)
+        
+        serializer = BackupConfigurationSerializer(config, data=request.data, partial=True)
+        
+        if serializer.is_valid():
+            serializer.save(updated_by=request.user)
+            logger.info(f"✅ Configuración de backups actualizada por {request.user.email}")
+            return Response(serializer.data)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CreateBackupView(APIView):

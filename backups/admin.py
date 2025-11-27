@@ -1,5 +1,28 @@
 from django.contrib import admin
-from .models import BackupRecord
+from .models import BackupRecord, BackupConfiguration
+
+
+@admin.register(BackupConfiguration)
+class BackupConfigurationAdmin(admin.ModelAdmin):
+    list_display = ['backup_schedule', 'backup_time', 'is_active', 'retention_days', 'last_backup_at', 'updated_at']
+    list_filter = ['is_active', 'backup_schedule']
+    readonly_fields = ['last_backup_at', 'updated_at', 'updated_by']
+    
+    fieldsets = (
+        ('Configuración de Frecuencia', {
+            'fields': ('backup_schedule', 'backup_time', 'is_active')
+        }),
+        ('Retención de Backups', {
+            'fields': ('retention_days',)
+        }),
+        ('Información del Sistema', {
+            'fields': ('last_backup_at', 'updated_at', 'updated_by'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(BackupRecord)

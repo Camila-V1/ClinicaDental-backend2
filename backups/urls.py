@@ -1,5 +1,6 @@
 from django.urls import path
 from .views import (
+    BackupConfigurationView,
     CreateBackupView,
     BackupHistoryListView,
     DownloadBackupView,
@@ -7,6 +8,7 @@ from .views import (
 )
 
 urlpatterns = [
+    path('config/', BackupConfigurationView.as_view(), name='backup_config'),
     path('create/', CreateBackupView.as_view(), name='create_backup'),
     path('history/', BackupHistoryListView.as_view(), name='backup_history'),
     path('history/<int:pk>/download/', DownloadBackupView.as_view(), name='download_backup'),
