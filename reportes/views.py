@@ -310,6 +310,34 @@ class ReportesViewSet(viewsets.ViewSet):
             })
             fecha_actual += timedelta(days=1)
         
+        # Intentar exportar si se solicitó formato
+        export_data = [
+            {
+                'Fecha': format_date(item['fecha']),
+                'Total Citas': item['cantidad'],
+                'Completadas': item['completadas'],
+                'Canceladas': item['canceladas']
+            }
+            for item in data
+        ]
+        
+        metrics = {
+            'Total de Días': len(data),
+            'Total Citas': sum(item['cantidad'] for item in data),
+            'Completadas': sum(item['completadas'] for item in data),
+            'Canceladas': sum(item['canceladas'] for item in data)
+        }
+        
+        export_response = self._export_report(
+            request,
+            f"Tendencia de Citas - Últimos {dias_a_revisar} días",
+            export_data,
+            metrics
+        )
+        
+        if export_response:
+            return export_response
+        
         serializer = ReporteTendenciaSerializer(data, many=True)
         return Response(serializer.data)
 
@@ -341,6 +369,30 @@ class ReportesViewSet(viewsets.ViewSet):
             } 
             for item in top_servicios
         ]
+        
+        # Intentar exportar si se solicitó formato
+        export_data = [
+            {
+                'Procedimiento': item['etiqueta'],
+                'Cantidad Realizada': item['valor']
+            }
+            for item in data
+        ]
+        
+        metrics = {
+            'Total Procedimientos': sum(item['valor'] for item in data),
+            'Procedimientos Únicos': len(data)
+        }
+        
+        export_response = self._export_report(
+            request,
+            f"Top {limite} Procedimientos Más Realizados",
+            export_data,
+            metrics
+        )
+        
+        if export_response:
+            return export_response
         
         serializer = ReporteSimpleSerializer(data, many=True)
         return Response(serializer.data)
