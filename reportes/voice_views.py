@@ -117,30 +117,34 @@ class VoiceReportQueryView(APIView):
         queryset = Cita.objects.all()
         
         if fecha_inicio and fecha_fin:
+            from datetime import datetime, time
+            # Crear datetime para el rango completo del día
+            inicio_dt = datetime.combine(fecha_inicio, time.min)
+            fin_dt = datetime.combine(fecha_fin, time.max)
             queryset = queryset.filter(
-                fecha__gte=fecha_inicio,
-                fecha__lte=fecha_fin
+                fecha_hora__gte=inicio_dt,
+                fecha_hora__lte=fin_dt
             )
         
         if filtros.get('estado'):
-            queryset = queryset.filter(estado=filtros['estado'])
+            queryset = queryset.filter(estado=filtros['estado'].upper())
         
         if filtros.get('paciente_nombre'):
             queryset = queryset.filter(
-                paciente__nombre__icontains=filtros['paciente_nombre']
+                paciente__usuario__nombre__icontains=filtros['paciente_nombre']
             )
         
-        citas = queryset.select_related('paciente', 'odontologo').order_by('fecha', 'hora')
+        citas = queryset.select_related('paciente__usuario', 'odontologo__usuario').order_by('fecha_hora')
         
         return [{
             'id': cita.id,
-            'fecha': cita.fecha.strftime('%d/%m/%Y'),
-            'hora': cita.hora.strftime('%H:%M'),
-            'paciente': cita.paciente.nombre_completo if cita.paciente else 'N/A',
-            'odontologo': cita.odontologo.nombre_completo if cita.odontologo else 'N/A',
+            'fecha': cita.fecha_hora.strftime('%d/%m/%Y'),
+            'hora': cita.fecha_hora.strftime('%H:%M'),
+            'paciente': cita.paciente.usuario.full_name if cita.paciente else 'N/A',
+            'odontologo': cita.odontologo.usuario.full_name if cita.odontologo else 'N/A',
             'motivo': cita.motivo or 'N/A',
-            'estado': cita.get_estado_display(),
-            'tipo_cita': cita.get_tipo_cita_display()
+            'motivo_tipo': cita.get_motivo_tipo_display(),
+            'estado': cita.get_estado_display()
         } for cita in citas[:100]]  # Limitar a 100 resultados
     
     def _obtener_facturas(self, fecha_inicio, fecha_fin, filtros):
@@ -168,7 +172,7 @@ class VoiceReportQueryView(APIView):
             'id': factura.id,
             'numero': factura.numero_factura,
             'fecha': factura.fecha_emision.strftime('%d/%m/%Y'),
-            'paciente': factura.paciente.nombre_completo if factura.paciente else 'N/A',
+            'paciente': factura.paciente.full_name if factura.paciente else 'N/A',
             'monto_total': float(factura.monto_total),
             'monto_pagado': float(factura.monto_pagado),
             'saldo': float(factura.saldo),
@@ -193,8 +197,8 @@ class VoiceReportQueryView(APIView):
         return [{
             'id': plan.id,
             'fecha': plan.fecha_creacion.strftime('%d/%m/%Y'),
-            'paciente': plan.paciente.nombre_completo if plan.paciente else 'N/A',
-            'odontologo': plan.odontologo.nombre_completo if plan.odontologo else 'N/A',
+            'paciente': plan.paciente.full_name if plan.paciente else 'N/A',
+            'odontologo': plan.odontologo.full_name if plan.odontologo else 'N/A',
             'titulo': plan.titulo,
             'estado': plan.get_estado_display(),
             'total': float(plan.total)
@@ -202,7 +206,7 @@ class VoiceReportQueryView(APIView):
     
     def _obtener_pacientes(self, fecha_inicio, fecha_fin, filtros):
         """Obtiene pacientes registrados."""
-        queryset = Usuario.objects.filter(rol='PACIENTE')
+        queryset = Usuario.objects.filter(tipo_usuario='PACIENTE')
         
         if fecha_inicio and fecha_fin:
             queryset = queryset.filter(
@@ -214,9 +218,10 @@ class VoiceReportQueryView(APIView):
         
         return [{
             'id': paciente.id,
-            'nombre': paciente.nombre_completo,
+            'nombre': paciente.full_name,
             'email': paciente.email,
             'telefono': paciente.telefono or 'N/A',
+            'ci': paciente.ci or 'N/A',
             'fecha_registro': paciente.date_joined.strftime('%d/%m/%Y'),
             'activo': paciente.is_active
         } for paciente in pacientes[:100]]
@@ -239,7 +244,7 @@ class VoiceReportQueryView(APIView):
             'monto': float(pago.monto),
             'metodo_pago': pago.get_metodo_pago_display(),
             'factura': pago.factura.numero_factura if pago.factura else 'N/A',
-            'paciente': pago.factura.paciente.nombre_completo if pago.factura and pago.factura.paciente else 'N/A'
+            'paciente': pago.factura.paciente.full_name if pago.factura and pago.factura.paciente else 'N/A'
         } for pago in pagos[:100]]
     
     def _generar_resumen(self, interpretacion, datos):
