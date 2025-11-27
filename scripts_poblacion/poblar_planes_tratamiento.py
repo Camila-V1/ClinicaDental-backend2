@@ -56,9 +56,10 @@ def poblar_planes_tratamiento(pacientes, odontologos, servicios):
             paciente=paciente,
             odontologo=odontologo,
             fecha_creacion=fecha_creacion,
+            titulo=f"Plan Completado - {paciente.usuario.apellido}",
             diagnostico=f"Tratamiento dental completado para {paciente.usuario.nombre} {paciente.usuario.apellido}",
             observaciones="Tratamiento finalizado satisfactoriamente",
-            estado='COMPLETADO'
+            estado='completado'
         )
         planes_creados.append(plan)
         
@@ -81,9 +82,6 @@ def poblar_planes_tratamiento(pacientes, odontologos, servicios):
                 notas=f"{servicio.nombre} realizado exitosamente"
             )
             items_creados.append(item)
-        
-        # Actualizar costos del plan
-        plan.actualizar_costos()
     
     print(f"    ✓ {len([p for p in planes_creados if p.estado == 'COMPLETADO'])} planes completados")
     
@@ -104,9 +102,10 @@ def poblar_planes_tratamiento(pacientes, odontologos, servicios):
             paciente=paciente,
             odontologo=odontologo,
             fecha_creacion=fecha_creacion,
+            titulo=f"Tratamiento en Curso - {paciente.usuario.apellido}",
             diagnostico=f"Plan de tratamiento para {paciente.usuario.nombre} {paciente.usuario.apellido}",
             observaciones="Tratamiento en curso",
-            estado='EN_PROGRESO'
+            estado='en_progreso'
         )
         planes_creados.append(plan)
         
@@ -136,7 +135,7 @@ def poblar_planes_tratamiento(pacientes, odontologos, servicios):
             )
             items_creados.append(item)
         
-        plan.actualizar_costos()
+        plan.actualizar_progreso()
     
     print(f"    ✓ {len([p for p in planes_creados if p.estado == 'EN_PROGRESO'])} planes en progreso")
     
@@ -153,14 +152,15 @@ def poblar_planes_tratamiento(pacientes, odontologos, servicios):
         dias_atras = random.randint(1, 10)
         fecha_creacion = hoy - timedelta(days=dias_atras)
         
-        estado = random.choice(['PROPUESTO', 'PROPUESTO', 'APROBADO'])  # Más propuestos
+        estado = random.choice(['propuesto', 'propuesto', 'aprobado'])  # Más propuestos
         
         plan = PlanDeTratamiento.objects.create(
             paciente=paciente,
             odontologo=odontologo,
             fecha_creacion=fecha_creacion,
+            titulo=f"{'Propuesta' if estado == 'propuesto' else 'Plan Aprobado'} - {paciente.usuario.apellido}",
             diagnostico=f"Plan propuesto para {paciente.usuario.nombre} {paciente.usuario.apellido}",
-            observaciones="Esperando aprobación del paciente" if estado == 'PROPUESTO' else "Plan aprobado, listo para iniciar",
+            observaciones="Esperando aprobación del paciente" if estado == 'propuesto' else "Plan aprobado, listo para iniciar",
             estado=estado
         )
         planes_creados.append(plan)
@@ -179,8 +179,6 @@ def poblar_planes_tratamiento(pacientes, odontologos, servicios):
                 notas=f"{servicio.nombre} programado"
             )
             items_creados.append(item)
-        
-        plan.actualizar_costos()
     
     print(f"    ✓ {len([p for p in planes_creados if p.estado in ['PROPUESTO', 'APROBADO']])} planes propuestos/aprobados")
     
@@ -200,9 +198,10 @@ def poblar_planes_tratamiento(pacientes, odontologos, servicios):
             paciente=paciente,
             odontologo=odontologo,
             fecha_creacion=fecha_creacion,
+            titulo=f"Plan Cancelado - {paciente.usuario.apellido}",
             diagnostico="Plan cancelado por el paciente",
             observaciones="Paciente decidió no continuar con el tratamiento",
-            estado='CANCELADO'
+            estado='cancelado'
         )
         planes_creados.append(plan)
         

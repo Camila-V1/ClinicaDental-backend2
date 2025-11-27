@@ -59,7 +59,7 @@ def poblar_historial(odontologos, pacientes, citas_atendidas):
         
         if created:
             historiales_creados.append(historial)
-            print(f"   ✓ Historial creado para: {paciente.usuario.full_name}")
+            print(f"   ✓ Historial creado para: {paciente.usuario.nombre} {paciente.usuario.apellido}")
     
     print(f"   ✓ {len(historiales_creados)} historiales clínicos creados")
     

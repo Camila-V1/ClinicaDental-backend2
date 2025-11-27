@@ -46,7 +46,7 @@ def poblar_facturacion(pacientes, citas_atendidas):
             factura = Factura.objects.create(
                 paciente=cita.paciente,
                 nit_ci=cita.paciente.usuario.ci or '0',
-                razon_social=cita.paciente.usuario.full_name,
+                razon_social=f"{cita.paciente.usuario.nombre} {cita.paciente.usuario.apellido}",
                 monto_total=monto,
                 monto_pagado=monto,
                 estado='PAGADA',
@@ -72,10 +72,6 @@ def poblar_facturacion(pacientes, citas_atendidas):
                 referencia_transaccion=f'REF-{cita.id}-{random.randint(1000, 9999)}'
             )
             
-            # Marcar cita como pagada
-            cita.pagada = True
-            cita.save()
-            
             pagos_creados.append(pago)
     
     print(f"   ✓ {len(facturas_creadas)} facturas creadas")
@@ -89,8 +85,7 @@ def poblar_facturacion(pacientes, citas_atendidas):
     # Tomar algunas citas futuras y crear facturas pendientes
     from agenda.models import Cita
     citas_futuras = Cita.objects.filter(
-        estado='CONFIRMADA',
-        pagada=False
+        estado='CONFIRMADA'
     )[:5]
     
     for cita in citas_futuras:
@@ -101,7 +96,7 @@ def poblar_facturacion(pacientes, citas_atendidas):
             factura = Factura.objects.create(
                 paciente=cita.paciente,
                 nit_ci=cita.paciente.usuario.ci or '0',
-                razon_social=cita.paciente.usuario.full_name,
+                razon_social=f"{cita.paciente.usuario.nombre} {cita.paciente.usuario.apellido}",
                 monto_total=monto,
                 monto_pagado=Decimal('0.00'),
                 estado='PENDIENTE',
