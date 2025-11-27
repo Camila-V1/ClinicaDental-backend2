@@ -34,13 +34,19 @@ echo "🔄 Ejecutando migraciones de base de datos..."
 echo "   → Migraciones compartidas (public schema)..."
 python manage.py migrate_schemas --shared
 
-# Tenants se crean manualmente o con scripts de población
+# ============================================================================
+# 3.1. CREAR Y MIGRAR TENANT clinica_demo (SI NO EXISTE)
+# ============================================================================
 echo ""
-echo "   ℹ️  Los tenants se gestionan manualmente con scripts_poblacion/poblar_todo.py"
+echo "🏥 Verificando tenant clinica_demo..."
 
-echo ""
-echo "   → Migraciones del tenant (clinica_demo schema)..."
-python manage.py migrate_schemas --schema=clinica_demo
+# Intentar migrar el tenant (creará el schema si no existe)
+python manage.py migrate_schemas --schema=clinica_demo || {
+    echo "   ⚠️  Tenant clinica_demo no existe, intentando crear..."
+    python scripts_poblacion/poblar_todo.py
+}
+
+echo "   ✅ Tenant clinica_demo verificado"
 
 # ============================================================================
 # 4. POBLAR DATOS INICIALES (COMENTADO - Ejecutar manualmente cuando necesites)
