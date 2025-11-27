@@ -38,18 +38,23 @@ def create_backups_table(schema_name):
     print(f"\n🔧 Creando tabla backups_backuprecord en schema: {schema_name}")
     
     with connection.cursor() as cursor:
-        cursor.execute(f"SET search_path TO {schema_name}")
+        # Usar identificador SQL seguro para el schema
+        from django.db import connection as conn
+        cursor.execute(
+            "SET search_path TO %s",
+            [schema_name]
+        )
         
         # Crear tabla manualmente si no existe
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS backups_backuprecord (
                 id SERIAL PRIMARY KEY,
                 file_name VARCHAR(255) NOT NULL,
-                file_path VARCHAR(500) NOT NULL,
+                file_path TEXT NOT NULL,
                 file_size BIGINT NOT NULL,
-                backup_type VARCHAR(20) NOT NULL,
+                backup_type VARCHAR(10) NOT NULL DEFAULT 'manual',
                 created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                created_by_id INTEGER REFERENCES usuarios_usuario(id) ON DELETE SET NULL
+                created_by_id INTEGER NULL REFERENCES usuarios_usuario(id) ON DELETE SET NULL
             );
         """)
         
