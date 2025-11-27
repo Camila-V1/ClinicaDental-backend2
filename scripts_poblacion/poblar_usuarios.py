@@ -50,27 +50,30 @@ def poblar_usuarios():
     # 2. USUARIO ADMINISTRADOR
     # =========================================================================
     print("  → Admin...")
-    if not Usuario.objects.filter(email='admin@clinicademo1.com').exists():
-        admin = Usuario.objects.create_user(
-            email='admin@clinicademo1.com',
-            password='admin123',
-            nombre='Admin',
-            apellido='Sistema',
-            ci='12345678',
-            sexo='M',
-            telefono='70000000',
-            tipo_usuario='ADMIN',
-            is_staff=True,
-            is_superuser=True,
-            is_active=True
-        )
-        
-        usuarios_creados.append(admin)
+    admin, created = Usuario.objects.get_or_create(
+        email='admin@clinicademo1.com',
+        defaults={
+            'nombre': 'Admin',
+            'apellido': 'Sistema',
+            'ci': '12345678',
+            'sexo': 'M',
+            'telefono': '70000000',
+            'tipo_usuario': 'ADMIN',
+            'is_staff': True,
+            'is_superuser': True,
+            'is_active': True
+        }
+    )
+    
+    # SIEMPRE actualizar la contraseña (hashear correctamente)
+    admin.set_password('admin123')
+    admin.save()
+    
+    usuarios_creados.append(admin)
+    if created:
         print(f"    ✓ Admin creado: {admin.email} / admin123")
     else:
-        admin = Usuario.objects.get(email='admin@clinicademo1.com')
-        usuarios_creados.append(admin)
-        print(f"    ✓ Admin ya existe: {admin.email}")
+        print(f"    ✓ Admin actualizado: {admin.email} / admin123")
     
     # =========================================================================
     # 3. ODONTÓLOGO 1
@@ -90,9 +93,9 @@ def poblar_usuarios():
         }
     )
     
-    if created:
-        odontologo.set_password('odontologo123')
-        odontologo.save()
+    # SIEMPRE actualizar la contraseña (hashear correctamente)
+    odontologo.set_password('odontologo123')
+    odontologo.save()
     
     # Crear perfil si no existe
     if not hasattr(odontologo, 'perfil_odontologo'):
@@ -124,9 +127,9 @@ def poblar_usuarios():
         }
     )
     
-    if created:
-        odontologo2.set_password('odontologo123')
-        odontologo2.save()
+    # SIEMPRE actualizar la contraseña (hashear correctamente)
+    odontologo2.set_password('odontologo123')
+    odontologo2.save()
     
     # Crear perfil si no existe
     if not hasattr(odontologo2, 'perfil_odontologo'):
@@ -159,9 +162,9 @@ def poblar_usuarios():
         }
     )
     
-    if created:
-        paciente1.set_password('paciente123')
-        paciente1.save()
+    # SIEMPRE actualizar la contraseña (hashear correctamente)
+    paciente1.set_password('paciente123')
+    paciente1.save()
     
     # Crear perfil si no existe
     if not hasattr(paciente1, 'perfil_paciente'):
@@ -188,9 +191,9 @@ def poblar_usuarios():
         }
     )
     
-    if created:
-        paciente2.set_password('paciente123')
-        paciente2.save()
+    # SIEMPRE actualizar la contraseña (hashear correctamente)
+    paciente2.set_password('paciente123')
+    paciente2.save()
     
     # Crear perfil si no existe
     if not hasattr(paciente2, 'perfil_paciente'):
@@ -217,9 +220,9 @@ def poblar_usuarios():
         }
     )
     
-    if created:
-        paciente3.set_password('paciente123')
-        paciente3.save()
+    # SIEMPRE actualizar la contraseña (hashear correctamente)
+    paciente3.set_password('paciente123')
+    paciente3.save()
     
     # Crear perfil si no existe
     if not hasattr(paciente3, 'perfil_paciente'):
