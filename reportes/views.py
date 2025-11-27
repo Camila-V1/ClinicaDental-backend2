@@ -178,12 +178,12 @@ class ReportesViewSet(viewsets.ViewSet):
             
             # 5. Tratamientos Activos (Planes en progreso)
             tratamientos_activos = PlanDeTratamiento.objects.filter(
-                estado__in=['EN_PROGRESO', 'PROPUESTO', 'APROBADO']
+                estado__in=['en_progreso', 'propuesto', 'aprobado']
             ).count()
             
             # 6. Planes Completados (este mes)
             planes_completados = PlanDeTratamiento.objects.filter(
-                estado='COMPLETADO',
+                estado='completado',
                 fecha_creacion__year=anio_actual,
                 fecha_creacion__month=mes_actual
             ).count()
