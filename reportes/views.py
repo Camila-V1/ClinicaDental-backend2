@@ -206,10 +206,11 @@ class ReportesViewSet(viewsets.ViewSet):
             ).count()
             
             # 9. Total Procedimientos Completados (este mes)
+            # El campo correcto es fecha_realizada, no fecha_realizacion
             total_procedimientos = ItemPlanTratamiento.objects.filter(
                 estado='COMPLETADO',
-                fecha_realizacion__year=anio_actual,
-                fecha_realizacion__month=mes_actual
+                fecha_realizada__year=anio_actual,
+                fecha_realizada__month=mes_actual
             ).count()
             
             # 10. Pacientes Nuevos del Mes
