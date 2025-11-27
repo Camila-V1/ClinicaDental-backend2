@@ -15,7 +15,7 @@ services:
     plan: free # Opciones: free, starter, standard, pro
     
     # Build configuration
-    buildCommand: "./build.sh"
+    buildCommand: "bash build.sh"
     startCommand: "gunicorn core.wsgi:application"
     
     # Environment variables
