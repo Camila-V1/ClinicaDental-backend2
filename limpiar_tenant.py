@@ -40,8 +40,8 @@ def limpiar_tenant(schema_name='clinica_demo'):
             # Importar modelos
             from usuarios.models import Usuario, PerfilOdontologo, PerfilPaciente, Especialidad
             from agenda.models import Cita
-            from historial_clinico.models import HistorialClinico, EpisodioAtencion, Odontograma, PlanTratamiento, ItemPlanTratamiento
-            from tratamientos.models import Servicio, CategoriaServicio
+            from historial_clinico.models import HistorialClinico, EpisodioAtencion, Odontograma
+            from tratamientos.models import Servicio, CategoriaServicio, PlanDeTratamiento, ItemPlanTratamiento
             from inventario.models import Insumo, CategoriaInsumo
             from facturacion.models import Pago, Factura
             
@@ -56,7 +56,7 @@ def limpiar_tenant(schema_name='clinica_demo'):
                 'Historiales Clínicos': HistorialClinico.objects.count(),
                 'Episodios': EpisodioAtencion.objects.count(),
                 'Odontogramas': Odontograma.objects.count(),
-                'Planes de Tratamiento': PlanTratamiento.objects.count(),
+                'Planes de Tratamiento': PlanDeTratamiento.objects.count(),
                 'Items Plan Tratamiento': ItemPlanTratamiento.objects.count(),
                 'Servicios': Servicio.objects.count(),
                 'Categorías Servicio': CategoriaServicio.objects.count(),
