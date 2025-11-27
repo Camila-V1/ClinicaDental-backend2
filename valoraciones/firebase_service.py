@@ -3,6 +3,7 @@ Servicio para enviar notificaciones push usando Firebase Cloud Messaging (FCM)
 """
 import json
 import logging
+import os
 from pathlib import Path
 from django.conf import settings
 from firebase_admin import credentials, messaging, initialize_app
@@ -11,15 +12,25 @@ logger = logging.getLogger(__name__)
 
 # Inicializar Firebase Admin SDK
 try:
-    # Buscar el archivo de credenciales
-    firebase_cred_path = Path(settings.BASE_DIR) / 'psicoadmin-94485-firebase-adminsdk-fbsvc-3581d8f111.json'
+    # Primero intentar usar variable de entorno (para producción en Render)
+    firebase_cred_json = os.environ.get('FIREBASE_CREDENTIALS_JSON')
     
-    if firebase_cred_path.exists():
-        cred = credentials.Certificate(str(firebase_cred_path))
+    if firebase_cred_json:
+        # Producción: usar credenciales desde variable de entorno
+        cred_dict = json.loads(firebase_cred_json)
+        cred = credentials.Certificate(cred_dict)
         initialize_app(cred)
-        logger.info("✅ Firebase Admin SDK inicializado correctamente")
+        logger.info("✅ Firebase Admin SDK inicializado desde variable de entorno")
     else:
-        logger.warning(f"⚠️ Archivo de credenciales Firebase no encontrado: {firebase_cred_path}")
+        # Desarrollo: usar archivo local
+        firebase_cred_path = Path(settings.BASE_DIR) / 'psicoadmin-94485-firebase-adminsdk-fbsvc-3581d8f111.json'
+        
+        if firebase_cred_path.exists():
+            cred = credentials.Certificate(str(firebase_cred_path))
+            initialize_app(cred)
+            logger.info("✅ Firebase Admin SDK inicializado desde archivo local")
+        else:
+            logger.warning(f"⚠️ Archivo de credenciales Firebase no encontrado: {firebase_cred_path}")
 except Exception as e:
     logger.error(f"❌ Error al inicializar Firebase Admin SDK: {e}")
 
