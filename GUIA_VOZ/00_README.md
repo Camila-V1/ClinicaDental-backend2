@@ -7,6 +7,7 @@
 3. **[03_ESTILOS_UI.md](03_ESTILOS_UI.md)** - Diseño del botón de micrófono y modal
 4. **[04_EJEMPLOS_USO.md](04_EJEMPLOS_USO.md)** - Ejemplos de comandos de voz
 5. **[05_MANEJO_ERRORES.md](05_MANEJO_ERRORES.md)** - Gestión de errores y casos especiales
+6. **[06_FIX_NO_SPEECH.md](06_FIX_NO_SPEECH.md)** - ⚡ **FIX: Error `no-speech` que detiene el reconocimiento**
 
 ---
 

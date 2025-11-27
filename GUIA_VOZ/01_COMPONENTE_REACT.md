@@ -65,7 +65,17 @@ export const useVoiceRecognition = () => {
       };
       
       recognitionRef.current.onerror = (event) => {
-        console.error('Error de reconocimiento:', event.error);
+        console.error('❌ Error de reconocimiento:', event.error);
+        
+        // Manejar error 'no-speech' sin detener (es normal, solo pausa)
+        if (event.error === 'no-speech') {
+          console.log('⏸️ Pausa detectada (no-speech) - continuando escucha...');
+          // NO cambiar isListening ni mostrar error
+          // El reconocimiento continúa automáticamente
+          return;
+        }
+        
+        // Para otros errores, sí detener y mostrar mensaje
         setError(getErrorMessage(event.error));
         setIsListening(false);
       };

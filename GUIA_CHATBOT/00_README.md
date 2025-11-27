@@ -2,11 +2,10 @@
 
 ## 📋 Índice
 
-1. **[01_ARQUITECTURA.md](01_ARQUITECTURA.md)** - Arquitectura del sistema
-2. **[02_COMANDOS.md](02_COMANDOS.md)** - Lista completa de comandos
-3. **[03_FRONTEND_CHAT.md](03_FRONTEND_CHAT.md)** - Componente de chat para frontend
-4. **[04_VOZ_INTEGRATION.md](04_VOZ_INTEGRATION.md)** - Integración con reconocimiento de voz
-5. **[05_EJEMPLOS_USO.md](05_EJEMPLOS_USO.md)** - Ejemplos de uso
+1. **[02_COMANDOS.md](02_COMANDOS.md)** - Lista completa de comandos (10 intenciones)
+2. **[03_FRONTEND_CHAT.md](03_FRONTEND_CHAT.md)** - Componentes React completos
+3. **[04_VOZ_INTEGRATION.md](04_VOZ_INTEGRATION.md)** - Integración con Web Speech API
+4. **[05_ESTILOS_CSS.md](05_ESTILOS_CSS.md)** - CSS completo con animaciones
 
 ---
 
@@ -285,11 +284,10 @@ python test_chatbot.py
 
 ## 🔗 Enlaces Rápidos
 
-- [Arquitectura](01_ARQUITECTURA.md)
-- [Comandos](02_COMANDOS.md)
-- [Frontend Chat](03_FRONTEND_CHAT.md)
-- [Integración Voz](04_VOZ_INTEGRATION.md)
-- [Ejemplos](05_EJEMPLOS_USO.md)
+- [Comandos Disponibles](02_COMANDOS.md) - 10 intenciones con ejemplos
+- [Frontend React](03_FRONTEND_CHAT.md) - Componentes, hooks y servicios
+- [Integración Voz](04_VOZ_INTEGRATION.md) - Reutilizar Web Speech API
+- [Estilos CSS](05_ESTILOS_CSS.md) - CSS completo responsive
 
 ---
 

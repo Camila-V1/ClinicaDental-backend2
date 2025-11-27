@@ -506,6 +506,38 @@ class ReportesViewSet(viewsets.ViewSet):
             'tasa_ocupacion': round(tasa_ocupacion, 2)
         }
         
+        # Exportar si se solicita
+        export_response = self._export_report(
+            request,
+            "Estadísticas Generales del Sistema",
+            [
+                {"Métrica": "Pacientes Activos", "Valor": total_pacientes_activos},
+                {"Métrica": "Pacientes Nuevos (Mes)", "Valor": pacientes_nuevos_mes},
+                {"Métrica": "Total Odontólogos", "Valor": total_odontologos},
+                {"Métrica": "Citas del Mes", "Valor": citas_mes_actual},
+                {"Métrica": "Citas Completadas", "Valor": citas_completadas},
+                {"Métrica": "Citas Pendientes", "Valor": citas_pendientes},
+                {"Métrica": "Citas Canceladas", "Valor": citas_canceladas},
+                {"Métrica": "Planes Completados", "Valor": tratamientos_completados},
+                {"Métrica": "Planes Activos", "Valor": planes_activos},
+                {"Métrica": "Total Procedimientos", "Valor": total_procedimientos},
+                {"Métrica": "Ingresos Mes Actual", "Valor": format_currency(ingresos_mes)},
+                {"Métrica": "Monto Pendiente", "Valor": format_currency(monto_pendiente)},
+                {"Métrica": "Facturas Vencidas", "Valor": facturas_vencidas},
+                {"Métrica": "Promedio por Factura", "Valor": format_currency(promedio_factura)},
+                {"Métrica": "Tasa de Ocupación", "Valor": f"{round(tasa_ocupacion, 2)}%"},
+            ],
+            metrics={
+                "Pacientes Activos": total_pacientes_activos,
+                "Odontólogos": total_odontologos,
+                "Citas del Mes": citas_mes_actual,
+                "Ingresos Mes": format_currency(ingresos_mes),
+                "Tasa Ocupación": f"{round(tasa_ocupacion, 2)}%"
+            }
+        )
+        if export_response:
+            return export_response
+        
         return Response(data)
 
     @action(detail=False, methods=['get'], url_path='reporte-financiero')

@@ -80,25 +80,54 @@ const VoiceReportButton = ({ onClick }) => {
 
 ---
 
-### Error: No se detecta habla
-**Causa:** Usuario no habla o micrófono muy bajo
+### Error: No se detecta habla (`no-speech`)
+**Causa:** Usuario hace pausa mientras habla o micrófono no detecta audio momentáneamente
 
-**Mensaje de error:**
-```
-"No se detectó ningún audio. Por favor, habla más cerca del micrófono."
-```
-
-**Prevención:**
+**❌ INCORRECTO:** Detener el reconocimiento y mostrar error
 ```javascript
-// Timeout si no hay transcripción en 10 segundos
+// ❌ NO HACER ESTO
+if (event.error === 'no-speech') {
+  setError('No se detectó audio');
+  setIsListening(false); // ❌ Detiene la escucha
+}
+```
+
+**✅ CORRECTO:** Ignorar el error y continuar escuchando
+```javascript
+// ✅ HACER ESTO
+recognitionRef.current.onerror = (event) => {
+  console.error('❌ Error de reconocimiento:', event.error);
+  
+  // 'no-speech' es NORMAL cuando el usuario hace pausa
+  if (event.error === 'no-speech') {
+    console.log('⏸️ Pausa detectada (no-speech) - continuando escucha...');
+    // NO cambiar isListening ni mostrar error
+    // El reconocimiento continúa automáticamente con continuous: true
+    return;
+  }
+  
+  // Para OTROS errores sí detener
+  setError(getErrorMessage(event.error));
+  setIsListening(false);
+};
+```
+
+**Explicación:**
+- `continuous: true` permite que el reconocimiento continúe después de pausas
+- `no-speech` se dispara cuando hay silencio, pero **no es un error fatal**
+- Si detienes el reconocimiento en cada pausa, el usuario debe presionar el botón repetidamente
+
+**Timeout opcional (solo si realmente no hay audio en mucho tiempo):**
+```javascript
+// Timeout si NO hay transcripción en 30 segundos (no 10)
 useEffect(() => {
   if (isListening) {
     const timeout = setTimeout(() => {
       if (!transcript) {
         stopListening();
-        toast.warning('No se detectó voz. Intenta hablar más cerca del micrófono.');
+        toast.warning('No se detectó voz por mucho tiempo. Intenta de nuevo.');
       }
-    }, 10000);
+    }, 30000); // 30 segundos, no 10
     
     return () => clearTimeout(timeout);
   }
