@@ -75,29 +75,23 @@ services:
     # Ejecutar cada hora (revisa si hay backups programados)
     schedule: "0 * * * *"
     
-    # Comando a ejecutar
-    buildCommand: "bash build.sh"
+    # Instalar dependencias primero
+    buildCommand: "pip install -r requirements.txt"
     startCommand: "python manage.py run_scheduled_backups"
     
-    # Environment variables (heredadas del web service)
+    # Environment variables (deben configurarse manualmente en Render)
     envVars:
       - key: DATABASE_URL
-        fromService:
-          type: web
-          name: clinica-dental-backend
-          envVarKey: DATABASE_URL
+        sync: false
       
       - key: SUPABASE_URL
-        fromService:
-          type: web
-          name: clinica-dental-backend
-          envVarKey: SUPABASE_URL
+        sync: false
       
       - key: SUPABASE_KEY
-        fromService:
-          type: web
-          name: clinica-dental-backend
-          envVarKey: SUPABASE_KEY
+        sync: false
+      
+      - key: SECRET_KEY
+        sync: false
       
       - key: DEFAULT_TENANT_SCHEMA
         value: clinica_demo

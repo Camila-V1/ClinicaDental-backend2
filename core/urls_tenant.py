@@ -33,4 +33,5 @@ urlpatterns = [
     path('api/reportes/', include('reportes.urls')),
     path('api/backups/', include('backups.urls')),  # Sistema de backups
     path('api/chatbot/', include('chatbot.urls')),  # Chatbot asistente
+    path('api/', include('valoraciones.urls')),  # Sistema de valoraciones
 ]

@@ -211,6 +211,7 @@ urlpatterns = [
     path('api/reportes/', include('reportes.urls')),
     path('api/backups/', include('backups.urls')),
     path('api/chatbot/', include('chatbot.urls')),
+    path('api/', include('valoraciones.urls')),
     
     # Public admin for managing tenants
     path('admin/', public_admin.urls),

@@ -18,4 +18,7 @@ urlpatterns = [
     path('health/', views.health_check, name='user_health_check'),
     path('fix-odontologo/', views.fix_odontologo, name='fix_odontologo'),
     path('poblar-especialidades/', views.poblar_especialidades, name='poblar_especialidades'),
+    
+    # --- Notificaciones Push ---
+    path('registrar-fcm-token/', views.registrar_fcm_token, name='registrar_fcm_token'),
 ]

@@ -443,3 +443,37 @@ def poblar_especialidades(request):
 			"status": "error",
 			"message": f"Error al poblar especialidades: {str(e)}"
 		}, status=500)
+
+
+# --- ENDPOINT PARA REGISTRAR TOKEN FCM ---
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def registrar_fcm_token(request):
+	"""
+	Endpoint para registrar el token FCM del dispositivo del usuario
+	
+	POST /api/usuarios/registrar-fcm-token/
+	Body: {
+		"fcm_token": "dA8xF...", 
+	}
+	"""
+	fcm_token = request.data.get('fcm_token')
+	
+	if not fcm_token:
+		return Response(
+			{'error': 'El campo fcm_token es requerido'},
+			status=status.HTTP_400_BAD_REQUEST
+		)
+	
+	# Guardar el token en el usuario
+	usuario = request.user
+	usuario.fcm_token = fcm_token
+	usuario.save(update_fields=['fcm_token'])
+	
+	return Response({
+		'message': 'Token FCM registrado exitosamente',
+		'fcm_token': fcm_token
+	}, status=status.HTTP_200_OK)

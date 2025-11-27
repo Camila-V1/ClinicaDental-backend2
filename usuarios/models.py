@@ -91,6 +91,14 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
     is_superuser = models.BooleanField(default=False)  # Solo para el superadmin de la clínica
     
     date_joined = models.DateTimeField(auto_now_add=True)
+    
+    # --- Campo para notificaciones push ---
+    fcm_token = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        help_text="Token de Firebase Cloud Messaging para notificaciones push"
+    )
 
     # --- Configuración del Modelo ---
     objects = CustomUserManager()

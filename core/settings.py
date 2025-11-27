@@ -84,6 +84,7 @@ TENANT_APPS = [
     'reportes',
     'backups.apps.BackupsConfig',  # Sistema de backups automáticos
     'chatbot',  # Chatbot asistente
+    'valoraciones.apps.ValoracionesConfig',  # Sistema de valoraciones y reseñas
 
     # Third-party for tenant runtime
     'rest_framework',

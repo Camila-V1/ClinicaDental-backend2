@@ -36,7 +36,7 @@ export const chatbotService = {
    */
   async enviarMensaje(texto, esVoz = false) {
     try {
-      const response = await apiClient.post('/chatbot/query/', {
+      const response = await apiClient.post('/api/chatbot/query/', {
         texto: texto.trim(),
         es_voz: esVoz
       });

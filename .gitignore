@@ -162,6 +162,11 @@ static_collected/
 *.crt
 *.p12
 
+# Firebase
+google-services*.json
+*firebase-adminsdk*.json
+firebase-credentials.json
+
 # Configuraciones locales
 local_settings.py
 settings_local.py
