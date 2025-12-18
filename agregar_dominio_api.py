@@ -11,7 +11,7 @@ import django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
 django.setup()
 
-from tenants.models import Tenant, Domain
+from tenants.models import Clinica, Domain
 
 def agregar_dominio_api():
     """Agregar api.dentaabcxy.store a clinica_demo si no existe"""
@@ -21,7 +21,7 @@ def agregar_dominio_api():
     
     try:
         # Buscar el tenant
-        tenant = Tenant.objects.get(schema_name=TENANT_SCHEMA)
+        tenant = Clinica.objects.get(schema_name=TENANT_SCHEMA)
         print(f"✅ Tenant encontrado: {tenant.schema_name}")
         
         # Verificar si el dominio ya existe
@@ -50,7 +50,7 @@ def agregar_dominio_api():
             primary_flag = "⭐ (primario)" if es_primario else ""
             print(f"  - {dominio} {primary_flag}")
         
-    except Tenant.DoesNotExist:
+    except Clinica.DoesNotExist:
         print(f"❌ ERROR: No existe el tenant con schema_name '{TENANT_SCHEMA}'")
         sys.exit(1)
     except Exception as e:
