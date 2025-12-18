@@ -65,19 +65,22 @@ def crear_o_verificar_tenant(schema_name, nombre, dominio_principal):
     # Crear dominios
     render_hostname = os.environ.get('RENDER_EXTERNAL_HOSTNAME', 'localhost')
     dominios = [
-        (dominio_principal, True),  # Principal
-        (f'{schema_name}.{render_hostname}', False),  # Alternativo
+        (dominio_principal, True),  # Principal (ej: clinicademo1.dentaabcxy.store)
+        (render_hostname, False),  # Dominio de Render COMPLETO (ej: clinica-dental-backend-4wyd.onrender.com)
+        (f'{schema_name}.{render_hostname}', False),  # Alternativo con schema
         (f'{schema_name}.localhost', False),  # Desarrollo
     ]
     
     for dominio, es_primario in dominios:
         if dominio and not dominio.startswith('localhost.') and dominio != 'localhost.localhost':
-            Domain.objects.create(
-                domain=dominio,
-                tenant=tenant,
-                is_primary=es_primario
-            )
-            print(f"  ✓ Dominio creado: {dominio} {'(principal)' if es_primario else ''}")
+            # Evitar duplicados
+            if not Domain.objects.filter(domain=dominio, tenant=tenant).exists():
+                Domain.objects.create(
+                    domain=dominio,
+                    tenant=tenant,
+                    is_primary=es_primario
+                )
+                print(f"  ✓ Dominio creado: {dominio} {'(principal)' if es_primario else ''}")
     
     print(f"  ✅ Tenant creado exitosamente")
     return tenant
