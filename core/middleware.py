@@ -32,7 +32,8 @@ class DefaultTenantMiddleware:
         public_domains = [
             'localhost',
             '127.0.0.1',
-            os.environ.get('RENDER_EXTERNAL_HOSTNAME', 'clinica-dental-backend.onrender.com')
+            os.environ.get('RENDER_EXTERNAL_HOSTNAME', 'clinica-dental-backend.onrender.com'),
+            'api.dentaabcxy.store',  # Dominio custom API
         ]
         
         # Si es un dominio público Y estamos en schema public, cambiar al tenant
