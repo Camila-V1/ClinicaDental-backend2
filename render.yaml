@@ -36,7 +36,7 @@ services:
         value: https://tu-frontend.vercel.app,https://tu-frontend.netlify.app
       
       - key: CSRF_TRUSTED_ORIGINS
-        value: https://tu-frontend.vercel.app,https://clinica-dental-backend.onrender.com
+        value: https://tu-frontend.vercel.app,https://clinica-dental-backend-4wyd.onrender.com
       
       # Database (OPCIÓN A: Conectar a BD existente)
       # Copia la Internal Database URL de tu PostgreSQL existente
