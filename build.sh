@@ -50,6 +50,13 @@ python manage.py migrate_schemas --schema=clinica_demo || {
 echo "   ✅ Tenant clinica_demo verificado"
 
 # ============================================================================
+# 3.2. AGREGAR DOMINIO DE RENDER A clinica_demo
+# ============================================================================
+echo ""
+echo "🌐 Configurando dominio de Render..."
+python agregar_dominio_render.py || echo "   ⚠️  Advertencia: No se pudo ejecutar agregar_dominio_render.py"
+
+# ============================================================================
 # 4. POBLAR DATOS INICIALES (COMENTADO - Ejecutar manualmente cuando necesites)
 # ============================================================================
 # Para poblar datos ejecuta manualmente:
